@@ -21,7 +21,6 @@ export default function Footer() {
           <ul className="space-y-2">
             <li><a href="/football" className="hover:text-yellow-200">Football</a></li>
             <li><a href="/basketball" className="hover:text-yellow-200">Basketball</a></li>
-            <li><a href="/results" className="hover:text-yellow-200">Results</a></li>
             <li><a href="/talents" className="hover:text-yellow-200">Talents</a></li>
             <li><a href="/contact" className="hover:text-yellow-200">Contact Us</a></li>
           </ul>

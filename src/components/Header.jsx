@@ -12,8 +12,20 @@ const Header = () => {
     { name: 'Football', path: '/football' },
     { name: 'Basketball', path: '/basketball' },
     { name: 'Talents', path: '/talents' },
-    { name: 'Contact Us', path: '/contact-us' }
+    { name: 'Contact ', path: '/contact' }
   ];
+
+  // Close mobile menu when screen resizes to desktop
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 768) {
+        setIsOpen(false);
+        setSearchOpen(false);
+      }
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -28,7 +40,19 @@ const Header = () => {
     alert(`Searching for: ${searchQuery}`);
     setSearchQuery('');
     setSearchOpen(false);
+    setIsOpen(false); // Close mobile menu after search
   };
+
+  // Close mobile menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (isOpen && !e.target.closest('.mobile-menu-container')) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isOpen]);
 
   return (
     <nav className={`sticky top-0 z-50 dark:bg-blue-900 shadow-lg transition-all duration-300 ${
@@ -39,7 +63,7 @@ const Header = () => {
           {/* Logo */}
           <div className="flex-shrink-0 flex items-center">
             <img
-              className="h-65 w-auto"
+              className="h-30 w-auto" // Adjusted for better mobile proportion
               src="src/assets/logo.png" 
               alt="The Halftime Logo"
             />
@@ -69,7 +93,7 @@ const Header = () => {
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Search..."
-                    className="px-3 py-1 rounded-l-md text-gray-800 focus:outline-none"
+                    className="px-3 py-1 rounded-l-md text-gray-800 focus:outline-none w-40 sm:w-auto"
                     autoFocus
                   />
                   <button 
@@ -94,19 +118,26 @@ const Header = () => {
           <div className="md:hidden flex items-center space-x-2">
             {/* Search Button (Mobile) */}
             <button 
-              onClick={() => setSearchOpen(!searchOpen)}
+              onClick={() => {
+                setSearchOpen(!searchOpen);
+                if (isOpen) setIsOpen(false); // Close menu if open
+              }}
               className="text-white p-2 rounded-full hover:bg-blue-700 transition"
+              aria-label={searchOpen ? "Close search" : "Open search"}
             >
               <Search className="h-5 w-5" />
             </button>
             
             {/* Mobile Menu Button */}
             <button
-              onClick={() => setIsOpen(!isOpen)}
+              onClick={() => {
+                setIsOpen(!isOpen);
+                if (searchOpen) setSearchOpen(false); // Close search if open
+              }}
               className="inline-flex items-center justify-center p-2 rounded-md text-white hover:bg-blue-700 focus:outline-none transition duration-300"
-              aria-expanded="false"
+              aria-expanded={isOpen}
+              aria-label={isOpen ? "Close menu" : "Open menu"}
             >
-              <span className="sr-only">Open main menu</span>
               {isOpen ? (
                 <X className="block h-6 w-6" />
               ) : (
@@ -118,7 +149,7 @@ const Header = () => {
 
         {/* Mobile Search Input */}
         {searchOpen && (
-          <div className="md:hidden mt-2 mb-4">
+          <div className="md:hidden mt-2 mb-4 transition-all duration-300">
             <form onSubmit={handleSearch} className="flex">
               <input
                 type="text"
@@ -139,8 +170,8 @@ const Header = () => {
         )}
 
         {/* Mobile Menu */}
-        <div className={`md:hidden transition-all duration-300 overflow-hidden ${
-          isOpen ? 'max-h-96' : 'max-h-0'
+        <div className={`mobile-menu-container md:hidden transition-all duration-300 ease-in-out overflow-hidden ${
+          isOpen ? 'max-h-screen opacity-100' : 'max-h-0 opacity-0'
         }`}>
           <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-blue-800">
             {navLinks.map((link) => (

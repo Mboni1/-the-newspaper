@@ -3,28 +3,35 @@ import React from 'react';
 const Article = () => {
   const articles = [
     {
-      id: 1,
-      title: 'Football',
-      excerpt: 'Ikipe Ikunzwe cyane mu Rwanda ikomeje kwiyubaka nyuma yuko ibuze igikombe cya shampiyona season ishize ikibwe na mucyeba APR fc.',
-      category: 'Umupira wamaguru',
-      date: '27 Kamena 2025',
-      image: 'https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80'
+        id: 1,
+      title: "APR FC yatsinze mukino wa nyuma",
+      excerpt: "Ikipe y'umupira w'amaguru ya APR FC yatsinze...",
+      fullContent: "APR FC yarushanwe na Rayon Sports mu mukino wa nyuma wa shampiyona y'umupira w'amaguru. APR FC yatsinze Rayon Sports ku mpande zitandatu (6-5) nyuma y'ibihe by'impuzandengo ku gipimo cy'amaguru. Ikipe ya APR FC yaje gutwara igikombe cya shampiyona y'u Rwanda mu mwaka wa 2024.",
+      category: "Umupira w'amaguru",
+      date: "27 Kamena 2024",
+      image: "https://images.unsplash.com/photo-1540747913346-19e32dc3e97e",
+      isFeatured: true
     },
-    {
+      {
       id: 2,
-      excerpt: 'Nyuma yigihe gito ikubitiwe muri Bal ikomejwe no kugayikira mumikino yimbere mugihugu.',
-      category: 'Basketball',
-      date: '25 Kamena 2025',
-      image: 'https://images.unsplash.com/photo-1546519638-68e109498ffc?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80'
+      title: "Basketball: REG yegukanye igikombe",
+      excerpt: "Ikipe ya REG yegukanye igikombe cya basketball...",
+      fullContent: "Ikipe ya REG yegukanye igikombe cya basketball mu Rwanda mu mwaka wa 2024. REG yatsinze Patriots ku mpande 78-72 mu mukino wa nyuma wabereye i Kigali. Uyu mukino wari urushanwa rwa nyuma rwa shampiyona y'igihugu ya basketball.",
+      category: "Basketball",
+      date: "25 Kamena 2024",
+      image: "https://images.unsplash.com/photo-1546519638-68e109498ffc",
+      isFeatured: true
     },
-    {
+      {
       id: 3,
-      title: 'Talents',
-      excerpt: 'Mumurejye wa Gahanga hagaragaye impano zidasazwe mu ikipe ya Nunga fc.',
-      category: 'Impano',
-      date: '10 Kamena 2025',
-      image: 'https://images.unsplash.com/photo-1461896836934-ffe607ba8211?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80'
-    }
+      title: "Mu Rwanda rwitwaye neza mu marushanwa ya Volleyball",
+      excerpt: "Ikipe y'igihugu ya Volleyball y'u Rwanda yitabiriye...",
+      fullContent: "Ikipe y'igihugu ya Volleyball y'u Rwanda yitabiriye amarushanwa ya Afurika yabereye i Cairo, Misiri. Dore yuko u Rwanda rwakinnye neza ariko rwatsinzwe mu kibanza cya gatatu ku ruhande rw'abagabo.",
+      category: "Talents",
+      date: "20 Kamena 2024",
+      image: "https://images.unsplash.com/photo-1592656094267-764a60363a2c",
+      isFeatured: true
+    },
   ];
 
   return (

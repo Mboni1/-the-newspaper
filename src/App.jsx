@@ -1,24 +1,34 @@
-
+import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import './App.css'
-import Article from './components/Article'
-import Header from './components/Header'
-import ArticleWithSidebar from './components/ArticleWithSidebar'
-import Footer from './components/Footer'
-import FeedbackForm from './components/FeedbackForm'
+import React from 'react';
+import Header from './Components/Header';
+import Home from './Pages/Home';
+import Footer from './Components/Footer'
+import  Football  from './Pages/Football';
+import  Basketball  from './Pages/Basketball';
+import  Talents  from './Pages/Talents';
+import  Contact  from './Pages/Contact';
+import ArticleWithSidebar from './Components/ArticleWithSidebar';
+import Article from './Components/Article';
 
-function App() {
-
+const App = () =>{
   return (
-    <>
-   <Header />
-   <Article/>
-   <div className="min-h-screen bg-gray-50">
-
-      <ArticleWithSidebar />
-    </div>
+    <BrowserRouter>
+    <Header/>
+    <Article/>
+    <ArticleWithSidebar/>
+    <Routes>
+    <Route path="/Home" element= {<Home />}></Route>
+    <Route path="/Football" element= {<Football />}></Route>
+    <Route path="/Basketball" element= {<Basketball />}></Route>
+    <Route path="/Talents" element= {<Talents />}></Route>
+    <Route path="/Contact" element= {<Contact />}></Route>
+    </Routes>
     <Footer/>
-    </>
-  )
-}
+    </BrowserRouter>
+  );
+};
 
-export default App
+
+
+export default App;

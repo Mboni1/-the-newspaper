@@ -13,7 +13,7 @@ const ArticleWithSidebar = () => {
     },
     {
       id: "JGwWNGJdvx8",
-      title: "new young talent"
+      title: "new talent"
     },
     {
       id: "JGwWNGJdvx8",
