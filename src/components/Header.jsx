@@ -85,7 +85,7 @@ const Header = () => {
             </div>
 
             {/* Search Button (Desktop) */}
-            <div className="ml-4 flex items-center">
+            <div className="ml-4 flex items-center ">
               {searchOpen ? (
                 <form onSubmit={handleSearch} className="flex">
                   <input
@@ -93,7 +93,7 @@ const Header = () => {
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Search..."
-                    className="px-3 py-1 rounded-l-md text-gray-800 focus:outline-none w-40 sm:w-auto"
+                    className="px-3 py-1 rounded-l-md text-white-100 focus:outline-none w-40 sm:w-auto"
                     autoFocus
                   />
                   <button 
@@ -156,7 +156,7 @@ const Header = () => {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search..."
-                className="flex-grow px-3 py-2 rounded-l-md text-gray-800 focus:outline-none"
+                className="flex-grow px-3 py-2 rounded-l-md text-white-600 focus:outline-none"
                 autoFocus
               />
               <button 

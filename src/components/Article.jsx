@@ -4,31 +4,31 @@ const Article = () => {
   const articles = [
     {
         id: 1,
-      title: "APR FC yatsinze mukino wa nyuma",
-      excerpt: "Ikipe y'umupira w'amaguru ya APR FC yatsinze...",
+      title: "APR FC won the final match",
+      excerpt: "The football team APR FC won...",
       fullContent: "APR FC yarushanwe na Rayon Sports mu mukino wa nyuma wa shampiyona y'umupira w'amaguru. APR FC yatsinze Rayon Sports ku mpande zitandatu (6-5) nyuma y'ibihe by'impuzandengo ku gipimo cy'amaguru. Ikipe ya APR FC yaje gutwara igikombe cya shampiyona y'u Rwanda mu mwaka wa 2024.",
-      category: "Umupira w'amaguru",
-      date: "27 Kamena 2024",
+      category: "Football",
+      date: "27 May 2025",
       image: "https://images.unsplash.com/photo-1540747913346-19e32dc3e97e",
       isFeatured: true
     },
       {
       id: 2,
-      title: "Basketball: REG yegukanye igikombe",
-      excerpt: "Ikipe ya REG yegukanye igikombe cya basketball...",
+      title: "REG Are The Champions",
+      excerpt: "The REG team won the basketball championship...",
       fullContent: "Ikipe ya REG yegukanye igikombe cya basketball mu Rwanda mu mwaka wa 2024. REG yatsinze Patriots ku mpande 78-72 mu mukino wa nyuma wabereye i Kigali. Uyu mukino wari urushanwa rwa nyuma rwa shampiyona y'igihugu ya basketball.",
       category: "Basketball",
-      date: "25 Kamena 2024",
+      date: "25 June 2025",
       image: "https://images.unsplash.com/photo-1546519638-68e109498ffc",
       isFeatured: true
     },
       {
       id: 3,
-      title: "Mu Rwanda rwitwaye neza mu marushanwa ya Volleyball",
-      excerpt: "Ikipe y'igihugu ya Volleyball y'u Rwanda yitabiriye...",
-      fullContent: "Ikipe y'igihugu ya Volleyball y'u Rwanda yitabiriye amarushanwa ya Afurika yabereye i Cairo, Misiri. Dore yuko u Rwanda rwakinnye neza ariko rwatsinzwe mu kibanza cya gatatu ku ruhande rw'abagabo.",
+      title: "How to support young talents?",
+      excerpt: "In Rwanda, there continues to be a noticeable presence of children with football talent...",
+      fullContent: "In Rwanda, many talented young footballers are emerging, but they face limited opportunities to join top-tier academies where they can develop their skills.",
       category: "Talents",
-      date: "20 Kamena 2024",
+      date: "20 June 2025",
       image: "https://images.unsplash.com/photo-1592656094267-764a60363a2c",
       isFeatured: true
     },
@@ -38,7 +38,7 @@ const Article = () => {
     <section className="py-12 bg-gray-50" aria-labelledby="recent-news-heading">
       <div className="container mx-auto px-4">
         <h2 id="recent-news-heading" className="text-3xl font-bold text-center mb-8 text-blue-900">
-          Amakuru Agezweho Muri Siporo
+         Current Sports Updates
         </h2>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -52,7 +52,7 @@ const Article = () => {
               <div className="h-48 overflow-hidden">
                 <img 
                   src={article.image} 
-                  alt={article.title ? `Ifoto y'ingingo: ${article.title}` : "Ifoto y'ingingo"}
+                  alt={article.title ? `${article.title}` : "Image"}
                   className="w-full h-full object-cover"
                   loading="lazy"
                 />
@@ -76,7 +76,7 @@ const Article = () => {
                   className="text-blue-600 hover:text-blue-600 font-medium transition-colors flex items-center"
                   aria-label={`Soma byinshi kuri ${article.title || 'iyi ngingo'}`}
                 >
-                  Soma byose
+                  Read More
                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
   <path strokeLinecap="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
 </svg>
@@ -88,7 +88,7 @@ const Article = () => {
 
         <div className="text-center mt-8">
           <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-md transition-colors">
-            Reba Izindi Nkuru
+            Related News
           </button>
         </div>
       </div>

@@ -9,7 +9,7 @@ export default function Footer() {
         
         {/* Company Info */}
         <div>
-          <h2 className="text-xl font-semibold mb-3 text-yellow-600">The Halftime</h2>
+          <h2 className="text-xl font-semibold mb-3 text-blue-300">The Halftime</h2>
           <p className="text-sm">
             Your trusted source for football, basketball, results, and talent scouting updates.
           </p>
@@ -17,7 +17,7 @@ export default function Footer() {
 
         {/* Quick Links */}
         <div>
-          <h2 className="text-xl font-semibold mb-3 text-yellow-600">Ibyo Wareba</h2>
+          <h2 className="text-xl font-semibold mb-3 text-blue-300">Ibyo Wareba</h2>
           <ul className="space-y-2">
             <li><a href="/football" className="hover:text-yellow-200">Football</a></li>
             <li><a href="/basketball" className="hover:text-yellow-200">Basketball</a></li>
@@ -28,7 +28,7 @@ export default function Footer() {
 
         {/* Newsletter */}
         <div>
-          <h2 className="text-xl font-semibold mb-3 text-yellow-600">Subscribe</h2>
+          <h2 className="text-xl font-semibold mb-3 text-blue-300">Subscribe</h2>
           <form className="flex flex-col space-y-2">
             <input
               type="email"
@@ -46,7 +46,7 @@ export default function Footer() {
 
         {/* Social Media */}
         <div>
-          <h2 className="text-xl font-semibold mb-3 text-yellow-600">Follow Us</h2>
+          <h2 className="text-xl font-semibold mb-3 text-blue-300">Follow Us</h2>
           <div className="flex space-x-4">
             <a href="https://facebook.com" aria-label="Facebook">
               <Facebook className="hover:text-yellow-300" />
@@ -63,7 +63,7 @@ export default function Footer() {
           </div>
         </div>
       </div>
-      <div className="border-t dark:border-yellow-600 my-4"></div>
+      <div className="border-t dark:border-blue-300 my-4"></div>
 
 {/* Footer Bottom with Distinct Background and Left-Right Layout */}
 <div className=" text-white dark:text-gray-300 mt-8 pt-4 pb-4">

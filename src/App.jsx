@@ -15,8 +15,6 @@ const App = () =>{
   return (
     <BrowserRouter>
     <Header/>
-    <Article/>
-    <ArticleWithSidebar/>
     <Routes>
     <Route path="/Home" element= {<Home />}></Route>
     <Route path="/Football" element= {<Football />}></Route>

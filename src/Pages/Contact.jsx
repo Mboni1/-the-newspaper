@@ -38,70 +38,128 @@ const InstagramIcon = () => (
   </svg>
 );
 
-const Contact = () => {
-  // ... (keep all the existing state and handler functions)
+const FeedbackForm = () => {
+  const [message, setMessage] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSubmitted, setIsSubmitted] = useState(false);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    
+    // Simulate form submission
+    setTimeout(() => {
+      console.log('Submitted:', message);
+      setIsSubmitting(false);
+      setIsSubmitted(true);
+      setMessage('');
+      setTimeout(() => setIsSubmitted(false), 3000);
+    }, 1500);
+  };
 
   return (
-    <section className="py-12 px-4 bg-gray-50 min-h-screen">
-      {/* ... (previous header code) */}
-
-      <div className="grid md:grid-cols-2 gap-10">
-        {/* Contact Information */}
-        <div className="bg-white p-8 rounded-xl shadow-md">
-          <h2 className="text-2xl font-bold text-gray-800 mb-6">Get in Touch</h2>
-          
-          <div className="space-y-6">
-            <div className="flex items-start">
-              <div className="bg-blue-100 p-3 rounded-full mr-4">
-                <PhoneIcon />
-              </div>
-              <div>
-                <h3 className="font-semibold text-gray-800">Phone</h3>
-                <p className="text-gray-600">+250 793 837 603</p>
-              </div>
+    <div className="grid md:grid-cols-2 gap-8 max-w-6xl mx-auto p-6">
+      {/* Contact Information Card */}
+      <div className="bg-white p-8 rounded-xl shadow-md">
+        <h2 className="text-2xl font-bold text-gray-800 mb-6">Contact Information</h2>
+        
+        <div className="space-y-6">
+          <div className="flex items-start">
+            <div className="bg-blue-100 p-3 rounded-full mr-4">
+              <PhoneIcon />
             </div>
-
-            <div className="flex items-start">
-              <div className="bg-blue-100 p-3 rounded-full mr-4">
-                <EnvelopeIcon />
-              </div>
-              <div>
-                <h3 className="font-semibold text-gray-800">Email</h3>
-                <p className="text-gray-600">info@halftime.rw</p>
-              </div>
-            </div>
-
-            <div className="flex items-start">
-              <div className="bg-blue-100 p-3 rounded-full mr-4">
-                <MapMarkerIcon />
-              </div>
-              <div>
-                <h3 className="font-semibold text-gray-800">Office</h3>
-                <p className="text-gray-600">KG 123 St, Kigali Heights, Kigali</p>
-              </div>
+            <div>
+              <h3 className="font-semibold text-gray-800">Phone</h3>
+              <p className="text-gray-600">+250 793 837 603</p>
             </div>
           </div>
 
-          <div className="mt-10">
-            <h3 className="font-semibold text-gray-800 mb-3">Follow Us</h3>
-            <div className="flex space-x-4">
-              <a href="#" className="bg-blue-100 p-3 rounded-full text-blue-600 hover:bg-blue-200 transition-colors">
-                <FacebookIcon />
-              </a>
-              <a href="#" className="bg-blue-100 p-3 rounded-full text-blue-600 hover:bg-blue-200 transition-colors">
-                <TwitterIcon />
-              </a>
-              <a href="#" className="bg-blue-100 p-3 rounded-full text-blue-600 hover:bg-blue-200 transition-colors">
-                <InstagramIcon />
-              </a>
+          <div className="flex items-start">
+            <div className="bg-blue-100 p-3 rounded-full mr-4">
+              <EnvelopeIcon />
+            </div>
+            <div>
+              <h3 className="font-semibold text-gray-800">Email</h3>
+              <p className="text-gray-600">info@halftime.rw</p>
+            </div>
+          </div>
+
+          <div className="flex items-start">
+            <div className="bg-blue-100 p-3 rounded-full mr-4">
+              <MapMarkerIcon />
+            </div>
+            <div>
+              <h3 className="font-semibold text-gray-800">Office</h3>
+              <p className="text-gray-600">Kk 123 St, Gahanga, Kigali</p>
             </div>
           </div>
         </div>
 
-        {/* ... (keep the existing form code) */}
+        <div className="mt-10">
+          <h3 className="font-semibold text-gray-800 mb-3">Follow Us</h3>
+          <div className="flex space-x-4">
+            <a href="#" className="bg-blue-100 p-3 rounded-full text-blue-600 hover:bg-blue-200 transition-colors">
+              <FacebookIcon />
+            </a>
+            <a href="#" className="bg-blue-100 p-3 rounded-full text-blue-600 hover:bg-blue-200 transition-colors">
+              <TwitterIcon />
+            </a>
+            <a href="#" className="bg-blue-100 p-3 rounded-full text-blue-600 hover:bg-blue-200 transition-colors">
+              <InstagramIcon />
+            </a>
+          </div>
+        </div>
       </div>
-    </section>
+
+      {/* Feedback Form Card */}
+      <div className="bg-white p-8 rounded-xl shadow-md">
+        <h2 className="text-2xl font-bold text-gray-800 mb-6">Send Us Feedback</h2>
+        
+        <form onSubmit={handleSubmit}>
+          <div className="mb-6">
+            <label htmlFor="message" className="block text-gray-700 mb-3 font-medium">
+              Your Message
+            </label>
+            <textarea
+              id="message"
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              rows={6}
+              placeholder="Share your thoughts, questions, or feedback..."
+              required
+            />
+          </div>
+          
+          <div className="flex items-center justify-between">
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className={`px-6 py-3 rounded-lg text-white font-medium ${
+                isSubmitting
+                  ? 'bg-blue-400 cursor-not-allowed'
+                  : 'bg-blue-600 hover:bg-blue-700'
+              } transition-colors`}
+            >
+              {isSubmitting ? 'Sending...' : 'Send Message'}
+            </button>
+            
+            {isSubmitted && (
+              <p className="text-green-600 ml-4">
+                <span className="mr-2">✓</span>
+                Your message has been sent successfully!
+              </p>
+            )}
+          </div>
+        </form>
+        
+        <p className="text-gray-500 text-sm mt-6">
+          <span className="font-semibold">Note:</span> 
+          We'll never share your information with third parties.
+        </p>
+      </div>
+    </div>
   );
 };
 
-export default Contact;
+export default FeedbackForm;

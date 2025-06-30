@@ -3,6 +3,7 @@ import TalentCard from '../components/TalentCard';
 import LoadingSpinner from '../Components/LoadingSpinner';
 import ErrorMessage from '../Components/ErrorMessage';
 import FilterTabs from '../Components/FilterTabs';
+import { FcFeedback } from 'react-icons/fc';
 
 const Talents = () => {
   const [talents, setTalents] = useState([]);
@@ -229,6 +230,7 @@ const Talents = () => {
             </div>
           )}
         </div>
+    
       </div>
     </section>
   );
