@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Menu, X, Search } from 'lucide-react';
 
-const Header = () => {
+
+const Header = ({ onSearch }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -12,7 +13,7 @@ const Header = () => {
     { name: 'Football', path: '/football' },
     { name: 'Basketball', path: '/basketball' },
     { name: 'Talents', path: '/talents' },
-    { name: 'Contact ', path: '/contact' }
+    { name: 'Contact', path: '/contact' }
   ];
 
   // Close mobile menu when screen resizes to desktop
@@ -37,10 +38,12 @@ const Header = () => {
 
   const handleSearch = (e) => {
     e.preventDefault();
-    alert(`Searching for: ${searchQuery}`);
+    if (onSearch) {
+      onSearch(searchQuery);
+    }
     setSearchQuery('');
     setSearchOpen(false);
-    setIsOpen(false); // Close mobile menu after search
+    setIsOpen(false);
   };
 
   // Close mobile menu when clicking outside
@@ -63,7 +66,7 @@ const Header = () => {
           {/* Logo */}
           <div className="flex-shrink-0 flex items-center">
             <img
-              className="h-30 w-auto" // Adjusted for better mobile proportion
+              className="h-30 w-auto"
               src="src/assets/logo.png" 
               alt="The Halftime Logo"
             />
@@ -85,7 +88,7 @@ const Header = () => {
             </div>
 
             {/* Search Button (Desktop) */}
-            <div className="ml-4 flex items-center ">
+            <div className="ml-4 flex items-center">
               {searchOpen ? (
                 <form onSubmit={handleSearch} className="flex">
                   <input
@@ -93,7 +96,7 @@ const Header = () => {
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Search..."
-                    className="px-3 py-1 rounded-l-md text-white-100 focus:outline-none w-40 sm:w-auto"
+                    className="px-3 py-1 rounded-l-md text-white-100 bg-blue-700 focus:outline-none w-40 sm:w-auto"
                     autoFocus
                   />
                   <button 
@@ -120,7 +123,7 @@ const Header = () => {
             <button 
               onClick={() => {
                 setSearchOpen(!searchOpen);
-                if (isOpen) setIsOpen(false); // Close menu if open
+                if (isOpen) setIsOpen(false);
               }}
               className="text-white p-2 rounded-full hover:bg-blue-700 transition"
               aria-label={searchOpen ? "Close search" : "Open search"}
@@ -132,7 +135,7 @@ const Header = () => {
             <button
               onClick={() => {
                 setIsOpen(!isOpen);
-                if (searchOpen) setSearchOpen(false); // Close search if open
+                if (searchOpen) setSearchOpen(false);
               }}
               className="inline-flex items-center justify-center p-2 rounded-md text-white hover:bg-blue-700 focus:outline-none transition duration-300"
               aria-expanded={isOpen}
@@ -156,7 +159,7 @@ const Header = () => {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search..."
-                className="flex-grow px-3 py-2 rounded-l-md text-white-600 focus:outline-none"
+                className="flex-grow px-3 py-2 rounded-l-md text-white-600 bg-blue-700 focus:outline-none"
                 autoFocus
               />
               <button 
