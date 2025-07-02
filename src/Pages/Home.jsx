@@ -1,20 +1,31 @@
 import React from 'react';
-import Header from '@components/Header';
-import Article from '@components/Article';
-import Footer from '../Components/Footer';
-import ArticleWithSidebar from '../Components/ArticleWithSidebar';
+import Article from '../components/Article';
+import ArticleWithSidebar from '../components/ArticleWithSidebar';
+import bgImage from '../assets/cover.png';
 
 const HomePage = () => {
-  return (<div> 
-  <h1 className="text-2xl leading-relaxed max-w-6xl mx-auto p-8 text-center text-gray-900">
-   Welcome to The Halftime</h1>
-  < div className= "text-xl leading-relaxed max-w-4xl mx-auto p-4 text-center text-gray-700">We share the latest football and basketball news 
-   while helping young talents connect with top clubs worldwide.
-   For fans and scouts, this is where future champions are born.
-</div>
-    <Article/>
-    <ArticleWithSidebar/>
-  </div>);
+  return (
+    <div>
+      <section
+        className="bg-cover bg-repeat bg-bottom w-full h-230"
+        style={{ backgroundImage: `url(${bgImage})` }}
+      >
+        <div className="w-full h-screen flex items-end">
+          <div className="container mx-auto mb-60 text-white px-10">
+            <h1 className="text-6xl font-bold mb-18">
+              Welcome to The Halftime
+            </h1>
+            <p className="text-lg max-w-2xl">
+              We share the latest football and basketball news while helping young talents connect with top clubs worldwide. For fans and scouts, this is where future champions are born.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <Article />
+      <ArticleWithSidebar />
+    </div>
+  );
 };
 
 export default HomePage;
