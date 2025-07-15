@@ -1,6 +1,5 @@
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import { useState } from 'react';
-import './App.css';
 import Header from './Components/Header';
 import Home from './Pages/Home';
 import Footer from './Components/Footer';
@@ -9,7 +8,10 @@ import Basketball from './Pages/Basketball';
 import Talents from './Pages/Talents';
 import Contact from './Pages/Contact';
 import LocalSearch from './Components/LocalSearch';
-import Article from './Components/Article';
+import Dashboard from './Pages/Dashboard';
+import Login from './Login';
+import PrivateRoute from './PrivateRoute';
+import { AuthProvider } from './AuthContext';
 
 const App = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -21,30 +23,41 @@ const App = () => {
   };
 
   return (
-    <BrowserRouter>
-      <div className="min-h-screen flex flex-col">
-        <Header onSearch={handleHeaderSearch} />
-        
-        <main className="flex-grow">
-          {showSearchResults ? (
-            <LocalSearch articles={Article.articles} initialQuery={searchTerm} />
-          ) : (
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/home" element={<Home />} />
-              <Route path="/football" element={<Football />} />
-              <Route path="/basketball" element={<Basketball />} />
-              <Route path="/talents" element={<Talents />} />
-              <Route path="/contact" element={<Contact />} />
-              {/* Add any additional routes here */}
-            </Routes>
-          )}
-        </main>
+    <AuthProvider>
+      <BrowserRouter>
+        <div className="min-h-screen flex flex-col">
+          <Header onSearch={handleHeaderSearch} />
 
-        <Footer />
-      </div>
-    </BrowserRouter>
+          <main className="flex-grow">
+            {showSearchResults ? (
+              <LocalSearch initialQuery={searchTerm} />
+            ) : (
+              <Routes>
+                <Route path="/" element={<Home />} />
+                <Route path="/home" element={<Home />} />
+                <Route path="/football" element={<Football />} />
+                <Route path="/basketball" element={<Basketball />} />
+                <Route path="/talents" element={<Talents />} />
+                <Route path="/contact" element={<Contact />} />
+                <Route path="/login" element={<Login />} />
+                <Route 
+                  path="/dashboard" 
+                  element={
+                    <PrivateRoute>
+                      <Dashboard />
+                    </PrivateRoute>
+                  } 
+                />
+              </Routes>
+            )}
+          </main>
+
+          <Footer />
+        </div>
+      </BrowserRouter>
+    </AuthProvider>
   );
 };
 
 export default App;
+

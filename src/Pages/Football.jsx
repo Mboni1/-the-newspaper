@@ -18,64 +18,64 @@ const Football = () => {
           const mockArticles = [
           {
             id: 1,
-            title: 'APR FC Secures League Title',
-            excerpt: 'APR FC clinches the national championship with three games to spare.',
+            headline: 'APR FC Secures League Title',
+            description: 'APR FC clinches the national championship with three games to spare.',
             content: 'Detailed match report and celebration highlights...',
-            date: '15 June 2025',
+            createdAt: '15 June 2025',
             category: 'rwanda',
             image: 'https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80',
             author: 'Jean de Dieu Nsengimana'
           },
           {
             id: 2,
-            title: 'CHAN 2025 Qualifiers Begin',
-            excerpt: 'Rwanda Amavubi prepares for crucial qualifiers against Tanzania.',
-            date: '12 June 2025',
+            headline: 'CHAN 2025 Qualifiers Begin',
+            description: 'Rwanda Amavubi prepares for crucial qualifiers against Tanzania.',
+            createdAt: '12 June 2025',
             category: 'local',
             image: 'https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80',
             author: 'Marie Claire Uwase'
           },
           {
             id: 3,
-            title: 'UEFA Champions League Final',
-            excerpt: 'Manchester City defeats Real Madrid in thrilling final match.',
-            date: '10 June 2025',
+            headline: 'UEFA Champions League Final',
+            description: 'Manchester City defeats Real Madrid in thrilling final match.',
+            createdAt: '10 June 2025',
             category: 'international',
             image: 'https://images.unsplash.com/photo-1522778119026-d647f0596c20?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80',
             author: 'Thomas Johnson'
           },
           {
             id: 4,
-            title: 'Rayon Sports New Signing',
-            excerpt: 'Burundian striker joins the Blues ahead of continental competition.',
-            date: '8 June 2025',
+            heasline: 'Rayon Sports New Signing',
+            description: 'Burundian striker joins the Blues ahead of continental competition.',
+            createdAt: '8 June 2025',
             category: 'rwanda',
             image: 'https://images.unsplash.com/photo-1579952363872-3e036b5d1c8d?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80',
             author: 'Eric Murangwa'
           },
           {
             id: 5,
-            title: 'Africa Cup of Nations Draw',
-            excerpt: 'Group stage matchups revealed for 2025 tournament in Morocco.',
-            date: '5 June 2025',
+            headline: 'Africa Cup of Nations Draw',
+            description: 'Group stage matchups revealed for 2025 tournament in Morocco.',
+            createdAt: '5 June 2025',
             category: 'local',
             image: 'https://images.unsplash.com/photo-1560272564-c83b66b1ad12?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80',
             author: 'Aisha Niyigena'
           },
           {
             id: 6,
-            title: 'World Cup 2026 Qualifiers',
-            excerpt: 'African teams begin journey to North American tournament.',
-            date: '1 June 2025',
+            headline: 'World Cup 2026 Qualifiers',
+            description: 'African teams begin journey to North American tournament.',
+            createdAt: '1 June 2025',
             category: 'international',
             image: 'https://images.unsplash.com/photo-1598880940080-ff9a29891fa8?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80',
             author: 'David Smith'
           },
            {
             id: 7,
-            title: 'Africa Cup of Nations Draw',
-            excerpt: 'Group stage matchups revealed for 2025 tournament in Morocco.',
-            date: '5 June 2025',
+            headline: 'Africa Cup of Nations Draw',
+            description: 'Group stage matchups revealed for 2025 tournament in Morocco.',
+            createdAt: '5 June 2025',
             category: 'local',
             image: 'https://images.unsplash.com/photo-1560272564-c83b66b1ad12?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80',
             author: 'Aisha Niyigena'
@@ -109,9 +109,9 @@ const Football = () => {
 
   return (
     <section className="py-8 px-4 bg-gray-50 min-h-screen">
-      <div className="max-w-7xl mx-auto flex flex-col lg:flex-row gap-8">
+      <div className="max-w-9xl mx-auto flex flex-col lg:flex-row gap-8">
         {/* Main Content Area - Featured Article */}
-        <main className="lg:w-2/3">
+        <main className="w-full min-h-[500px] lg:w-[80vw] lg:min-h-[90vh]">
           <header className="mb-8 text-center lg:text-left">
             <h1 className="text-3xl md:text-4xl font-bold text-blue-800 mb-2">Football News</h1>
             <p className="text-lg text-gray-600">Latest updates from Rwanda and world football</p>
@@ -157,8 +157,8 @@ const Football = () => {
         </main>
 
         {/* Aside - News Cards */}
-        <aside className="lg:w-1/3 mt-8 lg:mt-20">
-          <h2 className="text-xl font-bold mb-4 text-gray-800 border-b pb-2">More News</h2>
+        <aside className="lg:w-1/4 mt-8 lg:mt-20">
+          <h2 className="text-lg font-bold mb-3 text-gray-800 border-b pb-2">More News</h2>
           <div className="space-y-4">
             {filteredArticles
               .filter(article => article.id !== featuredArticle?.id)

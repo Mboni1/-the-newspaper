@@ -8,10 +8,23 @@ export default defineConfig({
     tailwindcss(), 
     react()
   ],
+  esbuild: {
+    loader: 'jsx',
+    include: /src\/.*\.jsx?$/,
+    exclude: [],
+  },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
       '@components': path.resolve(__dirname, './src/Components'),
+      '@pages': path.resolve(__dirname, './src/Pages')
     }
+  },
+  optimizeDeps: {
+    esbuildOptions: {
+      loader: {
+        '.js': 'jsx',
+      },
+    },
   }
 });

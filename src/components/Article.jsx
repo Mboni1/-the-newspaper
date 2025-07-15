@@ -1,95 +1,185 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import {
+  getArticles,
+  getArticle,
+  createArticle as apiCreateArticle,
+  updateArticle as apiUpdateArticle,
+  deleteArticle as apiDeleteArticle,
+} from '../Api/ArticleApi';
 
 const Article = () => {
-  const articles = [
-    {
-        id: 1,
-      title: "APR FC won the final match",
-      excerpt: "The football team APR FC won...",
-      fullContent: "APR FC yarushanwe na Rayon Sports mu mukino wa nyuma wa shampiyona y'umupira w'amaguru. APR FC yatsinze Rayon Sports ku mpande zitandatu (6-5) nyuma y'ibihe by'impuzandengo ku gipimo cy'amaguru. Ikipe ya APR FC yaje gutwara igikombe cya shampiyona y'u Rwanda mu mwaka wa 2024.",
-      category: "Football",
-      date: "27 May 2025",
-      image: "https://images.unsplash.com/photo-1540747913346-19e32dc3e97e",
-      isFeatured: true
-    },
-      {
-      id: 2,
-      title: "REG Are The Champions",
-      excerpt: "The REG team won the basketball championship...",
-      fullContent: "Ikipe ya REG yegukanye igikombe cya basketball mu Rwanda mu mwaka wa 2024. REG yatsinze Patriots ku mpande 78-72 mu mukino wa nyuma wabereye i Kigali. Uyu mukino wari urushanwa rwa nyuma rwa shampiyona y'igihugu ya basketball.",
-      category: "Basketball",
-      date: "25 June 2025",
-      image: "https://images.unsplash.com/photo-1546519638-68e109498ffc",
-      isFeatured: true
-    },
-      {
-      id: 3,
-      title: "How to support young talents?",
-      excerpt: "In Rwanda, there continues to be a noticeable presence of children with football talent...",
-      fullContent: "In Rwanda, many talented young footballers are emerging, but they face limited opportunities to join top-tier academies where they can develop their skills.",
-      category: "Talents",
-      date: "20 June 2025",
-      image: "https://images.unsplash.com/photo-1592656094267-764a60363a2c",
-      isFeatured: true
-    },
-  ];
+  const [articles, setArticles] = useState([]);
+  const [currentArticle, setCurrentArticle] = useState(null);
+  const [featuredArticle, setFeaturedArticle] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [formData, setFormData] = useState({
+    headline: '',
+    content: '',
+    description: '',
+    id: null
+  });
+
+  useEffect(() => {
+    fetchArticles();
+  }, []);
+
+  const fetchArticles = async () => {
+    try {
+      const res = await getArticles();
+      setArticles(res.data.data || []);
+    } catch (err) {
+      console.error('Failed to fetch articles:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchArticleById = async (id) => {
+    try {
+      const res = await getArticle(id);
+      setCurrentArticle(res.data.data);
+      setFormData({
+        headline: res.data.data.headline,
+        content: res.data.data.content,
+        description: res.data.data.description || '',
+        id: res.data.data.id
+      });
+    } catch (err) {
+      console.error('Failed to fetch article:', err);
+    }
+  };
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+ const handleCreateArticle = async () => {
+  try {
+    console.log('Sending data:', formData);
+
+    const res = await apiCreateArticle(formData);
+    console.log('Response:', res);
+
+    // ✅ Reba structure isanzwe: niba article isubizwa nka res.data
+    const newArticle = res.data?.data || res.data;
+
+    setArticles([...articles, newArticle]);
+
+    // 🧹 Siga form yiteguye indi nkuru
+    setFormData({ headline: '', content: '', description: '', id: null });
+
+  } catch (err) {
+    console.error('Failed to create article:', err.response?.data || err.message);
+  }
+};
+
+
+  const handleUpdateArticle = async () => {
+    if (!formData.id) return;
+    try {
+      const res = await apiUpdateArticle(formData.id, formData);
+      fetchArticles();
+      setCurrentArticle(null);
+      setFormData({ headline: '', content: '', description: '', id: null });
+    } catch (err) {
+      console.error('Failed to update article:', err);
+    }
+  };
+
+  const handleDeleteArticle = async (id) => {
+    try {
+      await apiDeleteArticle(id);
+      fetchArticles();
+    } catch (err) {
+      console.error('Failed to delete article:', err);
+    }
+  };
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleArticleClick = (article) => {
+    setFeaturedArticle(article);
+    //window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  if (loading) return <p className="text-center text-gray-600">Loading articles...</p>;
+  if (!loading && articles.length === 0) return <p className="text-center text-gray-500 mt-8">No articles found.</p>;
 
   return (
     <section className="py-12 bg-gray-50" aria-labelledby="recent-news-heading">
       <div className="container mx-auto px-4">
-        <h2 id="recent-news-heading" className="text-3xl font-bold text-center mb-8 text-blue-900">
-         Current Sports Updates
+        <h2 className="text-3xl font-bold text-center mb-8 text-blue-900">
+          Current Sports Updates
         </h2>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {articles.map((article) => (
-            <article 
-              key={article.id} 
-              className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300"
-              aria-labelledby={`article-${article.id}-title`}
-            >
-              {/* Article Image */}
-              <div className="h-48 overflow-hidden">
-                <img 
-                  src={article.image} 
-                  alt={article.title ? `${article.title}` : "Image"}
-                  className="w-full h-full object-cover"
-                  loading="lazy"
-                />
-              </div>
-              
-              {/* Article Content */}
-              <div className="p-6">
-                <div className="flex items-center mb-3">
-                  <span className="inline-block bg-blue-100 text-blue-600 text-xs px-2 py-1 rounded-md mr-2">
-                    {article.category}
-                  </span>
-                  <span className="text-gray-500 text-sm">{article.date}</span>
-                </div>
-                
-                <h3 id={`article-${article.id}-title`} className="text-xl font-semibold mb-2 text-gray-800">
-                  {article.title || 'Ingingo idasobanuwe'}
-                </h3>
-                <p className="text-gray-600 mb-4">{article.excerpt}</p>
-                
-                <button 
-                  className="text-blue-600 hover:text-blue-600 font-medium transition-colors flex items-center"
-                  aria-label={`Soma byinshi kuri ${article.title || 'iyi ngingo'}`}
-                >
-                  Read More
-                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-  <path strokeLinecap="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-</svg>
-                </button>
-              </div>
-            </article>
-          ))}
-        </div>
 
-        <div className="text-center mt-8">
-          <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-md transition-colors">
-            Related News
-          </button>
+        <div className="flex flex-col lg:flex-row gap-8">
+          {/* Main Featured Article */}
+          <main className="lg:w-2/3">
+            {featuredArticle && (
+              <article className="bg-white rounded-lg shadow-xl overflow-hidden mb-8">
+                <div className="h-64 bg-gray-200 flex items-center justify-center text-gray-500">
+                  <span>Featured Image</span>
+                </div>
+                <div className="p-6">
+                  <div className="flex items-center mb-3 justify-between text-sm text-gray-500">
+                    <span className="inline-block bg-blue-100 text-blue-600 text-xs px-2 py-1 rounded-md">
+                      {featuredArticle.category?.name || 'General'}
+                    </span>
+                    <span>{new Date(featuredArticle.createdAt).toLocaleDateString()}</span>
+                  </div>
+                  <h2 className="text-2xl font-bold mb-4 text-gray-800">
+                    {featuredArticle.headline}
+                  </h2>
+                  <p className="text-gray-600 mb-6">{featuredArticle.content}</p>
+                  <p className="text-sm text-gray-400 italic mb-4">
+                    By {featuredArticle.author?.name || 'Unknown Author'}
+                  </p>
+                  <button className="text-blue-600 hover:text-blue-800 font-medium">
+                    Read Full Story
+                  </button>
+                </div>
+              </article>
+            )}
+          </main>
+
+          {/* Sidebar with Other Articles */}
+          <aside className="lg:w-1/3">
+            <h3 className="text-xl font-semibold mb-6 text-gray-800 border-b pb-2">
+              More Updates
+            </h3>
+            <div className="space-y-6">
+              {articles
+                .filter(article => featuredArticle ? article.id !== featuredArticle.id : true)
+                .map((article) => (
+                  <article 
+                    key={article.id}
+                    className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300 cursor-pointer"
+                    onClick={() => handleArticleClick(article)}
+                  >
+                    <div className="h-32 bg-gray-200 flex items-center justify-center text-gray-500">
+                      <span>Article Image</span>
+                    </div>
+                    <div className="p-4">
+                      <div className="flex items-center mb-2 justify-between text-xs text-gray-500">
+                        <span className="inline-block bg-blue-100 text-blue-600 px-2 py-1 rounded-md">
+                          {article.category?.name || 'General'}
+                        </span>
+                        <span>{new Date(article.createdAt).toLocaleDateString()}</span>
+                      </div>
+                      <h3 className="text-lg font-semibold mb-2 text-gray-800 line-clamp-2">
+                        {article.headline}
+                      </h3>
+                      <p className="text-sm text-gray-400 italic">
+                        By {article.author?.name || 'Unknown Author'}
+                      </p>
+                    </div>
+                  </article>
+                ))}
+            </div>
+          </aside>
         </div>
       </div>
     </section>

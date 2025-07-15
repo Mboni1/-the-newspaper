@@ -104,7 +104,7 @@ const Basketball = () => {
     <section className="py-8 px-4 bg-gray-50 min-h-screen">
       <div className="max-w-7xl mx-auto flex flex-col lg:flex-row gap-8">
         {/* Main Content Area - Featured Article */}
-        <main className="lg:w-2/3">
+        <main className="w-full min-h-[500px] lg:w-[80vw] lg:min-h-[90vh]">
           <header className="mb-8 text-center lg:text-left">
             <h1 className="text-3xl md:text-4xl font-bold text-blue-800 mb-2">Basketball News</h1>
             <p className="text-lg text-gray-600">Latest updates from Rwanda and world basketball</p>
@@ -150,7 +150,7 @@ const Basketball = () => {
         </main>
 
         {/* Aside - News Cards */}
-        <aside className="lg:w-1/3 mt-8 lg:mt-20">
+        <aside className="lg:w-1/4 mt-8 lg:mt-20">
           <h2 className="text-xl font-bold mb-4 text-gray-800 border-b pb-2">More News</h2>
           <div className="space-y-4">
             {filteredArticles
