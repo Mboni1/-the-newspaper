@@ -8,7 +8,7 @@ import Locations from "./Locations";
 
 const Dashboard: React.FC = () => {
   return (
-    <section className="px-8 py-6 bg-gray-50">
+    <section className="pt-20 py-8 px-8 bg-gray-50">
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold">Dashboard Overview</h1>
@@ -18,7 +18,7 @@ const Dashboard: React.FC = () => {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-6 gap-6">
+      <div className=" grid  grid-cols-1 sm:grid-cols-2 md:grid-cols-6 gap-6">
         <TotalUsers />
         <Categories />
         <Documents />
