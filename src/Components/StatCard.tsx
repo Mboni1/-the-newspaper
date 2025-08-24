@@ -15,7 +15,7 @@ const StatCard: React.FC<StatCardProps> = ({
   rating,
 }) => {
   return (
-    <div className="flex items-center  grid-cols-6 gap-4 rounded-xl p-4 shadow-sm bg-white hover:shadow-md transition">
+    <div className="flex pt-20 items-center  grid-cols-6 gap-4 rounded-xl p-4 shadow-sm bg-white hover:shadow-md transition">
       {/* Icon inside blue bordered square */}
       <div className="flex items-center justify-center w-12 h-12 border-2 border-blue-200 rounded-md bg-white">
         <Icon className="w-6 h-6 text-blue-600" />

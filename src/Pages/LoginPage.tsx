@@ -12,10 +12,10 @@ const LoginPage: React.FC = () => {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(""); // reset previous errors
+    setError("");
 
     try {
-      const response = await axios.post(
+      const res = await axios.post(
         "https://nearme-bn.onrender.com/auth/login",
         {
           email,
@@ -23,23 +23,20 @@ const LoginPage: React.FC = () => {
         }
       );
 
-      // Assuming the backend returns user info including role
-      const { user, token } = response.data;
+      const { token } = res.data;
+      localStorage.setItem("token", token);
 
-      if (user.role === "admin") {
-        // Save token in localStorage or context if needed
-        localStorage.setItem("token", token);
-        localStorage.setItem("user", JSON.stringify(user));
-        navigate("/dashboard");
-      } else {
-        setError("Access denied: You are not an admin.");
+      // Decode JWT to check role
+      const payload = JSON.parse(atob(token.split(".")[1]));
+      if (payload.role !== "admin") {
+        setError("Access denied. Admins only.");
+        localStorage.removeItem("token");
+        return;
       }
-    } catch (err: any) {
-      if (err.response && err.response.data?.message) {
-        setError(err.response.data.message);
-      } else {
-        setError("Login failed. Please try again.");
-      }
+
+      navigate("/dashboard");
+    } catch (err) {
+      setError("Login failed. Please try again.");
     }
   };
 

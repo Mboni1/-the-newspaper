@@ -5,6 +5,8 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import LoginPage from "./Pages/LoginPage";
 import ForgotPasswordPage from "./Pages/ForgotPasswordPage";
 import DashboardPage from "./Pages/DashboardPage";
+import UserManagementPage from "./Pages/UserManagementPage";
+import ServiceCategoriesPage from "./Pages/ServiceCategoriesPage";
 
 // Components (for Dashboard layout)
 import Navbar from "./Components/Navbar";
@@ -19,7 +21,7 @@ const App: React.FC = () => {
         <Route path="/" element={<LoginPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
 
-        {/* Dashboard (Protected later with JWT) */}
+        {/* Dashboard Routes */}
         <Route
           path="/dashboard"
           element={
@@ -27,6 +29,27 @@ const App: React.FC = () => {
               <Navbar />
               <Dashboard />
               <Analytics />
+            </div>
+          }
+        />
+
+        <Route
+          path="/user-management"
+          element={
+            <div className="min-h-screen bg-gray-100">
+              <Navbar />
+              <UserManagementPage />
+            </div>
+          }
+        />
+
+        {/* Service Categories Route */}
+        <Route
+          path="/service-categories"
+          element={
+            <div className="min-h-screen bg-gray-100">
+              <Navbar />
+              <ServiceCategoriesPage />
             </div>
           }
         />

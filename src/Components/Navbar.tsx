@@ -3,7 +3,7 @@ import { Search, Bell, ChevronDown, User } from "lucide-react";
 
 const Navbar: React.FC = () => {
   return (
-    <header className="flex justify-between items-center px-6 py-3  bg-white shadow-sm">
+    <header className="fixed top-0 left-0 right-0 w-full z-50 flex justify-between items-center px-6 py-3  bg-white shadow-sm">
       {/* Search bar */}
       <div className="flex items-center w-1/3 relative">
         {/* Search Icon */}
