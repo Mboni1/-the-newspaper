@@ -10,7 +10,7 @@ import ServiceCategoriesPage from "./Pages/ServiceCategoriesPage";
 import BusinessPage from "./Pages/BusinessesPage";
 import DocumentsPage from "./Pages/DocumentsPage";
 import ReviewsPage from "./Pages/ReviewsPage";
-import LocationAnalyticsPage from "./Pages/LocationAnalyticsPage";
+import VisitorAnalyticsPage from "./Pages/VisitorAnalyticsPage";
 
 // Components (for Dashboard layout)
 import Navbar from "./Components/Navbar";
@@ -81,14 +81,12 @@ const App: React.FC = () => {
             </div>
           }
         />
-
-        {/* New Route: Location Analytics */}
         <Route
-          path="/location-analytics"
+          path="/visitor-analytics"
           element={
             <div className="min-h-screen bg-gray-100">
               <Navbar />
-              <LocationAnalyticsPage />
+              <VisitorAnalyticsPage />
             </div>
           }
         />

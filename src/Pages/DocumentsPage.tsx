@@ -109,22 +109,6 @@ export default function DocumentsPage() {
           </div>
         ))}
       </div>
-
-      {/* Footer Stats */}
-      <div className="grid grid-cols-3 text-center bg-white rounded-2xl shadow p-6">
-        <div>
-          <p className="text-xl font-bold text-blue-600">{articles.length}</p>
-          <p className="text-gray-500 text-sm">Total Articles</p>
-        </div>
-        <div>
-          <p className="text-xl font-bold text-blue-600">5</p>
-          <p className="text-gray-500 text-sm">Categories</p>
-        </div>
-        <div>
-          <p className="text-xl font-bold text-blue-600">Weekly</p>
-          <p className="text-gray-500 text-sm">New Content</p>
-        </div>
-      </div>
     </div>
   );
 }

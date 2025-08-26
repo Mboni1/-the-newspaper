@@ -219,24 +219,6 @@ export default function ReviewsManagement() {
           <ReviewCard key={review.id} review={review} />
         ))}
       </div>
-      <div className="grid grid-cols-4 gap-6 mt-6 bg-white rounded-2xl shadow p-6 text-center">
-        <div>
-          <p className="text-2xl font-bold text-blue-600">6</p>
-          <p className="text-gray-500">Total Reviews</p>
-        </div>
-        <div>
-          <p className="text-2xl font-bold text-green-600">4</p>
-          <p className="text-gray-500">Published</p>
-        </div>
-        <div>
-          <p className="text-2xl font-bold text-yellow-500">1</p>
-          <p className="text-gray-500">Pending</p>
-        </div>
-        <div>
-          <p className="text-2xl font-bold text-blue-600">4.2</p>
-          <p className="text-gray-500">Average Rating</p>
-        </div>
-      </div>
     </div>
   );
 }

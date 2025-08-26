@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import StatsSectionPage from "./StatsSectionPage";
+
 import {
   Plane,
   Bus,
@@ -150,7 +150,6 @@ const ServiceCategories: React.FC = () => {
           </div>
         ))}
       </div>
-      <StatsSectionPage />
     </div>
   );
 };

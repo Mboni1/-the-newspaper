@@ -284,26 +284,6 @@ export default function BusinessGrid() {
           );
         })}
       </div>
-
-      {/* Footer Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center bg-white shadow rounded-2xl p-6">
-        <div>
-          <p className="text-2xl font-bold text-blue-600">18</p>
-          <p className="text-gray-500 text-sm">Total Businesses</p>
-        </div>
-        <div>
-          <p className="text-2xl font-bold text-blue-600">10</p>
-          <p className="text-gray-500 text-sm">Categories</p>
-        </div>
-        <div>
-          <p className="text-2xl font-bold text-blue-600">4.6</p>
-          <p className="text-gray-500 text-sm">Average Rating</p>
-        </div>
-        <div>
-          <p className="text-2xl font-bold text-blue-600">24/7</p>
-          <p className="text-gray-500 text-sm">Support Available</p>
-        </div>
-      </div>
     </div>
   );
 }
