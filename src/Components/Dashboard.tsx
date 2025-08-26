@@ -4,7 +4,7 @@ import Categories from "./Categories";
 import Documents from "./Documents";
 import Business from "./Business";
 import Reviews from "./Reviews";
-import Locations from "./Locations";
+import Countries from "./Countries";
 
 const Dashboard: React.FC = () => {
   return (
@@ -24,7 +24,7 @@ const Dashboard: React.FC = () => {
         <Documents />
         <Business />
         <Reviews />
-        <Locations />
+        <Countries />
       </div>
     </section>
   );
