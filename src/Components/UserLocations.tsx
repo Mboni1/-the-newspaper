@@ -24,12 +24,12 @@ const UserLocations: React.FC = () => {
 
   return (
     <div className="bg-white shadow rounded-lg p-4">
-      <h2 className="text-sm font-semibold mb-1">User locations</h2>
-      <p className="text-gray-500 text-xs mb-3">
+      <h2 className="text-sm font-semibold px-5 py-1.5">User locations</h2>
+      <p className="text-gray-500 text-xs px-5 mb-3">
         Geographic distribution of users
       </p>
       <div className="flex items-center">
-        <div className="w-1/2 h-40">
+        <div className="w-1/2 h-74 py-12 px-5">
           <Doughnut
             data={userLocationsData}
             options={{
@@ -39,7 +39,7 @@ const UserLocations: React.FC = () => {
             }}
           />
         </div>
-        <div className="w-1/2 ml-3 space-y-1">
+        <div className="w-1/3 ml-2 space-y-1">
           {userLocationsData.labels.map((label, index) => (
             <div
               key={label}
@@ -47,7 +47,7 @@ const UserLocations: React.FC = () => {
             >
               <div className="flex items-center space-x-1">
                 <span
-                  className="w-2.5 h-2.5 rounded-full"
+                  className="w-3 h-2.5 rounded-full"
                   style={{
                     backgroundColor: userLocationsData.datasets[0]
                       .backgroundColor[index] as string,

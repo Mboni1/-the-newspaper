@@ -65,11 +65,11 @@ const UserStatistics: React.FC = () => {
   };
 
   return (
-    <div className="bg-white shadow rounded-lg p-4">
+    <div className="bg-white shadow rounded-lg p-4 py-8 px-8">
       {/* Header */}
       <div className="flex justify-between items-center mb-3">
         <div>
-          <h2 className="text-sm font-semibold">User statistics</h2>
+          <h2 className="text-sm font-semibold py-1.5">User statistics</h2>
           <p className="text-gray-500 text-xs">User activities overview</p>
         </div>
 
@@ -92,7 +92,7 @@ const UserStatistics: React.FC = () => {
       </div>
 
       {/* Chart */}
-      <div className="h-64">
+      <div className="h-74">
         <Bar
           data={userStatsData}
           options={{

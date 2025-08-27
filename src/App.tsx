@@ -11,6 +11,7 @@ import BusinessPage from "./Pages/BusinessesPage";
 import DocumentsPage from "./Pages/DocumentsPage";
 import ReviewsPage from "./Pages/ReviewsPage";
 import VisitorAnalyticsPage from "./Pages/VisitorAnalyticsPage";
+import LocationsOverviewPage from "./Pages/LocationsOverviewPage";
 
 // Components (for Dashboard layout)
 import Navbar from "./Components/Navbar";
@@ -87,6 +88,15 @@ const App: React.FC = () => {
             <div className="min-h-screen bg-gray-100">
               <Navbar />
               <VisitorAnalyticsPage />
+            </div>
+          }
+        />
+        <Route
+          path="/locations-overview"
+          element={
+            <div className="min-h-screen bg-gray-100">
+              <Navbar />
+              <LocationsOverviewPage />
             </div>
           }
         />
