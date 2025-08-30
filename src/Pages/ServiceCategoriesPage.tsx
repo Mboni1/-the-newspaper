@@ -1,6 +1,5 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-
 import {
   Plane,
   Bus,
@@ -14,106 +13,79 @@ import {
   MoreHorizontal,
 } from "lucide-react";
 
+// Map string names from API -> Lucide icons
+const iconMap: Record<string, React.ElementType> = {
+  Plane,
+  Bus,
+  Bed,
+  Wifi,
+  CreditCard,
+  Heart,
+  Utensils,
+  Map,
+  ShoppingBag,
+  MoreHorizontal,
+};
+
 interface Category {
   id: number;
   name: string;
   services: number;
   description: string;
-  icon: React.ElementType;
+  icon: string;
   link: string;
 }
 
-const categories: Category[] = [
-  {
-    id: 1,
-    name: "Travel & Emergency Info",
-    services: 24,
-    description:
-      "Essential travel documents, emergency contacts, and safety information",
-    icon: Plane,
-    link: "/categories/travel",
-  },
-  {
-    id: 2,
-    name: "Transportation Services",
-    services: 18,
-    description:
-      "Public transport, ride-sharing, car rentals, and navigation services",
-    icon: Bus,
-    link: "/categories/transport",
-  },
-  {
-    id: 3,
-    name: "Accommodation & Booking Services",
-    services: 32,
-    description: "Hotels, hostels, vacation rentals, and booking platforms",
-    icon: Bed,
-    link: "/categories/accommodation",
-  },
-  {
-    id: 4,
-    name: "Communication & Connectivity",
-    services: 15,
-    description: "Internet access, phone services, and communication apps",
-    icon: Wifi,
-    link: "/categories/communication",
-  },
-  {
-    id: 5,
-    name: "Money & Payments",
-    services: 21,
-    description: "Banking services, currency exchange, and payment methods",
-    icon: CreditCard,
-    link: "/categories/money",
-  },
-  {
-    id: 6,
-    name: "Health & Wellness",
-    services: 27,
-    description:
-      "Medical services, pharmacies, fitness centers, and wellness facilities",
-    icon: Heart,
-    link: "/categories/health",
-  },
-  {
-    id: 7,
-    name: "Food & Dining",
-    services: 45,
-    description:
-      "Restaurants, cafes, food delivery, and local cuisine recommendations",
-    icon: Utensils,
-    link: "/categories/food",
-  },
-  {
-    id: 8,
-    name: "Local Events, Attractions & Tours",
-    services: 38,
-    description:
-      "Tourist attractions, guided tours, cultural events, and entertainment",
-    icon: Map,
-    link: "/categories/events",
-  },
-  {
-    id: 9,
-    name: "Shopping",
-    services: 29,
-    description: "Retail stores, markets, souvenirs, and shopping centers",
-    icon: ShoppingBag,
-    link: "/categories/shopping",
-  },
-  {
-    id: 10,
-    name: "More",
-    services: 12,
-    description: "Additional services and miscellaneous categories",
-    icon: MoreHorizontal,
-    link: "/categories/more",
-  },
-];
-
 const ServiceCategories: React.FC = () => {
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const res = await fetch("https://nearme-bn.onrender.com/category", {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        });
+
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
+
+        const data = await res.json();
+        console.log("Fetched data:", data);
+
+        if (Array.isArray(data)) {
+          setCategories(data);
+        } else if (Array.isArray(data.data)) {
+          setCategories(data.data);
+        } else if (Array.isArray(data.categories)) {
+          setCategories(data.categories);
+        } else {
+          console.error("Unexpected API response format", data);
+          setCategories([]);
+        }
+      } catch (err) {
+        console.error("Error fetching categories:", err);
+        setCategories([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCategories();
+  }, []);
+
+  if (loading) return <p className="p-8">Loading categories...</p>;
+
+  if (categories.length === 0) {
+    return <p className="p-8 text-red-500">No categories found.</p>;
+  }
+
   return (
-    <div className="p-8 pt-20 px-8 py-8 bg-gray-50 min-h-screen">
+    <div className="p-8 pt-20 bg-gray-50 min-h-screen">
       <Link
         to="/dashboard"
         className="text-blue-600 hover:underline inline-block mb-4"
@@ -128,27 +100,32 @@ const ServiceCategories: React.FC = () => {
       </p>
 
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {categories.map((category) => (
-          <div
-            key={category.id}
-            className="bg-white p-6 rounded-2xl shadow hover:shadow-lg transition"
-          >
-            <div className="flex items-center gap-3 mb-3">
-              <category.icon className="w-6 h-6 text-blue-600" />
-              <h2 className="text-xl font-semibold">{category.name}</h2>
-            </div>
-            <p className="text-sm text-blue-600 font-medium mb-2">
-              {category.services} services
-            </p>
-            <p className="text-gray-600 text-sm mb-4">{category.description}</p>
-            <Link
-              to={category.link}
-              className="text-blue-600 text-sm font-semibold hover:underline"
+        {categories.map((category) => {
+          const Icon = iconMap[category.icon] || MoreHorizontal;
+          return (
+            <div
+              key={category.id}
+              className="bg-white p-6 rounded-2xl shadow hover:shadow-lg transition"
             >
-              EXPLORE CATEGORY →
-            </Link>
-          </div>
-        ))}
+              <div className="flex items-center gap-3 mb-3">
+                <Icon className="w-6 h-6 text-blue-600" />
+                <h2 className="text-xl font-semibold">{category.name}</h2>
+              </div>
+              <p className="text-sm text-blue-600 font-medium mb-2">
+                {category.services} services
+              </p>
+              <p className="text-gray-600 text-sm mb-4">
+                {category.description}
+              </p>
+              <Link
+                to={category.link}
+                className="text-blue-600 text-sm font-semibold hover:underline"
+              >
+                EXPLORE CATEGORY →
+              </Link>
+            </div>
+          );
+        })}
       </div>
     </div>
   );

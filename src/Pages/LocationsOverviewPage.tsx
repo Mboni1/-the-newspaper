@@ -78,7 +78,10 @@ const LocationsOverviewPage: React.FC = () => {
   return (
     <div className="p-6 pt-20 min-h-screen bg-gray-50">
       {/* Back link */}
-      <Link to="/dashboard" className="flex items-center text-gray-700 mb-4">
+      <Link
+        to="/dashboard"
+        className="text-blue-600 hover:underline inline-block mb-4"
+      >
         ← Back to Dashboard
       </Link>
 

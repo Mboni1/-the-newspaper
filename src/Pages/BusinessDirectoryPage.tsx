@@ -14,6 +14,20 @@ import {
   Hospital,
   ShieldAlert,
 } from "lucide-react";
+import { useEffect, useState } from "react";
+
+const BASE_URL = "https://nearme-bn.onrender.com";
+
+interface Post {
+  id: number;
+  title: string;
+  address: string;
+  phone: string;
+  hours: string;
+  image: string;
+  category: string;
+  rating?: number;
+}
 
 type Business = {
   id: number;

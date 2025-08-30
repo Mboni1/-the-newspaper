@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Search, ChevronLeft, ChevronRight } from "lucide-react";
 
 interface User {
@@ -9,52 +9,46 @@ interface User {
   status: "Active" | "Inactive";
 }
 
-const users: User[] = [
-  {
-    id: 1,
-    name: "John doe",
-    email: "johndoe@gmail.com",
-    role: "Admin",
-    status: "Active",
-  },
-  {
-    id: 2,
-    name: "Sara doe",
-    email: "sarahdoe@gmail.com",
-    role: "Support",
-    status: "Active",
-  },
-  {
-    id: 3,
-    name: "Mike doe",
-    email: "mikedoe@gmail.com",
-    role: "Moderator",
-    status: "Active",
-  },
-  {
-    id: 4,
-    name: "Emily Davis",
-    email: "emilydavis@gmail.com",
-    role: "Admin",
-    status: "Inactive",
-  },
-  {
-    id: 5,
-    name: "Alex doe",
-    email: "alexdoe@gmail.com",
-    role: "Support",
-    status: "Active",
-  },
-  {
-    id: 6,
-    name: "Lisa Wang",
-    email: "lisawang@gmail.com",
-    role: "Moderator",
-    status: "Active",
-  },
-];
-
 const UserManagement: React.FC = () => {
+  const [users, setUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const res = await fetch("https://nearme-bn.onrender.com/user", {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        });
+
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
+
+        const responseData = await res.json();
+        console.log("Fetched users:", responseData);
+
+        // ✅ adjust based on API structure
+        if (Array.isArray(responseData.data)) {
+          setUsers(responseData.data);
+        } else {
+          console.error("Unexpected API response format", responseData);
+          setUsers([]);
+        }
+      } catch (err) {
+        console.error("Error fetching users:", err);
+        setUsers([]);
+      }
+    };
+
+    fetchUsers();
+  }, []);
+
+  if (loading) return <p className="p-8">Loading users...</p>;
+  if (users.length === 0)
+    return <p className="p-8 text-red-500">No users found.</p>;
+
   return (
     <div className="p-4 sm:p-6 pt-20 bg-gray-50 min-h-screen">
       {/* Back link */}
