@@ -29,7 +29,6 @@ const UserManagement: React.FC = () => {
         const responseData = await res.json();
         console.log("Fetched users:", responseData);
 
-        // ✅ adjust based on API structure
         if (Array.isArray(responseData.data)) {
           setUsers(responseData.data);
         } else {
