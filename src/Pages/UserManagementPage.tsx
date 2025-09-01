@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { Search, ChevronLeft, ChevronRight } from "lucide-react";
+import { Link } from "react-router-dom";
 
 interface User {
   id: number;
-  name: string;
+  firstName: string;
+  lastName: string;
   email: string;
-  role: "Admin" | "Support" | "Moderator";
-  status: "Active" | "Inactive";
+  role: "admin" | "support" | "moderator";
+  status?: "Active" | "Inactive";
 }
 
 const UserManagement: React.FC = () => {
@@ -27,17 +29,24 @@ const UserManagement: React.FC = () => {
         }
 
         const responseData = await res.json();
-        console.log("Fetched users:", responseData);
+        console.log("Fetched users:", JSON.stringify(responseData, null, 2));
 
+        // If API returns { message: "...", data: [...] }
         if (Array.isArray(responseData.data)) {
           setUsers(responseData.data);
+        }
+        // If API returns a single user object instead of array
+        else if (responseData.data) {
+          setUsers([responseData.data]);
         } else {
           console.error("Unexpected API response format", responseData);
           setUsers([]);
         }
-      } catch (err) {
-        console.error("Error fetching users:", err);
+      } catch (error) {
+        console.error("Error fetching users:", error);
         setUsers([]);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -49,14 +58,13 @@ const UserManagement: React.FC = () => {
     return <p className="p-8 text-red-500">No users found.</p>;
 
   return (
-    <div className="p-4 sm:p-6 pt-20 bg-gray-50 min-h-screen">
-      {/* Back link */}
-      <a
-        href="/dashboard"
-        className="text-blue-600 text-sm flex items-center mb-4"
+    <div className="p-6 pt-20 px-10 py-10 bg-gray-50 min-h-screen">
+      <Link
+        to="/dashboard"
+        className="text-blue-600 hover:underline inline-block mb-4"
       >
         ← Back to Dashboard
-      </a>
+      </Link>
 
       {/* Title */}
       <h1 className="text-xl sm:text-2xl font-bold">User Management</h1>
@@ -66,7 +74,7 @@ const UserManagement: React.FC = () => {
 
       {/* Search + Filter */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 mb-4">
-        <div className="relative w-full sm:w-1/2">
+        <div className="relative w-full sm:w-w-3/4">
           <Search className="absolute left-3 top-3 text-gray-400" size={18} />
           <input
             type="text"
@@ -96,71 +104,68 @@ const UserManagement: React.FC = () => {
               </tr>
             </thead>
             <tbody>
-              {users.map((u) => (
-                <tr key={u.id} className="border-t">
-                  <td className="p-3 flex items-center gap-3">
-                    <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-purple-500 flex items-center justify-center text-white font-semibold text-xs sm:text-sm">
-                      {u.name
-                        .split(" ")
-                        .map((n) => n[0])
-                        .join("")}
-                    </div>
-                    <div>
-                      <p className="font-medium text-sm sm:text-base">
-                        {u.name}
-                      </p>
-                      <p className="text-xs sm:text-sm text-gray-500">
-                        {u.email}
-                      </p>
-                    </div>
-                  </td>
+              {users.map((u) => {
+                const fullName = `${u.firstName ?? ""} ${
+                  u.lastName ?? ""
+                }`.trim();
 
-                  <td className="p-3">
-                    <span
-                      className={`px-2 py-1 rounded-full text-xs sm:text-sm font-medium
-                        ${u.role === "Admin" ? "bg-red-100 text-red-600" : ""}
-                        ${
-                          u.role === "Support"
-                            ? "bg-blue-100 text-blue-600"
-                            : ""
-                        }
-                        ${
-                          u.role === "Moderator"
-                            ? "bg-green-100 text-green-600"
-                            : ""
-                        }
-                      `}
-                    >
-                      {u.role}
-                    </span>
-                  </td>
+                return (
+                  <tr key={u.id} className="border-t">
+                    <td className="p-3 flex items-center gap-3">
+                      <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-purple-500 flex items-center justify-center text-white font-semibold text-xs sm:text-sm">
+                        {fullName
+                          .split(" ")
+                          .map((n) => n[0])
+                          .join("")
+                          .toUpperCase()}
+                      </div>
+                      <div>
+                        <p className="font-medium text-sm sm:text-base">
+                          {fullName}
+                        </p>
+                        <p className="text-xs sm:text-sm text-gray-500">
+                          {u.email}
+                        </p>
+                      </div>
+                    </td>
 
-                  <td className="p-3">
-                    <span
-                      className={`flex items-center gap-1 text-xs sm:text-sm font-medium
-                        ${
-                          u.status === "Active"
-                            ? "text-green-600"
-                            : "text-gray-400"
-                        }
-                      `}
-                    >
+                    <td className="p-3">
                       <span
-                        className={`w-2 h-2 rounded-full ${
-                          u.status === "Active" ? "bg-green-500" : "bg-gray-400"
-                        }`}
-                      ></span>
-                      {u.status}
-                    </span>
-                  </td>
+                        className={`px-2 py-1 rounded-full text-xs sm:text-sm font-medium
+              ${u.role === "admin" ? "bg-red-100 text-red-600" : ""}
+              ${u.role === "support" ? "bg-blue-100 text-blue-600" : ""}
+              ${u.role === "moderator" ? "bg-green-100 text-green-600" : ""}
+            `}
+                      >
+                        {u.role}
+                      </span>
+                    </td>
 
-                  <td className="p-3 text-right">
-                    <button className="text-gray-500 hover:text-gray-800">
-                      ⋮
-                    </button>
-                  </td>
-                </tr>
-              ))}
+                    <td className="p-3">
+                      <span
+                        className={`flex items-center gap-1 text-xs sm:text-sm font-medium
+              ${u.status === "Active" ? "text-green-600" : "text-gray-400"}
+            `}
+                      >
+                        <span
+                          className={`w-2 h-2 rounded-full ${
+                            u.status === "Active"
+                              ? "bg-green-500"
+                              : "bg-gray-400"
+                          }`}
+                        ></span>
+                        {u.status ?? "Inactive"}
+                      </span>
+                    </td>
+
+                    <td className="p-3 text-right">
+                      <button className="text-gray-500 hover:text-gray-800">
+                        ...
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

@@ -7,11 +7,15 @@ import ForgotPasswordPage from "./Pages/ForgotPasswordPage";
 import DashboardPage from "./Pages/DashboardPage";
 import UserManagementPage from "./Pages/UserManagementPage";
 import ServiceCategoriesPage from "./Pages/ServiceCategoriesPage";
-import BusinessPage from "./Pages/BusinessesPage";
+import BusinessDirectoryPage from "./Pages/BusinessDirectoryPage";
 import DocumentsPage from "./Pages/DocumentsPage";
 import ReviewsPage from "./Pages/ReviewsPage";
 import VisitorAnalyticsPage from "./Pages/VisitorAnalyticsPage";
 import LocationsOverviewPage from "./Pages/LocationsOverviewPage";
+import AddArticlePage from "./Pages/AddArticlePage";
+import AddLocationPage from "./Pages/AddLocationPage";
+import AddBusinessPage from "./Pages/AddBusinessPage";
+import AddCategoryPage from "./Pages/AddCategoryPage";
 
 // Components (for Dashboard layout)
 import Navbar from "./Components/Navbar";
@@ -60,7 +64,16 @@ const App: React.FC = () => {
           element={
             <div className="min-h-screen bg-gray-100">
               <Navbar />
-              <BusinessPage />
+              <BusinessDirectoryPage />
+            </div>
+          }
+        />
+        <Route
+          path="/business-directory"
+          element={
+            <div className="min-h-screen bg-gray-100">
+              <Navbar />
+              <BusinessDirectoryPage />
             </div>
           }
         />
@@ -97,6 +110,42 @@ const App: React.FC = () => {
             <div className="min-h-screen bg-gray-100">
               <Navbar />
               <LocationsOverviewPage />
+            </div>
+          }
+        />
+        <Route
+          path="/add-article"
+          element={
+            <div className="min-h-screen bg-gray-100">
+              <Navbar />
+              <AddArticlePage />
+            </div>
+          }
+        />
+        <Route
+          path="/add-location"
+          element={
+            <div className="min-h-screen bg-gray-100">
+              <Navbar />
+              <AddLocationPage />
+            </div>
+          }
+        />
+        <Route
+          path="/add-business"
+          element={
+            <div className="min-h-screen bg-gray-100">
+              <Navbar />
+              <AddBusinessPage />
+            </div>
+          }
+        />
+        <Route
+          path="/add-category"
+          element={
+            <div className="min-h-screen bg-gray-100">
+              <Navbar />
+              <AddCategoryPage />
             </div>
           }
         />
