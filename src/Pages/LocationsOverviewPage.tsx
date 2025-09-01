@@ -1,6 +1,7 @@
-import React from "react";
-import { Link } from "react-router-dom";
-import { Search, Filter, MoreHorizontal, Plus } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { Search, Filter, MoreHorizontal } from "lucide-react";
+import axios from "axios";
 
 interface Location {
   id: number;
@@ -11,70 +12,34 @@ interface Location {
   imageUrl: string;
 }
 
-const locations: Location[] = [
-  {
-    id: 1,
-    name: "Volcanoes National Park",
-    district: "Musanze",
-    longitude: "29.5833°E",
-    description:
-      "Experience breathtaking natural beauty and pristine wilderness in this stunning destination",
-    imageUrl:
-      "https://upload.wikimedia.org/wikipedia/commons/3/3f/Mount_Karisimbi.jpg",
-  },
-  {
-    id: 2,
-    name: "Kigali Genocide Memorial",
-    district: "Gasabo",
-    longitude: "30.0644°E",
-    description:
-      "Discover rich heritage and traditional culture through immersive historical experiences.",
-    imageUrl:
-      "https://upload.wikimedia.org/wikipedia/commons/8/8c/Kigali_Genocide_Memorial_Centre.jpg",
-  },
-  {
-    id: 3,
-    name: "Akagera National Park",
-    district: "Kayonza",
-    longitude: "30.7500°E",
-    description:
-      "Encounter diverse wildlife and enjoy thrilling safari adventures in their natural habitat.",
-    imageUrl:
-      "https://upload.wikimedia.org/wikipedia/commons/d/d7/Akagera_National_Park.jpg",
-  },
-  {
-    id: 4,
-    name: "Nyungwe National Park",
-    district: "Rusizi",
-    longitude: "29.1333°E",
-    description:
-      "Experience breathtaking natural beauty and pristine wilderness in this stunning destination",
-    imageUrl:
-      "https://upload.wikimedia.org/wikipedia/commons/d/d7/Nyungwe_National_Park.jpg",
-  },
-  {
-    id: 5,
-    name: "Lake kivu",
-    district: "Rubavu",
-    longitude: "30.0644°E",
-    description:
-      "Encounter diverse wildlife and enjoy thrilling safari adventures in their natural habitat.",
-    imageUrl:
-      "https://upload.wikimedia.org/wikipedia/commons/d/d7/Lake-Kivu.jpg",
-  },
-  {
-    id: 6,
-    name: "King's Palace Museum",
-    district: "Nyanza",
-    longitude: "30.7500°E",
-    description:
-      "Discover rich heritage and traditional culture through immersive historical experiences.",
-    imageUrl:
-      "https://upload.wikimedia.org/wikipedia/commons/d/d7/King's Palace Museum.jpg",
-  },
-];
-
 const LocationsOverviewPage: React.FC = () => {
+  const navigate = useNavigate();
+  const [locations, setLocations] = useState<Location[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchLocations = async () => {
+      try {
+        const res = await axios.get("https://nearme-bn.onrender.com/location", {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        });
+
+        setLocations(res.data.data || []);
+        setLoading(false);
+      } catch (err: any) {
+        setError(err.message || "Failed to fetch locations");
+        setLoading(false);
+      }
+    };
+    fetchLocations();
+  }, []);
+
+  if (loading) return <p className="p-6 pt-20">Loading locations...</p>;
+  if (error) return <p className="p-6 pt-20 text-red-500">{error}</p>;
+
   return (
     <div className="p-6 pt-20 min-h-screen bg-gray-50">
       {/* Back link */}
@@ -94,14 +59,17 @@ const LocationsOverviewPage: React.FC = () => {
             destinations
           </p>
         </div>
-        <button className="bg-blue-600 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-700 flex items-center space-x-2">
-          <Plus className="w-5 h-5" /> <span>New</span>
+        <button
+          onClick={() => navigate("/add-location")}
+          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl shadow-md"
+        >
+          + New
         </button>
       </div>
 
       {/* Search + Filter */}
       <div className="flex flex-col sm:flex-row items-center gap-3 bg-white p-3 rounded-xl shadow mb-8">
-        <div className="flex items-center flex-1 border rounded-lg px-3 py-2">
+        <div className="flex items-center w-full px-3 py-2 rounded-xl bg-white shadow-sm">
           <Search className="text-gray-400 w-5 h-5 mr-2" />
           <input
             type="text"
@@ -109,7 +77,7 @@ const LocationsOverviewPage: React.FC = () => {
             className="flex-1 outline-none"
           />
         </div>
-        <div className="flex items-center border rounded-lg px-3 py-2">
+        <div className="flex items-center relative rounded-lg px-3 py-2">
           <Filter className="text-gray-400 w-5 h-5 mr-2" />
           <select className="outline-none bg-transparent">
             <option>All Provinces</option>
@@ -124,19 +92,16 @@ const LocationsOverviewPage: React.FC = () => {
 
       {/* Locations Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-        {locations.map((loc) => (
+        {locations?.map((loc) => (
           <div
             key={loc.id}
             className="bg-white rounded-2xl shadow hover:shadow-md transition overflow-hidden"
           >
-            {/* Image */}
             <img
               src={loc.imageUrl}
               alt={loc.name}
               className="w-full h-40 object-cover"
             />
-
-            {/* Content */}
             <div className="p-4">
               <div className="flex items-start justify-between">
                 <h2 className="font-bold text-lg">{loc.name}</h2>
@@ -144,7 +109,6 @@ const LocationsOverviewPage: React.FC = () => {
                   <MoreHorizontal />
                 </button>
               </div>
-
               <div className="flex gap-2 mt-2">
                 <span className="bg-blue-50 text-blue-600 text-xs px-2 py-1 rounded-lg">
                   {loc.district}
@@ -153,7 +117,6 @@ const LocationsOverviewPage: React.FC = () => {
                   Longitude: {loc.longitude}
                 </span>
               </div>
-
               <p className="text-gray-600 text-sm mt-3">{loc.description}</p>
             </div>
           </div>

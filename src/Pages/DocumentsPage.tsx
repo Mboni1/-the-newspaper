@@ -1,114 +1,118 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+// src/pages/ArticlesPage.tsx
+import React, { useState } from "react";
+import { Search } from "lucide-react";
+import { useNavigate } from "react-router-dom"; // <-- import useNavigate
 
-type Article = {
+interface Article {
   id: number;
   title: string;
   author: string;
   date: string;
-  image?: string;
-};
+  image: string;
+}
 
-const articles: Article[] = [
-  {
-    id: 1,
-    title: "Best telecom to use in Southern Rwanda",
-    author: "John Doe",
-    date: "2025-08-20",
-    image: "https://source.unsplash.com/100x100/?technology",
-  },
-  {
-    id: 2,
-    title: "Best Hotels in Karongi District",
-    author: "John Doe",
-    date: "2025-08-20",
-    image: "https://source.unsplash.com/100x100/?hotel",
-  },
-  {
-    id: 3,
-    title: "What Is UMUGANDA and How Is It Done",
-    author: "John Doe",
-    date: "2025-08-20",
-    image: "https://source.unsplash.com/100x100/?community",
-  },
-  {
-    id: 4,
-    title: "How To Renew Your Resident Permit In Rwanda",
-    author: "John Doe",
-    date: "2025-08-20",
-    image: "https://source.unsplash.com/100x100/?document",
-  },
-  {
-    id: 5,
-    title: "How To Get A Rwandan Visa",
-    author: "John Doe",
-    date: "2025-08-20",
-    image: "https://source.unsplash.com/100x100/?passport",
-  },
-];
-
-export default function DocumentsPage() {
+const ArticlesPage: React.FC = () => {
   const [search, setSearch] = useState("");
+  const navigate = useNavigate(); // <-- initialize useNavigate
 
-  // Correct filtering
-  const filteredArticles = articles.filter((article) =>
-    article.title.toLowerCase().includes(search.toLowerCase())
+  const [articles, setArticles] = useState<Article[]>([
+    {
+      id: 1,
+      title: "Best telecom to use in Southern Rwanda",
+      author: "John Doe",
+      date: "2025-08-20",
+      image:
+        "https://images.unsplash.com/photo-1524666041070-9d87656c25b7?w=300",
+    },
+    {
+      id: 2,
+      title: "Best Hotels in Karongi District",
+      author: "John Doe",
+      date: "2025-08-20",
+      image:
+        "https://images.unsplash.com/photo-1505691938895-1758d7feb511?w=300",
+    },
+    {
+      id: 3,
+      title: "What Is UMUGANDA and How Is It Done",
+      author: "John Doe",
+      date: "2025-08-20",
+      image:
+        "https://images.unsplash.com/photo-1508780709619-79562169bc64?w=300",
+    },
+  ]);
+
+  const filteredArticles = articles.filter((a) =>
+    a.title.toLowerCase().includes(search.toLowerCase())
   );
 
   return (
-    <div className="p-6 pt-20 px-6 py-6 bg-gray-50 max-w-3xl mx-auto">
-      <Link
-        to="/dashboard"
+    <div className="p-6 pt-20 bg-gray-50 min-h-screen">
+      {/* Back link */}
+      <button
+        onClick={() => navigate("/dashboard")}
         className="text-blue-600 hover:underline inline-block mb-4"
       >
         ← Back to Dashboard
-      </Link>
+      </button>
 
-      {/* Search Bar */}
-      <input
-        type="text"
-        placeholder="Search Articles"
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        className="w-full px-4 py-2 border border-gray-200 rounded-xl mb-6 focus:ring-2 focus:ring-blue-400 outline-none"
-      />
+      {/* Header */}
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <h1 className="text-2xl font-bold">All Articles</h1>
+          <p className="text-gray-600">
+            Manage and organize all listed articles in one place.
+          </p>
+        </div>
+
+        {/* + New button using useNavigate */}
+        <button
+          onClick={() => navigate("/add-article")}
+          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl shadow-md"
+        >
+          + New
+        </button>
+      </div>
+
+      {/* Search */}
+      <div className="flex items-center bg-white rounded-xl shadow px-4 py-2 mb-6">
+        <Search className="w-5 h-5 text-gray-400" />
+        <input
+          type="text"
+          placeholder="search"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="ml-2 w-full outline-none text-gray-700"
+        />
+      </div>
 
       {/* Articles List */}
-      <div className="space-y-4 mb-10">
+      <div className="space-y-4">
         {filteredArticles.map((article) => (
           <div
             key={article.id}
-            className="flex items-center justify-between bg-white rounded-xl shadow-sm hover:shadow-md transition p-4"
+            className="flex items-center justify-between bg-white rounded-2xl shadow-md p-4"
           >
-            {/* Left side: Title + Author + Date */}
             <div>
-              <h2 className="text-blue-600 font-medium hover:underline cursor-pointer">
-                {article.title}
-              </h2>
-              <div className="flex items-center text-sm text-gray-500 mt-1">
-                {/* Avatar initials */}
-                <div className="w-7 h-7 rounded-full bg-gray-300 flex items-center justify-center text-xs font-bold mr-2">
-                  {article.author
-                    .split(" ")
-                    .map((n) => n[0])
-                    .join("")}
-                </div>
-                <span className="mr-2">{article.author}</span>
-                <span>{article.date}</span>
+              <h2 className="text-lg font-semibold">{article.title}</h2>
+              <div className="text-sm text-gray-500">
+                {article.author} &nbsp; {article.date}
+              </div>
+              <div className="flex gap-4 mt-2">
+                <button className="text-blue-600 hover:underline">Edit</button>
+                <button className="text-red-600 hover:underline">Delete</button>
               </div>
             </div>
-
-            {/* Right side: Thumbnail */}
-            {article.image && (
-              <img
-                src={article.image}
-                alt={article.title}
-                className="w-16 h-16 rounded-lg object-cover ml-4"
-              />
-            )}
+            <img
+              src={article.image}
+              alt={article.title}
+              className="w-24 h-20 object-cover rounded-xl"
+            />
           </div>
         ))}
       </div>
     </div>
   );
-}
+};
+
+export default ArticlesPage;

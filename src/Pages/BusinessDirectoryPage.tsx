@@ -1,298 +1,186 @@
+import React, { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
 import {
-  Phone,
-  MapPin,
-  Clock,
-  Star,
-  Plane,
+  MoreHorizontal,
   Car,
-  Bed,
-  Wifi,
-  CreditCard,
   Utensils,
-  Ticket,
-  ShoppingBag,
-  Hospital,
-  ShieldAlert,
+  Building,
+  Camera,
+  Search,
+  ChevronDown,
 } from "lucide-react";
-import { useEffect, useState } from "react";
 
-const BASE_URL = "https://nearme-bn.onrender.com";
-
-interface Post {
-  id: number;
-  title: string;
-  address: string;
-  phone: string;
-  hours: string;
-  image: string;
-  category: string;
-  rating?: number;
-}
-
-type Business = {
+interface Business {
   id: number;
   name: string;
   address: string;
-  phone: string;
-  hours: string;
-  image: string;
   category: string;
-  rating?: number;
-};
+  image: string;
+  icon: React.ElementType;
+}
 
-// Map category → icon
-const categoryIcons: Record<string, React.ElementType> = {
-  "Travel & Emergency": ShieldAlert,
-  Transportation: Car,
-  Accomodation: Bed,
-  Communication: Wifi,
-  "Money & Payments": CreditCard,
-  "Food & Dining": Utensils,
-  "Events & Tours": Ticket,
-  Shopping: ShoppingBag,
-  "Health & Wellness": Hospital,
-};
 const businesses: Business[] = [
   {
     id: 1,
-    name: "US Embassy Kigali",
-    address: "KG 7 Ave, Kigali",
-    phone: "+250 252 580 888",
-    hours: "8:00 AM - 17:00 PM",
-    image: "https://source.unsplash.com/400x250/?restaurant",
-    category: "Travel & Emergency",
-    rating: 4.8,
+    name: "Move Car Rental",
+    address: "KG 9 Ave, Kigali",
+    category: "Transportation Services",
+    image: "https://source.unsplash.com/400x300/?car,rental",
+    icon: Car,
   },
   {
     id: 2,
-    name: "Kigali Travel Health Clinic",
-    address: "KN 3 Rd, Kigali",
-    phone: "+250 788 777 888",
-    hours: "5:00 PM - 2:00 AM",
-    image: "https://source.unsplash.com/400x250/?cafe",
-    category: "Travel & Emergency",
-    rating: 4.8,
+    name: "Kigali Bus service",
+    address: "KG 9 Ave, Kigali",
+    category: "Transportation Services",
+    image: "https://source.unsplash.com/400x300/?bus,transport",
+    icon: Car,
   },
   {
     id: 3,
-    name: "Kigali Genocide Memorial",
-    address: "KG 14 Ave, Gisozi",
-    phone: "+250 252 536 505",
-    hours: "8:00 AM - 5:00 PM",
-    image: "https://source.unsplash.com/400x250/?memorial",
-    category: "Events & Tours",
-    rating: 4.8,
+    name: "Kigali Serena Hotel",
+    address: "KG 9 Ave, Kigali",
+    category: "Accommodation Services",
+    image: "https://source.unsplash.com/400x300/?hotel,kigali",
+    icon: Building,
   },
   {
     id: 4,
-    name: "Rwanda Eco Tours",
-    address: "KN 5 Ave, Kigali",
-    phone: "+250 788 999 000",
-    hours: "7:00 AM - 6:00 PM",
-    image: "https://source.unsplash.com/400x250/?mountains",
-    category: "Events & Tours",
-    rating: 4.8,
+    name: "Heaven Restaurant",
+    address: "KG 9 Ave, Kigali",
+    category: "Food & Dining",
+    image: "https://source.unsplash.com/400x300/?restaurant,food",
+    icon: Utensils,
   },
   {
     id: 5,
-    name: "Kigali City Tower Mall",
-    address: "KN 4 Ave, Kigali",
-    phone: "+250 252 597 500",
-    hours: "9:00 AM - 9:00 PM",
-    image: "https://source.unsplash.com/400x250/?shopping-mall",
-    category: "Shopping",
-    rating: 4.4,
+    name: "Rwanda Eco Tours",
+    address: "KG 9 Ave, Kigali",
+    category: "Local Events & Tours",
+    image: "https://source.unsplash.com/400x300/?tourism,rwanda",
+    icon: Camera,
   },
   {
     id: 6,
-    name: "Kimironko Market",
-    address: "Kimironko, Kigali",
-    phone: "+250 788 444 555",
-    hours: "6:00 AM - 6:00 PM",
-    image: "https://source.unsplash.com/400x250/?market",
-    category: "Shopping",
-    rating: 4.2,
-  },
-  {
-    id: 7,
-    name: "Kigali Bus Services",
-    address: "Nyabugogo Bus Terminal",
-    phone: "+250 788 444 555",
-    hours: "5:00 AM - 10:00 PM",
-    image: "https://source.unsplash.com/400x250/?market",
-    category: "Transportation",
-    rating: 4.2,
-  },
-  {
-    id: 8,
-    name: "Kigali Serena Hotel",
-    address: "KN 3 Ave, Kigali",
-    phone: "+250 788 444 555",
-    hours: "24/7",
-    image: "https://source.unsplash.com/400x250/?market",
-    category: "Accomodation",
-    rating: 4.8,
-  },
-  {
-    id: 9,
-    name: "Heaven Boutique Hotel",
-    address: "KG 7 Ave, Kigali",
-    phone: "+250 788 444 555",
-    hours: "24/7",
-    image: "https://source.unsplash.com/400x250/?market",
-    category: "Accomodation",
-    rating: 4.5,
-  },
-  {
-    id: 10,
-    name: "MTN Rwanda Service Center",
-    address: "KN 4 Ave, Kigali",
-    phone: "+250 788 444 555",
-    hours: "8:00 AM - 18:00 PM",
-    image: "https://source.unsplash.com/400x250/?market",
-    category: "Communication",
-    rating: 4.3,
-  },
-  {
-    id: 11,
-    name: "Airtel Rwanda Store",
-    address: "KG 11 Ave, Kigali",
-    phone: "+250 788 444 555",
-    hours: "8:00 AM - 19:00 PM",
-    image: "https://source.unsplash.com/400x250/?market",
-    category: "Communication",
-    rating: 4.2,
-  },
-  {
-    id: 12,
-    name: "Bank of Kigali",
-    address: "KN 2 Ave, Kigali",
-    phone: "+250 788 444 555",
-    hours: "8:00 AM - 17:00 PM",
-    image: "https://source.unsplash.com/400x250/?market",
-    category: "Money & Payments",
-    rating: 4.6,
-  },
-  {
-    id: 13,
-    name: "Equity Bank Rwanda",
-    address: "KG 5 Ave, Kigali",
-    phone: "+250 788 444 555",
-    hours: "6:00 AM - 17:00 PM",
-    image: "https://source.unsplash.com/400x250/?market",
-    category: "Money & Payments",
-    rating: 4.4,
-  },
-  {
-    id: 14,
-    name: "King Faisal Hospital",
-    address: "KG 544 St, Kigali",
-    phone: "+250 788 444 555",
-    hours: "24/7",
-    image: "https://source.unsplash.com/400x250/?market",
-    category: "Health & Wellness",
-    rating: 4.8,
-  },
-  {
-    id: 15,
-    name: "Pharmacy Plus",
-    address: "KN 1 Ave, Kigali",
-    phone: "+250 788 444 555",
-    hours: "7:00 AM - 22:00 PM",
-    image: "https://source.unsplash.com/400x250/?market",
-    category: "Health & Wellness",
-    rating: 4.5,
-  },
-  {
-    id: 16,
-    name: "Heaven Restaurant",
-    address: "KG 7 Ave, Kigali",
-    phone: "+250 788 444 555",
-    hours: "10:00 AM - 23:00 PM",
-    image: "https://source.unsplash.com/400x250/?market",
-    category: "Food & Dining",
-    rating: 4.7,
-  },
-  {
-    id: 17,
-    name: "Repub Rouge",
-    address: "KN 3 Ave, Kigali",
-    phone: "+250 788 444 555",
-    hours: "5:00 pM - 2:00 AM",
-    image: "https://source.unsplash.com/400x250/?market",
-    category: "Food & Dining",
-    rating: 4.6,
-  },
-  {
-    id: 18,
-    name: "Move Rwanda Car Rental",
+    name: "Repub Lounge",
     address: "KG 9 Ave, Kigali",
-    phone: "+250 788 444 555",
-    hours: "24/7",
-    image: "https://source.unsplash.com/400x250/?market",
-    category: "Transportation",
-    rating: 4.7,
+    category: "Food & Dining",
+    image: "https://source.unsplash.com/400x300/?dining,lounge",
+    icon: Utensils,
   },
 ];
 
-export default function BusinessGrid() {
+const categories = [
+  "All Categories",
+  "Transportation Services",
+  "Accommodation Services",
+  "Food & Dining",
+  "Local Events & Tours",
+];
+
+const BusinessDirectory: React.FC = () => {
+  const navigate = useNavigate();
+  const [search, setSearch] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("All Categories");
+
+  // Filter logic
+  const filteredBusinesses = businesses.filter((business) => {
+    const matchesSearch =
+      business.name.toLowerCase().includes(search.toLowerCase()) ||
+      business.address.toLowerCase().includes(search.toLowerCase());
+    const matchesCategory =
+      selectedCategory === "All Categories" ||
+      business.category === selectedCategory;
+
+    return matchesSearch && matchesCategory;
+  });
+
   return (
-    <div className="max-w-10xl mx-auto p-8">
-      {/* Grid of Businesses */}
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
-        {businesses.map((biz) => {
-          const Icon = categoryIcons[biz.category];
+    <div className="p-6 pt-20 px-10 py-10 bg-gray-50 min-h-screen">
+      <Link
+        to="/dashboard"
+        className="text-blue-600 hover:underline inline-block mb-4"
+      >
+        ← Back to Dashboard
+      </Link>
+
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold">Business Directory</h1>
+          <p className="text-gray-600 text-sm sm:text-base">
+            Manage and organize all listed businesses in one place.
+          </p>
+        </div>
+        <button
+          onClick={() => navigate("/add-business")}
+          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl shadow-md"
+        >
+          + New
+        </button>
+      </div>
+
+      {/* Search & Filter */}
+      <div className="flex flex-col sm:flex-row items-center gap-3 mb-8">
+        {/* Search bar */}
+        <div className="flex items-center w-full  px-3 py-4 rounded-xl bg-white shadow-sm">
+          <Search className="w-5 h-5 text-gray-400 mr-2" />
+          <input
+            type="text"
+            placeholder="search"
+            className="w-full outline-none text-sm"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+
+        {/* Category filter */}
+        <div className="relative w-full lg:w-1/2 ">
+          <select
+            value={selectedCategory}
+            onChange={(e) => setSelectedCategory(e.target.value)}
+            className="w-full px-3 py-4  rounded-xl shadow-sm bg-white text-sm appearance-none cursor-pointer"
+          >
+            {categories.map((cat) => (
+              <option key={cat} value={cat}>
+                {cat}
+              </option>
+            ))}
+          </select>
+          <ChevronDown className="absolute right-3 top-3 w-4 h-4 text-gray-500 pointer-events-none" />
+        </div>
+      </div>
+
+      {/* Cards Grid */}
+      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {filteredBusinesses.map((business) => {
+          const Icon = business.icon;
           return (
             <div
-              key={biz.id}
+              key={business.id}
               className="bg-white rounded-2xl shadow hover:shadow-lg transition overflow-hidden"
             >
-              <div className="relative">
-                <img
-                  src={biz.image}
-                  alt={biz.name}
-                  className="w-full h-40 object-cover"
-                />
-                {/* Category + Rating Badge */}
-                <div className="absolute top-0 left-3 flex items-center gap-1 bg-blue-600 text-white text-xs px-3 py-1 rounded-full shadow">
-                  {Icon && <Icon className="w-4 h-4" />}
-                  <span>{biz.category}</span>
-                </div>
+              {/* Business Image */}
+              <img
+                src={business.image}
+                alt={business.name}
+                className="w-full h-40 object-cover"
+              />
 
-                {biz.rating && (
-                  <div className="absolute top-3 right-3 flex items-center bg-white text-gray-800 text-xs px-2 py-1 rounded-full shadow">
-                    <Star className="w-4 h-4 text-yellow-500 mr-1" />
-                    {biz.rating}
-                  </div>
-                )}
-              </div>
-              {/* Content */}
+              {/* Business Info */}
               <div className="p-4">
-                <h3 className="text-lg font-semibold text-gray-800 mb-1">
-                  {biz.name}
-                </h3>
-
-                <div className="flex items-center text-sm text-gray-600 mb-1">
-                  <MapPin className="w-4 h-4 mr-1" />
-                  {biz.address}
+                <div className="flex items-start justify-between">
+                  <div>
+                    <h2 className="text-lg font-semibold">{business.name}</h2>
+                    <p className="text-gray-500 text-sm">{business.address}</p>
+                  </div>
+                  <MoreHorizontal className="text-gray-400 w-5 h-5 cursor-pointer" />
                 </div>
 
-                <div className="flex items-center text-sm text-gray-600 mb-1">
-                  <Phone className="w-4 h-4 mr-1" />
-                  {biz.phone}
+                <div className="flex items-center mt-3 text-blue-600 font-medium text-sm">
+                  <Icon className="w-5 h-5 mr-2" />
+                  {business.category}
                 </div>
-
-                <div className="flex items-center text-sm text-gray-600 mb-3">
-                  <Clock className="w-4 h-4 mr-1" />
-                  {biz.hours}
-                </div>
-
-                <a
-                  href="#"
-                  className="text-blue-600 font-medium text-sm hover:underline"
-                >
-                  View Details →
-                </a>
               </div>
             </div>
           );
@@ -300,4 +188,6 @@ export default function BusinessGrid() {
       </div>
     </div>
   );
-}
+};
+
+export default BusinessDirectory;

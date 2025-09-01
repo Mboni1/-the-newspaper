@@ -40,7 +40,7 @@ const VisitorAnalyticsPage: React.FC = () => {
 
       {/* Search & Filter */}
       <div className="flex flex-col sm:flex-row gap-3 mb-8">
-        <div className="flex items-center w-full sm:w-2/3 bg-white border rounded-lg px-3 py-2 shadow-sm">
+        <div className="flex items-center w-full sm:w-2/3 bg-white  rounded-lg px-3 py-4 shadow-sm">
           <Search className="text-gray-400 w-5 h-5 mr-2" />
           <input
             type="text"
@@ -48,7 +48,7 @@ const VisitorAnalyticsPage: React.FC = () => {
             className="flex-1 outline-none text-sm"
           />
         </div>
-        <div className="flex items-center w-full sm:w-1/3 bg-white border rounded-lg px-3 py-2 shadow-sm">
+        <div className="flex items-center w-full sm:w-1/3 bg-white  rounded-lg px-3 py-4 shadow-sm">
           <Globe className="text-gray-400 w-5 h-5 mr-2" />
           <select className="flex-1 outline-none text-sm bg-transparent">
             <option>Select a country...</option>
