@@ -5,10 +5,11 @@ import { Link } from "react-router-dom";
 import axios from "axios";
 
 const Categories: React.FC = () => {
-  const [categories, setCategories] = useState(0);
+  const [totalCategories, setTotalCategories] = useState<number>(0);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchCategories = async () => {
+    const fetchTotalCategories = async () => {
       try {
         const res = await axios.get("https://nearme-bn.onrender.com/category", {
           headers: {
@@ -16,24 +17,25 @@ const Categories: React.FC = () => {
           },
         });
 
-        if (Array.isArray(res.data.data)) {
-          setCategories(res.data.data.length);
-        } else if (res.data.data) {
-          setCategories(1);
-        } else {
-          setCategories(0);
-        }
-      } catch (error) {
-        console.error("Error fetching users:", error);
+        // Assuming backend returns { total: number }
+        setTotalCategories(res.data.total || 0);
+        setLoading(false);
+      } catch (err) {
+        console.error(err);
+        setLoading(false);
       }
     };
 
-    fetchCategories();
+    fetchTotalCategories();
   }, []);
 
   return (
     <Link to="/service-categories">
-      <StatCard icon={Grid} value={categories} label="Categories" />
+      <StatCard
+        icon={Grid}
+        value={loading ? "..." : totalCategories} // show "..." while loading
+        label="Categories"
+      />
     </Link>
   );
 };

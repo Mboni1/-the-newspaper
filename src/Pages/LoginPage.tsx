@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Mail, Lock, ArrowRight, Eye, EyeOff, Shield } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
+import logo1 from "../Assets/logo1.jpeg";
 
 const LoginPage: React.FC = () => {
   const [email, setEmail] = useState("");
@@ -28,8 +29,8 @@ const LoginPage: React.FC = () => {
 
       // Decode JWT to check role
       const payload = JSON.parse(atob(token.split(".")[1]));
-      if (payload.role !== "admin") {
-        setError("Access denied. Admins only.");
+      if (payload.role !== "admin" && payload.role !== "moderator") {
+        setError("Access denied. Admins & Moderators only.");
         localStorage.removeItem("token");
         return;
       }
@@ -44,10 +45,8 @@ const LoginPage: React.FC = () => {
     <div className="flex items-center justify-center min-h-screen bg-gray-50">
       <div className="w-full max-w-md bg-white shadow-xl rounded-2xl p-8">
         {/* Icon */}
-        <div className="flex justify-center mb-4">
-          <div className="bg-blue-600 p-3 rounded-lg">
-            <Shield className="w-8 h-8 text-blue-100" />
-          </div>
+        <div className="flex justify-center mb-8">
+          <img src={logo1} alt="Logo1" className="w-14 h-12 text-blue-100" />
         </div>
 
         {/* Title */}

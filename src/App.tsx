@@ -149,6 +149,14 @@ const App: React.FC = () => {
             </div>
           }
         />
+        <Route
+          path="/login"
+          element={
+            <div className="min-h-screen bg-gray-100">
+              <LoginPage />
+            </div>
+          }
+        />
       </Routes>
     </Router>
   );

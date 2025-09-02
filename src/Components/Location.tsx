@@ -1,12 +1,45 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { MapPin } from "lucide-react";
 import StatCard from "./StatCard";
 import { Link } from "react-router-dom";
+import axios from "axios";
 
 const Location: React.FC = () => {
+  const [totalLocations, setTotalLocations] = useState<number>(0);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchTotalLocations = async () => {
+      try {
+        const res = await axios.get(
+          "https://nearme-bn.onrender.com/location/admin/all",
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          }
+        );
+
+        // Assuming backend returns { total: number }
+        setTotalLocations(res.data.total || 0);
+      } catch (err) {
+        console.error("Failed to fetch total locations:", err);
+        setTotalLocations(0);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTotalLocations();
+  }, []);
+
   return (
     <Link to="/locations-overview">
-      <StatCard icon={MapPin} value={"45"} label="Location" />
+      <StatCard
+        icon={MapPin}
+        value={loading ? "..." : totalLocations}
+        label="Location"
+      />
     </Link>
   );
 };

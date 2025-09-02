@@ -7,40 +7,39 @@ interface User {
   firstName: string;
   lastName: string;
   email: string;
-  role: "admin" | "support" | "moderator";
+  role: "admin" | "user" | "moderator";
   status?: "Active" | "Inactive";
 }
 
 const UserManagement: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [totalUsers, setTotalUsers] = useState(0);
+  const limit = 2;
 
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const res = await fetch("https://nearme-bn.onrender.com/user", {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        });
+        setLoading(true);
 
-        if (!res.ok) {
-          throw new Error(`HTTP error! status: ${res.status}`);
-        }
+        const res = await fetch(
+          `https://nearme-bn.onrender.com/user/all?page=${page}&limit=${limit}`,
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          }
+        );
 
         const responseData = await res.json();
         console.log("Fetched users:", JSON.stringify(responseData, null, 2));
-
-        // If API returns { message: "...", data: [...] }
         if (Array.isArray(responseData.data)) {
           setUsers(responseData.data);
-        }
-        // If API returns a single user object instead of array
-        else if (responseData.data) {
-          setUsers([responseData.data]);
+          setTotalUsers(responseData.total || responseData.data.length);
         } else {
-          console.error("Unexpected API response format", responseData);
           setUsers([]);
+          setTotalUsers(0);
         }
       } catch (error) {
         console.error("Error fetching users:", error);
@@ -51,7 +50,9 @@ const UserManagement: React.FC = () => {
     };
 
     fetchUsers();
-  }, []);
+  }, [page]);
+
+  const totalPages = Math.ceil(totalUsers / limit);
 
   if (loading) return <p className="p-8">Loading users...</p>;
   if (users.length === 0)
@@ -74,7 +75,7 @@ const UserManagement: React.FC = () => {
 
       {/* Search + Filter */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 mb-4">
-        <div className="relative w-full sm:w-w-3/4">
+        <div className="relative w-full sm:w-3/4">
           <Search className="absolute left-3 top-3 text-gray-400" size={18} />
           <input
             type="text"
@@ -86,7 +87,7 @@ const UserManagement: React.FC = () => {
         <select className="border border-gray-300 rounded-lg px-3 py-2 text-sm sm:text-base w-full sm:w-auto">
           <option>All Roles</option>
           <option>Admin</option>
-          <option>Support</option>
+          <option>User</option>
           <option>Moderator</option>
         </select>
       </div>
@@ -133,7 +134,7 @@ const UserManagement: React.FC = () => {
                       <span
                         className={`px-2 py-1 rounded-full text-xs sm:text-sm font-medium
               ${u.role === "admin" ? "bg-red-100 text-red-600" : ""}
-              ${u.role === "support" ? "bg-blue-100 text-blue-600" : ""}
+              ${u.role === "user" ? "bg-blue-100 text-blue-600" : ""}
               ${u.role === "moderator" ? "bg-green-100 text-green-600" : ""}
             `}
                       >
@@ -170,15 +171,28 @@ const UserManagement: React.FC = () => {
           </table>
         </div>
 
-        {/* Footer */}
+        {/* Footer with Pagination */}
         <div className="flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-0 p-3 text-xs sm:text-sm text-gray-500">
-          <p>Showing {users.length} users</p>
+          <p>
+            Showing {(page - 1) * limit + 1} -{" "}
+            {Math.min(page * limit, totalUsers)} of {totalUsers} users
+          </p>
           <div className="flex items-center gap-2">
-            <button className="p-1 rounded hover:bg-gray-100">
+            <button
+              disabled={page === 1}
+              onClick={() => setPage((prev) => prev - 1)}
+              className="p-1 rounded hover:bg-gray-100 disabled:opacity-50"
+            >
               <ChevronLeft size={18} />
             </button>
-            <span className="px-3 py-1 bg-blue-600 text-white rounded">1</span>
-            <button className="p-1 rounded hover:bg-gray-100">
+            <span className="px-3 py-1 bg-blue-600 text-white rounded">
+              {page}
+            </span>
+            <button
+              disabled={page === totalPages}
+              onClick={() => setPage((prev) => prev + 1)}
+              className="p-1 rounded hover:bg-gray-100 disabled:opacity-50"
+            >
               <ChevronRight size={18} />
             </button>
           </div>

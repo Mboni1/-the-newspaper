@@ -1,14 +1,7 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import {
-  MoreHorizontal,
-  Car,
-  Utensils,
-  Building,
-  Camera,
-  Search,
-  ChevronDown,
-} from "lucide-react";
+import { MoreHorizontal, Building, Search, ChevronDown } from "lucide-react";
+import axios from "axios";
 
 interface Business {
   id: number;
@@ -19,57 +12,6 @@ interface Business {
   icon: React.ElementType;
 }
 
-const businesses: Business[] = [
-  {
-    id: 1,
-    name: "Move Car Rental",
-    address: "KG 9 Ave, Kigali",
-    category: "Transportation Services",
-    image: "https://source.unsplash.com/400x300/?car,rental",
-    icon: Car,
-  },
-  {
-    id: 2,
-    name: "Kigali Bus service",
-    address: "KG 9 Ave, Kigali",
-    category: "Transportation Services",
-    image: "https://source.unsplash.com/400x300/?bus,transport",
-    icon: Car,
-  },
-  {
-    id: 3,
-    name: "Kigali Serena Hotel",
-    address: "KG 9 Ave, Kigali",
-    category: "Accommodation Services",
-    image: "https://source.unsplash.com/400x300/?hotel,kigali",
-    icon: Building,
-  },
-  {
-    id: 4,
-    name: "Heaven Restaurant",
-    address: "KG 9 Ave, Kigali",
-    category: "Food & Dining",
-    image: "https://source.unsplash.com/400x300/?restaurant,food",
-    icon: Utensils,
-  },
-  {
-    id: 5,
-    name: "Rwanda Eco Tours",
-    address: "KG 9 Ave, Kigali",
-    category: "Local Events & Tours",
-    image: "https://source.unsplash.com/400x300/?tourism,rwanda",
-    icon: Camera,
-  },
-  {
-    id: 6,
-    name: "Repub Lounge",
-    address: "KG 9 Ave, Kigali",
-    category: "Food & Dining",
-    image: "https://source.unsplash.com/400x300/?dining,lounge",
-    icon: Utensils,
-  },
-];
-
 const categories = [
   "All Categories",
   "Transportation Services",
@@ -78,22 +20,56 @@ const categories = [
   "Local Events & Tours",
 ];
 
-const BusinessDirectory: React.FC = () => {
+const BusinessDirectoryPage: React.FC = () => {
   const navigate = useNavigate();
+  const [businesses, setBusinesses] = useState<Business[]>([]);
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All Categories");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const limit = 4;
+  const [totalPages, setTotalPages] = useState(1);
 
-  // Filter logic
-  const filteredBusinesses = businesses.filter((business) => {
-    const matchesSearch =
-      business.name.toLowerCase().includes(search.toLowerCase()) ||
-      business.address.toLowerCase().includes(search.toLowerCase());
-    const matchesCategory =
-      selectedCategory === "All Categories" ||
-      business.category === selectedCategory;
+  const fetchBusinesses = async (page: number) => {
+    try {
+      setLoading(true);
+      const params: any = { limit, page };
+      if (selectedCategory !== "All Categories")
+        params.category = selectedCategory;
+      if (search) params.search = search;
 
-    return matchesSearch && matchesCategory;
-  });
+      const res = await axios.get(
+        "https://nearme-bn.onrender.com/category/adminfetchbuz/all",
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+          params,
+        }
+      );
+
+      setBusinesses(res.data.data || []);
+      setTotalPages(Math.ceil(res.data.total / limit) || 1); // assuming backend returns total
+      setLoading(false);
+    } catch (err: any) {
+      console.error(err);
+      setError("Failed to load businesses.");
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchBusinesses(currentPage);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPage, selectedCategory, search]);
+
+  const handlePrev = () => setCurrentPage((prev) => Math.max(prev - 1, 1));
+  const handleNext = () =>
+    setCurrentPage((prev) => Math.min(prev + 1, totalPages));
+
+  if (loading) return <p className="p-6">Loading businesses...</p>;
+  if (error) return <p className="p-6 text-red-500">{error}</p>;
 
   return (
     <div className="p-6 pt-20 px-10 py-10 bg-gray-50 min-h-screen">
@@ -122,24 +98,25 @@ const BusinessDirectory: React.FC = () => {
 
       {/* Search & Filter */}
       <div className="flex flex-col sm:flex-row items-center gap-3 mb-8">
-        {/* Search bar */}
-        <div className="flex items-center w-full  px-3 py-4 rounded-xl bg-white shadow-sm">
+        <div className="flex items-center w-full px-3 py-4 rounded-xl bg-white shadow-sm">
           <Search className="w-5 h-5 text-gray-400 mr-2" />
           <input
             type="text"
-            placeholder="search"
+            placeholder="Search"
             className="w-full outline-none text-sm"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
 
-        {/* Category filter */}
-        <div className="relative w-full lg:w-1/2 ">
+        <div className="relative w-full lg:w-1/2">
           <select
             value={selectedCategory}
-            onChange={(e) => setSelectedCategory(e.target.value)}
-            className="w-full px-3 py-4  rounded-xl shadow-sm bg-white text-sm appearance-none cursor-pointer"
+            onChange={(e) => {
+              setSelectedCategory(e.target.value);
+              setCurrentPage(1); // reset to page 1
+            }}
+            className="w-full px-3 py-4 rounded-xl shadow-sm bg-white text-sm appearance-none cursor-pointer"
           >
             {categories.map((cat) => (
               <option key={cat} value={cat}>
@@ -153,21 +130,21 @@ const BusinessDirectory: React.FC = () => {
 
       {/* Cards Grid */}
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredBusinesses.map((business) => {
-          const Icon = business.icon;
+        {businesses.map((business) => {
+          const Icon = business.icon || Building;
           return (
             <div
               key={business.id}
               className="bg-white rounded-2xl shadow hover:shadow-lg transition overflow-hidden"
             >
-              {/* Business Image */}
               <img
-                src={business.image}
+                src={
+                  business.image ||
+                  "https://source.unsplash.com/400x300/?business"
+                }
                 alt={business.name}
                 className="w-full h-40 object-cover"
               />
-
-              {/* Business Info */}
               <div className="p-4">
                 <div className="flex items-start justify-between">
                   <div>
@@ -176,7 +153,6 @@ const BusinessDirectory: React.FC = () => {
                   </div>
                   <MoreHorizontal className="text-gray-400 w-5 h-5 cursor-pointer" />
                 </div>
-
                 <div className="flex items-center mt-3 text-blue-600 font-medium text-sm">
                   <Icon className="w-5 h-5 mr-2" />
                   {business.category}
@@ -186,8 +162,29 @@ const BusinessDirectory: React.FC = () => {
           );
         })}
       </div>
+
+      {/* Pagination Buttons */}
+      <div className="flex justify-center mt-6 gap-4">
+        <button
+          onClick={handlePrev}
+          disabled={currentPage === 1}
+          className="px-4 py-2 bg-blue-600 rounded hover:bg-gray-300 disabled:opacity-50"
+        >
+          Previous
+        </button>
+        <span className="px-4 py-2">
+          Page {currentPage} of {totalPages}
+        </span>
+        <button
+          onClick={handleNext}
+          disabled={currentPage === totalPages}
+          className="px-4 py-2 bg-blue-600 rounded hover:bg-gray-300 disabled:opacity-50"
+        >
+          Next
+        </button>
+      </div>
     </div>
   );
 };
 
-export default BusinessDirectory;
+export default BusinessDirectoryPage;

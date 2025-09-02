@@ -1,8 +1,8 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Star } from "lucide-react";
 import { Link } from "react-router-dom";
+import axios from "axios";
 
-// --- Types
 type Review = {
   id: number;
   reviewer: string;
@@ -18,104 +18,8 @@ type Review = {
   statusColor: string;
 };
 
-// --- Dummy Data
-const reviews: Review[] = [
-  {
-    id: 1,
-    reviewer: "Sarah Johnson",
-    initials: "SJ",
-    rating: 5,
-    date: "2024-01-15",
-    business: "Kigali Serena Hotel",
-    category: "Accommodation",
-    categoryColor: "bg-blue-100 text-blue-700",
-    title: "Exceptional service and beautiful location",
-    content:
-      "Had an amazing stay at this hotel. The staff was incredibly friendly and the rooms were spotless. The view from my room was breathtaking and the breakfast was delicious.",
-    status: "Published",
-    statusColor: "bg-green-100 text-green-700",
-  },
-  {
-    id: 2,
-    reviewer: "Mike Chen",
-    initials: "MC",
-    rating: 4,
-    date: "2024-01-14",
-    business: "Heaven Restaurant",
-    category: "Food & Dining",
-    categoryColor: "bg-orange-100 text-orange-700",
-    title: "Great food, lovely atmosphere",
-    content:
-      "The food was excellent and the ambiance was perfect for a romantic dinner. Service was a bit slow but the quality made up for it.",
-    status: "Published",
-    statusColor: "bg-green-100 text-green-700",
-  },
-  {
-    id: 3,
-    reviewer: "Alex Rodriguez",
-    initials: "AR",
-    rating: 3,
-    date: "2024-01-12",
-    business: "MTN Rwanda Service Center",
-    category: "Communication",
-    categoryColor: "bg-purple-100 text-purple-700",
-    title: "Average service, long wait times",
-    content:
-      "The staff was helpful but I had to wait for over an hour to get my SIM card issue resolved. The process could be more efficient.",
-    status: "Pending",
-    statusColor: "bg-yellow-100 text-yellow-700",
-  },
-  {
-    id: 4,
-    reviewer: "Emily Davis",
-    initials: "ED",
-    rating: 5,
-    date: "2024-01-13",
-    business: "Rwanda Eco Tours",
-    category: "Events & Tours",
-    categoryColor: "bg-green-100 text-green-700",
-    title: "Unforgettable gorilla trekking experience",
-    content:
-      "This tour company provided an incredible experience. Our guide was knowledgeable and the entire trip was well organized. Highly recommend!",
-    status: "Published",
-    statusColor: "bg-green-100 text-green-700",
-  },
-  {
-    id: 5,
-    reviewer: "Lisa Wang",
-    initials: "LW",
-    rating: 5,
-    date: "2024-01-11",
-    business: "King Faisal Hospital",
-    category: "Health & Wellness",
-    categoryColor: "bg-pink-100 text-pink-700",
-    title: "Professional medical care",
-    content:
-      "Excellent medical facility with modern equipment and professional staff. The doctors were thorough and caring.",
-    status: "Published",
-    statusColor: "bg-green-100 text-green-700",
-  },
-  {
-    id: 6,
-    reviewer: "John Smith",
-    initials: "JS",
-    rating: 2,
-    date: "2024-01-10",
-    business: "Kimironko Market",
-    category: "Shopping",
-    categoryColor: "bg-indigo-100 text-indigo-700",
-    title: "Crowded and overpriced",
-    content:
-      "The market is very crowded and some vendors try to overcharge tourists. Need better organization and price regulation.",
-    status: "Pending",
-    statusColor: "bg-red-100 text-red-700",
-  },
-];
-
-// --- Small Components
 const ReviewCard: React.FC<{ review: Review }> = ({ review }) => (
   <div className="bg-white rounded-2xl shadow p-6">
-    {/* User & Rating */}
     <div className="flex items-start justify-between">
       <div className="flex items-center">
         <div className="w-10 h-10 rounded-full bg-blue-500 text-white flex items-center justify-center font-bold">
@@ -141,8 +45,6 @@ const ReviewCard: React.FC<{ review: Review }> = ({ review }) => (
       </div>
       <button className="text-gray-400">⋯</button>
     </div>
-
-    {/* Business */}
     <div className="mt-3">
       <h4 className="text-lg font-semibold text-gray-800">{review.business}</h4>
       <span
@@ -151,12 +53,8 @@ const ReviewCard: React.FC<{ review: Review }> = ({ review }) => (
         {review.category}
       </span>
     </div>
-
-    {/* Title & Content */}
     <h5 className="mt-3 font-semibold text-gray-700">{review.title}</h5>
     <p className="text-gray-600 mt-1 text-sm">{review.content}</p>
-
-    {/* Status */}
     <div className="mt-4">
       <span className={`px-3 py-1 text-sm rounded-full ${review.statusColor}`}>
         {review.status}
@@ -165,12 +63,66 @@ const ReviewCard: React.FC<{ review: Review }> = ({ review }) => (
   </div>
 );
 
-// --- Main Component
 export default function ReviewsManagement() {
+  const [reviews, setReviews] = useState<Review[]>([]);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<
     "All" | "Published" | "Pending"
   >("All");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const limit = 20; // limit ya page 1
+
+  useEffect(() => {
+    const fetchReviews = async () => {
+      setLoading(true);
+      try {
+        const res = await axios.get(
+          `https://nearme-bn.onrender.com/review/admin/all?page=${page}&limit=${limit}`,
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          }
+        );
+
+        const reviewsData = Array.isArray(res.data.data) ? res.data.data : [];
+        const mapped: Review[] = reviewsData.map((item: any) => ({
+          id: item.id,
+          reviewer: item.reviewerName || "Anonymous",
+          initials: (item.reviewerName || "A")
+            .split(" ")
+            .map((n: string) => n[0])
+            .join("")
+            .toUpperCase(),
+          rating: item.rating,
+          date: new Date(item.date).toLocaleDateString(),
+          business: item.businessName || "Unknown Business",
+          category: item.categoryName,
+          categoryColor: "bg-blue-100 text-blue-700",
+          title: item.title,
+          content: item.comment,
+          status:
+            item.status?.toLowerCase() === "published"
+              ? "Published"
+              : "Pending",
+          statusColor:
+            item.status?.toLowerCase() === "published"
+              ? "bg-green-100 text-green-700"
+              : "bg-yellow-100 text-yellow-700",
+        }));
+
+        setReviews(mapped);
+        setLoading(false);
+      } catch (err: any) {
+        setError(err.message || "Failed to fetch reviews");
+        setLoading(false);
+      }
+    };
+
+    fetchReviews();
+  }, [page]);
 
   const filteredReviews = reviews.filter(
     (review) =>
@@ -179,6 +131,9 @@ export default function ReviewsManagement() {
         review.business.toLowerCase().includes(search.toLowerCase()) ||
         review.content.toLowerCase().includes(search.toLowerCase()))
   );
+
+  if (loading) return <p className="p-8">Loading reviews...</p>;
+  if (error) return <p className="p-8 text-red-500">{error}</p>;
 
   return (
     <div className="p-6 pt-20 px-10 py-10 bg-gray-50 min-h-screen">
@@ -193,11 +148,10 @@ export default function ReviewsManagement() {
         Monitor and manage user reviews across all business listings
       </p>
 
-      {/* Search + Filter */}
       <div className="flex items-center gap-4 mb-6 mt-4">
         <input
           type="text"
-          placeholder="Search reviews by business, reviewer, or content..."
+          placeholder="Search by reviewer, business, or content..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="flex-1 px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-400 outline-none"
@@ -213,11 +167,29 @@ export default function ReviewsManagement() {
         </select>
       </div>
 
-      {/* Reviews Grid */}
       <div className="grid md:grid-cols-2 gap-6">
         {filteredReviews.map((review) => (
           <ReviewCard key={review.id} review={review} />
         ))}
+      </div>
+
+      {/* Pagination */}
+      <div className="flex justify-center gap-4 mt-6">
+        <button
+          onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
+          className=" text-white px-4 py-2 bg-blue-600 rounded hover:bg-blue-700"
+          disabled={page === 1}
+        >
+          Previous
+        </button>
+        <span className="px-4 py-2">{page}</span>
+        <button
+          onClick={() => setPage((prev) => prev + 1)}
+          className=" text-white px-4 py-2 bg-blue-600 rounded hover:bg-blue-700"
+          disabled={reviews.length < limit}
+        >
+          Next
+        </button>
       </div>
     </div>
   );
