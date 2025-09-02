@@ -5,35 +5,37 @@ import { Link } from "react-router-dom";
 import axios from "axios";
 
 const TotalUsers: React.FC = () => {
-  const [users, setUsers] = useState(0);
+  const [totalUsers, setTotalUsers] = useState<number>(0);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchUsers = async () => {
+    const fetchTotalUsers = async () => {
       try {
-        const res = await axios.get("https://nearme-bn.onrender.com/user", {
+        const res = await axios.get("https://nearme-bn.onrender.com/user/all", {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
         });
 
-        if (Array.isArray(res.data.data)) {
-          setUsers(res.data.data.length);
-        } else if (res.data.data) {
-          setUsers(1);
-        } else {
-          setUsers(0);
-        }
-      } catch (error) {
-        console.error("Error fetching users:", error);
+        // Assuming backend returns { total: number }
+        setTotalUsers(res.data.total || 0);
+        setLoading(false);
+      } catch (err) {
+        console.error(err);
+        setLoading(false);
       }
     };
 
-    fetchUsers();
+    fetchTotalUsers();
   }, []);
 
   return (
     <Link to="/user-management">
-      <StatCard icon={Users} value={users} label="Users" />
+      <StatCard
+        icon={Users}
+        value={loading ? "..." : totalUsers} // show "..." while loading
+        label="TotalUsers"
+      />
     </Link>
   );
 };
