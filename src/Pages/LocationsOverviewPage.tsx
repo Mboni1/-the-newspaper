@@ -5,11 +5,11 @@ import axios from "axios";
 
 interface Location {
   id: number;
+  title: string;
   name: string;
+  location: string;
   district: string;
-  longitude: string;
-  description: string;
-  imageUrl: string;
+  placeImg: string[];
   province?: string;
 }
 
@@ -22,7 +22,7 @@ const LocationsOverviewPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [provinceFilter, setProvinceFilter] = useState("All");
   const [currentPage, setCurrentPage] = useState(1);
-  const limit = 3; // 3 locations per page
+  const limit = 3;
 
   useEffect(() => {
     const fetchLocations = async () => {
@@ -48,7 +48,7 @@ const LocationsOverviewPage: React.FC = () => {
     fetchLocations();
   }, []);
 
-  // 🔎 filter + search
+  // filter + search
   useEffect(() => {
     let filtered = [...locations];
 
@@ -108,7 +108,8 @@ const LocationsOverviewPage: React.FC = () => {
       </div>
 
       {/* Search + Filter */}
-      <div className="flex flex-col sm:flex-row items-center gap-3 bg-white p-3 rounded-xl shadow mb-8">
+
+      <div className="flex flex-col sm:flex-row gap-3 w-full mb-4">
         <div className="flex items-center w-full px-3 py-2 rounded-xl bg-white shadow-sm">
           <Search className="text-gray-400 w-5 h-5 mr-2" />
           <input
@@ -124,7 +125,7 @@ const LocationsOverviewPage: React.FC = () => {
           <select
             value={provinceFilter}
             onChange={(e) => setProvinceFilter(e.target.value)}
-            className="outline-none bg-transparent"
+            className="flex flex-col rounded-xl px-3 py-2  bg-white shadow-sm"
           >
             <option value="All">All Provinces</option>
             <option value="Northern">Northern</option>
@@ -137,44 +138,50 @@ const LocationsOverviewPage: React.FC = () => {
       </div>
 
       {/* Locations Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+
+      <div className="p-6   px-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {paginatedLocations.length > 0 ? (
-          paginatedLocations.map((loc) => (
+          paginatedLocations.map((location) => (
             <div
-              key={loc.id}
-              className="bg-white rounded-2xl shadow hover:shadow-md transition overflow-hidden"
+              key={location.id}
+              className="bg-white rounded-xl shadow-sm  p-3 hover:shadow-md transition w-full"
             >
-              <img
-                src={loc.imageUrl}
-                alt={loc.name}
-                className="w-full h-40 object-cover"
-              />
-              <div className="p-4">
+              {location.placeImg?.length > 0 && (
+                <img
+                  src={location.placeImg[0]}
+                  alt={location.name}
+                  className="w-full h-40 object-cover rounded-lg"
+                />
+              )}
+              <div className="mt-3">
                 <div className="flex items-start justify-between">
-                  <h2 className="font-bold text-lg">{loc.name}</h2>
+                  <div>
+                    <h2 className="font-semibold text-base">
+                      {location.title}
+                    </h2>
+                    <p className="text-gray-500 text-sm">{location.location}</p>
+                  </div>
                   <button className="text-gray-400 hover:text-gray-600">
                     <MoreHorizontal />
                   </button>
                 </div>
+
+                {/* Badges */}
                 <div className="flex gap-2 mt-2 flex-wrap">
-                  <span className="bg-blue-50 text-blue-600 text-xs px-2 py-1 rounded-lg">
-                    {loc.district}
+                  <span className="bg-blue-50 text-blue-600 text-xs px-2 py-1 rounded-md">
+                    {location.district}
                   </span>
-                  <span className="bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded-lg">
-                    Longitude: {loc.longitude}
-                  </span>
-                  {loc.province && (
-                    <span className="bg-green-100 text-green-600 text-xs px-2 py-1 rounded-lg">
-                      {loc.province}
+                  {location.province && (
+                    <span className="bg-green-50 text-green-600 text-xs px-2 py-1 rounded-md">
+                      {location.province}
                     </span>
                   )}
                 </div>
-                <p className="text-gray-600 text-sm mt-3">{loc.description}</p>
               </div>
             </div>
           ))
         ) : (
-          <p className="text-gray-500">No locations found.</p>
+          <p className="text-center">No locations found.</p>
         )}
       </div>
 

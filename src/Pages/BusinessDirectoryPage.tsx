@@ -1,75 +1,126 @@
+// src/pages/BusinessDirectoryPage.tsx
 import React, { useEffect, useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
-import { MoreHorizontal, Building, Search, ChevronDown } from "lucide-react";
 import axios from "axios";
+import { Link, useNavigate } from "react-router-dom";
+import { Building, MoreHorizontal, Search } from "lucide-react";
 
 interface Business {
   id: number;
   name: string;
   address: string;
   category: string;
-  image: string;
-  icon: React.ElementType;
+  placeImg: string[];
+  coords: string[];
+  icon?: React.ElementType;
 }
 
-const categories = [
-  "All Categories",
-  "Transportation Services",
-  "Accommodation Services",
-  "Food & Dining",
-  "Local Events & Tours",
-];
+// Corrected SearchFilterBar
+interface SearchFilterBarProps {
+  searchTerm: string;
+  setSearchTerm: (value: string) => void;
+  category: string;
+  setCategory: (value: string) => void;
+}
+
+const SearchFilterBar: React.FC<SearchFilterBarProps> = ({
+  searchTerm,
+  setSearchTerm,
+  category,
+  setCategory,
+}) => {
+  return (
+    <div className="flex flex-col sm:flex-row gap-3 w-full mb-6">
+      {/* Search Input */}
+      <div className="flex items-center w-full px-4 py-2 rounded-xl border border-gray-300 focus-within:ring-2 focus-within:ring-blue-500">
+        <Search className="text-gray-400 w-5 h-5 mr-2" />
+        <input
+          type="text"
+          placeholder="Search"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="flex-1 outline-none bg-transparent"
+        />
+      </div>
+
+      {/* Dropdown Filter */}
+      <div className="relative">
+        <select
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
+          className="px-4 py-2 rounded-xl border border-gray-300 outline-none cursor-pointer focus:ring-2 focus:ring-blue-500"
+        >
+          <option value="All">All categories</option>
+          <option value="Hotels">Hotels</option>
+          <option value="Restaurants">Restaurants</option>
+          <option value="Shops">Shops</option>
+          <option value="Museums">Museums</option>
+        </select>
+      </div>
+    </div>
+  );
+};
 
 const BusinessDirectoryPage: React.FC = () => {
   const navigate = useNavigate();
   const [businesses, setBusinesses] = useState<Business[]>([]);
-  const [search, setSearch] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("All Categories");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const limit = 3;
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
-  const limit = 4;
-  const [totalPages, setTotalPages] = useState(1);
 
-  const fetchBusinesses = async (page: number) => {
+  // Search / Filter state
+  const [searchTerm, setSearchTerm] = useState("");
+  const [category, setCategory] = useState("All");
+
+  const fetchBusinesses = async (page = 1) => {
     try {
       setLoading(true);
-      const params: any = { limit, page };
-      if (selectedCategory !== "All Categories")
-        params.category = selectedCategory;
-      if (search) params.search = search;
-
+      const token = localStorage.getItem("token");
       const res = await axios.get(
         "https://nearme-bn.onrender.com/category/adminfetchbuz/all",
         {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-          params,
+          headers: { Authorization: `Bearer ${token}` },
+          params: { page, limit },
         }
       );
 
-      setBusinesses(res.data.data || []);
-      setTotalPages(Math.ceil(res.data.total / limit) || 1); // assuming backend returns total
+      const mappedData: Business[] = (res.data.data || []).map((item: any) => ({
+        id: item.id,
+        name: item.title,
+        address: item.location,
+        category: item.subCategory?.name || "Uncategorized",
+        placeImg: item.placeImg || [],
+        coords: item.coords || [],
+        icon: Building,
+      }));
+
+      setBusinesses(mappedData);
+      setTotalPages(Math.ceil(res.data.total / limit) || 1);
       setLoading(false);
-    } catch (err: any) {
-      console.error(err);
-      setError("Failed to load businesses.");
+    } catch (err) {
+      console.error("Error fetching businesses:", err);
+      setError("Failed to fetch businesses.");
       setLoading(false);
     }
   };
 
   useEffect(() => {
     fetchBusinesses(currentPage);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentPage, selectedCategory, search]);
+  }, [currentPage]);
+
+  // Filtered businesses
+  const filteredBusinesses = businesses.filter((b) => {
+    const matchesCategory = category === "All" || b.category === category;
+    const matchesSearch =
+      b.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      b.address.toLowerCase().includes(searchTerm.toLowerCase());
+    return matchesCategory && matchesSearch;
+  });
 
   const handlePrev = () => setCurrentPage((prev) => Math.max(prev - 1, 1));
   const handleNext = () =>
     setCurrentPage((prev) => Math.min(prev + 1, totalPages));
-
-  if (loading) return <p className="p-6">Loading businesses...</p>;
-  if (error) return <p className="p-6 text-red-500">{error}</p>;
 
   return (
     <div className="p-6 pt-20 px-10 py-10 bg-gray-50 min-h-screen">
@@ -80,11 +131,11 @@ const BusinessDirectoryPage: React.FC = () => {
         ← Back to Dashboard
       </Link>
 
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+      {/* Header + New */}
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold">Business Directory</h1>
-          <p className="text-gray-600 text-sm sm:text-base">
+          <h1 className="text-2xl font-bold">Business Directory</h1>
+          <p className="text-gray-600">
             Manage and organize all listed businesses in one place.
           </p>
         </div>
@@ -96,55 +147,35 @@ const BusinessDirectoryPage: React.FC = () => {
         </button>
       </div>
 
-      {/* Search & Filter */}
-      <div className="flex flex-col sm:flex-row items-center gap-3 mb-8">
-        <div className="flex items-center w-full px-3 py-4 rounded-xl bg-white shadow-sm">
-          <Search className="w-5 h-5 text-gray-400 mr-2" />
-          <input
-            type="text"
-            placeholder="Search"
-            className="w-full outline-none text-sm"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </div>
+      {/* Search / Filter Bar */}
+      <SearchFilterBar
+        searchTerm={searchTerm}
+        setSearchTerm={setSearchTerm}
+        category={category}
+        setCategory={setCategory}
+      />
 
-        <div className="relative w-full lg:w-1/2">
-          <select
-            value={selectedCategory}
-            onChange={(e) => {
-              setSelectedCategory(e.target.value);
-              setCurrentPage(1); // reset to page 1
-            }}
-            className="w-full px-3 py-4 rounded-xl shadow-sm bg-white text-sm appearance-none cursor-pointer"
-          >
-            {categories.map((cat) => (
-              <option key={cat} value={cat}>
-                {cat}
-              </option>
-            ))}
-          </select>
-          <ChevronDown className="absolute right-3 top-3 w-4 h-4 text-gray-500 pointer-events-none" />
-        </div>
-      </div>
+      {/* Loading/Error */}
+      {loading && <p className="p-4">Loading businesses...</p>}
+      {error && <p className="p-4 text-red-500">{error}</p>}
 
-      {/* Cards Grid */}
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {businesses.map((business) => {
+      {/* Business Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {filteredBusinesses.map((business) => {
           const Icon = business.icon || Building;
           return (
             <div
               key={business.id}
-              className="bg-white rounded-2xl shadow hover:shadow-lg transition overflow-hidden"
+              className="bg-white rounded-2xl shadow hover:shadow-md transition overflow-hidden"
             >
-              <img
-                src={
-                  business.image ||
-                  "https://source.unsplash.com/400x300/?business"
-                }
-                alt={business.name}
-                className="w-full h-40 object-cover"
-              />
+              {business.placeImg.length > 0 && (
+                <img
+                  src={business.placeImg[0]}
+                  alt={business.name}
+                  className="w-full h-40 object-cover"
+                />
+              )}
+
               <div className="p-4">
                 <div className="flex items-start justify-between">
                   <div>
@@ -153,6 +184,7 @@ const BusinessDirectoryPage: React.FC = () => {
                   </div>
                   <MoreHorizontal className="text-gray-400 w-5 h-5 cursor-pointer" />
                 </div>
+
                 <div className="flex items-center mt-3 text-blue-600 font-medium text-sm">
                   <Icon className="w-5 h-5 mr-2" />
                   {business.category}
@@ -163,12 +195,12 @@ const BusinessDirectoryPage: React.FC = () => {
         })}
       </div>
 
-      {/* Pagination Buttons */}
+      {/* Pagination */}
       <div className="flex justify-center mt-6 gap-4">
         <button
           onClick={handlePrev}
           disabled={currentPage === 1}
-          className="px-4 py-2 bg-blue-600 rounded hover:bg-gray-300 disabled:opacity-50"
+          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
         >
           Previous
         </button>
@@ -178,7 +210,7 @@ const BusinessDirectoryPage: React.FC = () => {
         <button
           onClick={handleNext}
           disabled={currentPage === totalPages}
-          className="px-4 py-2 bg-blue-600 rounded hover:bg-gray-300 disabled:opacity-50"
+          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
         >
           Next
         </button>
