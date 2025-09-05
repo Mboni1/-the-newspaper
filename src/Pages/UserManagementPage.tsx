@@ -20,7 +20,7 @@ const UserManagement: React.FC = () => {
   const [filterRole, setFilterRole] = useState("All Roles");
   const [openMenu, setOpenMenu] = useState<number | null>(null); // dropdown state
 
-  const limit = 3;
+  const limit = 5;
 
   useEffect(() => {
     const fetchUsers = async () => {
