@@ -12,8 +12,6 @@ import {
   Map,
   ShoppingBag,
   MoreHorizontal,
-  ChevronLeft,
-  ChevronRight,
 } from "lucide-react";
 
 // Map string names from API -> Lucide icons
@@ -41,11 +39,11 @@ interface Category {
 
 const ServiceCategories: React.FC = () => {
   const navigate = useNavigate();
-  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [page, setPage] = useState(1);
   const [totalCategories, setTotalCategories] = useState(0);
+  const [categories, setCategories] = useState<Category[]>([]);
 
   const limit = 9;
 
@@ -54,7 +52,7 @@ const ServiceCategories: React.FC = () => {
       try {
         setLoading(true);
         const res = await fetch(
-          `https://nearme-bn.onrender.com/category?page=${page}&limit=${limit}`,
+          `https://nearme-bn.onrender.com/category?page=${page}&limit=${limit}&search=${searchTerm}`,
           {
             headers: {
               "Content-Type": "application/json",
@@ -68,6 +66,7 @@ const ServiceCategories: React.FC = () => {
           "Fetched categories:",
           JSON.stringify(responseData, null, 2)
         );
+
         if (Array.isArray(responseData.data)) {
           setCategories(responseData.data);
           setTotalCategories(responseData.total || responseData.data.length);
@@ -76,7 +75,7 @@ const ServiceCategories: React.FC = () => {
           setTotalCategories(0);
         }
       } catch (error) {
-        console.error("Error fetching users:", error);
+        console.error("Error fetching categories:", error);
         setCategories([]);
       } finally {
         setLoading(false);
@@ -87,6 +86,18 @@ const ServiceCategories: React.FC = () => {
   }, [page, searchTerm]);
 
   const totalPages = Math.ceil(totalCategories / limit);
+
+  const handlePrev = () => {
+    if (page > 1) {
+      setPage((prev) => prev - 1);
+    }
+  };
+
+  const handleNext = () => {
+    if (page < totalPages) {
+      setPage((prev) => prev + 1);
+    }
+  };
 
   if (loading) return <p className="p-8">Loading categories...</p>;
   if (categories.length === 0) {
@@ -127,6 +138,11 @@ const ServiceCategories: React.FC = () => {
           <input
             type="text"
             placeholder="Search Category"
+            value={searchTerm}
+            onChange={(e) => {
+              setPage(1); // reset page kuri 1 igihe ushakisha
+              setSearchTerm(e.target.value);
+            }}
             className="flex-1 outline-none"
           />
         </div>
@@ -151,43 +167,36 @@ const ServiceCategories: React.FC = () => {
               <p className="text-gray-600 text-sm mb-4">
                 {category.description}
               </p>
-              <Link
-                to={category.link}
+              <button
+                onClick={() => navigate(`/category/${category.id}`)}
                 className="text-blue-600 text-sm font-semibold hover:underline"
               >
                 EXPLORE CATEGORY →
-              </Link>
+              </button>
             </div>
           );
         })}
       </div>
 
       {/* Pagination */}
-      <div className="flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-0 p-3 text-xs sm:text-sm text-gray-500 mt-6">
-        <p>
-          Showing {(page - 1) * limit + 1} -{" "}
-          {Math.min(page * limit, totalCategories)} of {totalCategories}{" "}
-          categories
-        </p>
-        <div className="flex items-center gap-2">
-          <button
-            disabled={page === 1}
-            onClick={() => setPage((prev) => prev - 1)}
-            className="p-1 rounded hover:bg-gray-100 disabled:opacity-50"
-          >
-            <ChevronLeft size={18} />
-          </button>
-          <span className="px-3 py-1 bg-blue-600 text-white rounded">
-            {page}
-          </span>
-          <button
-            disabled={page === totalPages}
-            onClick={() => setPage((prev) => prev + 1)}
-            className="p-1 rounded hover:bg-gray-100 disabled:opacity-50"
-          >
-            <ChevronRight size={18} />
-          </button>
-        </div>
+      <div className="flex justify-center mt-6 gap-4">
+        <button
+          onClick={handlePrev}
+          disabled={page === 1}
+          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+        >
+          Prev
+        </button>
+        <span className="px-4 py-2">
+          Page {page} of {totalPages}
+        </span>
+        <button
+          onClick={handleNext}
+          disabled={page === totalPages}
+          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+        >
+          Next
+        </button>
       </div>
     </div>
   );

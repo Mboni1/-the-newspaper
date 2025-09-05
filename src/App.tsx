@@ -16,6 +16,7 @@ import AddArticlePage from "./Pages/AddArticlePage";
 import AddLocationPage from "./Pages/AddLocationPage";
 import AddBusinessPage from "./Pages/AddBusinessPage";
 import AddCategoryPage from "./Pages/AddCategoryPage";
+import CategoryPage from "./Pages/CategoryPage";
 
 // Components (for Dashboard layout)
 import Navbar from "./Components/Navbar";
@@ -41,6 +42,7 @@ const App: React.FC = () => {
             </div>
           }
         />
+
         <Route
           path="/user-management"
           element={
@@ -50,6 +52,7 @@ const App: React.FC = () => {
             </div>
           }
         />
+
         <Route
           path="/service-categories"
           element={
@@ -59,6 +62,7 @@ const App: React.FC = () => {
             </div>
           }
         />
+
         <Route
           path="/business"
           element={
@@ -68,6 +72,7 @@ const App: React.FC = () => {
             </div>
           }
         />
+
         <Route
           path="/business-directory"
           element={
@@ -77,6 +82,7 @@ const App: React.FC = () => {
             </div>
           }
         />
+
         <Route
           path="/documents"
           element={
@@ -86,6 +92,7 @@ const App: React.FC = () => {
             </div>
           }
         />
+
         <Route
           path="/reviews"
           element={
@@ -95,6 +102,7 @@ const App: React.FC = () => {
             </div>
           }
         />
+
         <Route
           path="/visitor-analytics"
           element={
@@ -104,6 +112,7 @@ const App: React.FC = () => {
             </div>
           }
         />
+
         <Route
           path="/locations-overview"
           element={
@@ -113,6 +122,7 @@ const App: React.FC = () => {
             </div>
           }
         />
+
         <Route
           path="/add-article"
           element={
@@ -122,6 +132,7 @@ const App: React.FC = () => {
             </div>
           }
         />
+
         <Route
           path="/add-location"
           element={
@@ -131,6 +142,7 @@ const App: React.FC = () => {
             </div>
           }
         />
+
         <Route
           path="/add-business"
           element={
@@ -140,6 +152,7 @@ const App: React.FC = () => {
             </div>
           }
         />
+
         <Route
           path="/add-category"
           element={
@@ -149,11 +162,23 @@ const App: React.FC = () => {
             </div>
           }
         />
+
         <Route
           path="/login"
           element={
             <div className="min-h-screen bg-gray-100">
               <LoginPage />
+            </div>
+          }
+        />
+
+        {/* 👉 Category detail route */}
+        <Route
+          path="/category/:id"
+          element={
+            <div className="min-h-screen bg-gray-100">
+              <Navbar />
+              <CategoryPage />
             </div>
           }
         />

@@ -69,8 +69,8 @@ const UserStatistics: React.FC = () => {
       {/* Header */}
       <div className="flex justify-between items-center mb-3">
         <div>
-          <h2 className="text-sm font-semibold py-1.5">User statistics</h2>
-          <p className="text-gray-500 text-xs">User activities overview</p>
+          <h2 className="text-lg font-semibold py-1.5">User statistics</h2>
+          <p className="text-gray-500 text-sm">User activities overview</p>
         </div>
 
         {/* Timerange buttons */}

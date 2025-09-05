@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Search, ChevronLeft, ChevronRight } from "lucide-react";
+import { Search, MoreVertical } from "lucide-react";
 import { Link } from "react-router-dom";
 
 interface User {
@@ -16,7 +16,11 @@ const UserManagement: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [totalUsers, setTotalUsers] = useState(0);
-  const limit = 2;
+  const [search, setSearch] = useState("");
+  const [filterRole, setFilterRole] = useState("All Roles");
+  const [openMenu, setOpenMenu] = useState<number | null>(null); // dropdown state
+
+  const limit = 3;
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -33,7 +37,6 @@ const UserManagement: React.FC = () => {
         );
 
         const responseData = await res.json();
-        console.log("Fetched users:", JSON.stringify(responseData, null, 2));
         if (Array.isArray(responseData.data)) {
           setUsers(responseData.data);
           setTotalUsers(responseData.total || responseData.data.length);
@@ -53,6 +56,30 @@ const UserManagement: React.FC = () => {
   }, [page]);
 
   const totalPages = Math.ceil(totalUsers / limit);
+
+  const handlePrev = () => setPage((prev) => Math.max(prev - 1, 1));
+  const handleNext = () => setPage((prev) => Math.min(prev + 1, totalPages));
+
+  const handleDelete = (id: number) => {
+    setUsers((prev) => prev.filter((u) => u.id !== id));
+    setOpenMenu(null);
+  };
+
+  const handleEdit = (id: number) => {
+    alert(`Edit user ${id}`);
+    setOpenMenu(null);
+  };
+
+  // ✅ filter users by search and role
+  const filteredUsers = users.filter((u) => {
+    const fullName = `${u.firstName} ${u.lastName}`.toLowerCase();
+    const matchesSearch =
+      fullName.includes(search.toLowerCase()) ||
+      u.email.toLowerCase().includes(search.toLowerCase());
+    const matchesRole =
+      filterRole === "All Roles" || u.role === filterRole.toLowerCase();
+    return matchesSearch && matchesRole;
+  });
 
   if (loading) return <p className="p-8">Loading users...</p>;
   if (users.length === 0)
@@ -79,12 +106,18 @@ const UserManagement: React.FC = () => {
           <Search className="absolute left-3 top-3 text-gray-400" size={18} />
           <input
             type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
             placeholder="Search users by name or email..."
             className="pl-10 pr-4 py-2 w-full rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none text-sm sm:text-base"
           />
         </div>
 
-        <select className="border border-gray-300 rounded-lg px-3 py-2 text-sm sm:text-base w-full sm:w-auto">
+        <select
+          value={filterRole}
+          onChange={(e) => setFilterRole(e.target.value)}
+          className="border border-gray-300 rounded-lg px-3 py-2 text-sm sm:text-base w-full sm:w-auto"
+        >
           <option>All Roles</option>
           <option>Admin</option>
           <option>User</option>
@@ -105,7 +138,7 @@ const UserManagement: React.FC = () => {
               </tr>
             </thead>
             <tbody>
-              {users.map((u) => {
+              {filteredUsers.map((u) => {
                 const fullName = `${u.firstName ?? ""} ${
                   u.lastName ?? ""
                 }`.trim();
@@ -133,10 +166,16 @@ const UserManagement: React.FC = () => {
                     <td className="p-3">
                       <span
                         className={`px-2 py-1 rounded-full text-xs sm:text-sm font-medium
-              ${u.role === "admin" ? "bg-red-100 text-red-600" : ""}
-              ${u.role === "user" ? "bg-blue-100 text-blue-600" : ""}
-              ${u.role === "moderator" ? "bg-green-100 text-green-600" : ""}
-            `}
+                          ${u.role === "admin" ? "bg-red-100 text-red-600" : ""}
+                          ${
+                            u.role === "user" ? "bg-blue-100 text-blue-600" : ""
+                          }
+                          ${
+                            u.role === "moderator"
+                              ? "bg-green-100 text-green-600"
+                              : ""
+                          }
+                        `}
                       >
                         {u.role}
                       </span>
@@ -145,8 +184,12 @@ const UserManagement: React.FC = () => {
                     <td className="p-3">
                       <span
                         className={`flex items-center gap-1 text-xs sm:text-sm font-medium
-              ${u.status === "Active" ? "text-green-600" : "text-gray-400"}
-            `}
+                          ${
+                            u.status === "Active"
+                              ? "text-green-600"
+                              : "text-gray-400"
+                          }
+                        `}
                       >
                         <span
                           className={`w-2 h-2 rounded-full ${
@@ -159,10 +202,33 @@ const UserManagement: React.FC = () => {
                       </span>
                     </td>
 
-                    <td className="p-3 text-right">
-                      <button className="text-gray-500 hover:text-gray-800">
-                        ...
+                    <td className="p-3 text-right relative">
+                      <button
+                        className="text-gray-500 hover:text-gray-800"
+                        onClick={() =>
+                          setOpenMenu((prev) => (prev === u.id ? null : u.id))
+                        }
+                      >
+                        <MoreVertical />
                       </button>
+
+                      {/* Dropdown menu */}
+                      {openMenu === u.id && (
+                        <div className="absolute right-0 mt-2 w-32 bg-white border rounded shadow-lg z-10">
+                          <button
+                            onClick={() => handleEdit(u.id)}
+                            className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => handleDelete(u.id)}
+                            className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      )}
                     </td>
                   </tr>
                 );
@@ -170,33 +236,27 @@ const UserManagement: React.FC = () => {
             </tbody>
           </table>
         </div>
+      </div>
 
-        {/* Footer with Pagination */}
-        <div className="flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-0 p-3 text-xs sm:text-sm text-gray-500">
-          <p>
-            Showing {(page - 1) * limit + 1} -{" "}
-            {Math.min(page * limit, totalUsers)} of {totalUsers} users
-          </p>
-          <div className="flex items-center gap-2">
-            <button
-              disabled={page === 1}
-              onClick={() => setPage((prev) => prev - 1)}
-              className="p-1 rounded hover:bg-gray-100 disabled:opacity-50"
-            >
-              <ChevronLeft size={18} />
-            </button>
-            <span className="px-3 py-1 bg-blue-600 text-white rounded">
-              {page}
-            </span>
-            <button
-              disabled={page === totalPages}
-              onClick={() => setPage((prev) => prev + 1)}
-              className="p-1 rounded hover:bg-gray-100 disabled:opacity-50"
-            >
-              <ChevronRight size={18} />
-            </button>
-          </div>
-        </div>
+      {/*  Pagination  */}
+      <div className="flex justify-center mt-6 gap-4 p-4">
+        <button
+          onClick={handlePrev}
+          disabled={page === 1}
+          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+        >
+          Prev.
+        </button>
+        <span className="px-4 py-2">
+          Page {page} of {totalPages}
+        </span>
+        <button
+          onClick={handleNext}
+          disabled={page === totalPages}
+          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+        >
+          Next
+        </button>
       </div>
     </div>
   );
