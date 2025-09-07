@@ -35,6 +35,9 @@ const LoginPage: React.FC = () => {
         return;
       }
 
+      // Save role to localStorage or context
+      localStorage.setItem("role", payload.role);
+
       navigate("/dashboard");
     } catch (err) {
       setError("Login failed. Please try again.");

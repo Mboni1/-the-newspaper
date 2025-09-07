@@ -8,43 +8,35 @@ interface Category {
   description: string;
   image: string;
   services: number;
+  featuredImage: string;
 }
 
-const limit = 3; // pagination limit
+const limit = 3;
 
 const CategoryPage: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
+  const { name } = useParams<{ name: string }>();
   const [category, setCategory] = useState<Category | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
-  const [page, setPage] = useState(1); // pagination state
+  const [page, setPage] = useState(1);
 
   const [formData, setFormData] = useState({
     name: "",
     description: "",
     image: "",
   });
-
-  // Fetch single + all
   useEffect(() => {
-    const fetchCategories = async () => {
+    const fetchCategoryAndServices = async () => {
       try {
         setLoading(true);
-        const resAll = await fetch("https://nearme-bn.onrender.com/category", {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        });
-        const dataAll = await resAll.json();
-        setCategories(Array.isArray(dataAll.data) ? dataAll.data : []);
 
-        if (id) {
+        if (name) {
+          // Fetch category info
           const resOne = await fetch(
-            `https://nearme-bn.onrender.com/category/${id}`,
+            `https://nearme-bn.onrender.com/category/${name}`,
             {
               headers: {
                 "Content-Type": "application/json",
@@ -53,17 +45,36 @@ const CategoryPage: React.FC = () => {
             }
           );
           const dataOne = await resOne.json();
-          setCategory(dataOne);
+          console.log("Category response:", dataOne);
+          setCategory(dataOne.data || null);
+
+          // Fetch subcategories/services for that category
+          const resServices = await fetch(
+            `https://nearme-bn.onrender.com/category/${name}`,
+            {
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+              },
+            }
+          );
+          const dataServices = await resServices.json();
+          console.log("Services response:", dataServices);
+          setCategories(
+            Array.isArray(dataServices.data) ? dataServices.data : []
+          );
         }
       } catch (error) {
         console.error("Error fetching category:", error);
+        setCategory(null);
         setCategories([]);
       } finally {
         setLoading(false);
       }
     };
-    fetchCategories();
-  }, [id]);
+
+    fetchCategoryAndServices();
+  }, [name]);
 
   // Add
   const handleAdd = () => {
@@ -78,7 +89,7 @@ const CategoryPage: React.FC = () => {
     setFormData({
       name: cat.name,
       description: cat.description,
-      image: cat.image,
+      image: cat.featuredImage,
     });
     setIsModalOpen(true);
   };
@@ -106,6 +117,7 @@ const CategoryPage: React.FC = () => {
         id: Date.now(),
         ...formData,
         services: 0,
+        featuredImage: formData.image,
       };
       setCategories([...categories, newCategory]);
     }
@@ -137,9 +149,9 @@ const CategoryPage: React.FC = () => {
         <p className="text-sm text-blue-600 mb-4">
           {category.services} services available
         </p>
-        {category.image && (
+        {category.featuredImage && (
           <img
-            src={category.image}
+            src={category.featuredImage}
             alt={category.name}
             className="w-full max-w-md object-cover rounded-xl mb-4"
           />
@@ -195,9 +207,9 @@ const CategoryPage: React.FC = () => {
                   </button>
                 </div>
               </div>
-              {cat.image && (
+              {cat.featuredImage && (
                 <img
-                  src={cat.image}
+                  src={cat.featuredImage}
                   alt={cat.name}
                   className="w-24 h-20 object-cover rounded-xl"
                 />
@@ -214,7 +226,7 @@ const CategoryPage: React.FC = () => {
               onClick={() => setPage((p) => p - 1)}
               className="px-3 py-1 bg-blue-600 rounded disabled:opacity-50"
             >
-              Prev
+              Prev.
             </button>
             <span>
               Page {page} of {totalPages}

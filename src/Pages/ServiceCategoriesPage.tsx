@@ -154,7 +154,7 @@ const ServiceCategories: React.FC = () => {
           const Icon = iconMap[category.icon] || MoreHorizontal;
           return (
             <div
-              key={category.id}
+              key={category.name}
               className="bg-white p-6 rounded-2xl shadow hover:shadow-lg transition"
             >
               <div className="flex items-center gap-3 mb-3">
@@ -168,7 +168,7 @@ const ServiceCategories: React.FC = () => {
                 {category.description}
               </p>
               <button
-                onClick={() => navigate(`/category/${category.id}`)}
+                onClick={() => navigate(`/category/${category.name}`)}
                 className="text-blue-600 text-sm font-semibold hover:underline"
               >
                 EXPLORE CATEGORY →
