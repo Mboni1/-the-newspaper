@@ -174,7 +174,7 @@ const App: React.FC = () => {
 
         {/* 👉 Category detail route */}
         <Route
-          path="/category/:id"
+          path="/category/:name"
           element={
             <div className="min-h-screen bg-gray-100">
               <Navbar />

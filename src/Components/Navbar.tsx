@@ -1,7 +1,7 @@
 import React from "react";
 import NotificationBell from "./NotificationBell";
 import UserAvatar from "./UserAvatar";
-import DropdownIcon from "./DropdownIcon";
+import DropDownIcon from "./DropDownIcon";
 import logo1 from "../Assets/logo1.jpeg";
 
 const Navbar: React.FC = () => {
@@ -17,7 +17,7 @@ const Navbar: React.FC = () => {
         <NotificationBell />
         <div className="flex items-center gap-2 px-4">
           <UserAvatar />
-          <DropdownIcon />
+          <DropDownIcon />
         </div>
       </div>
     </header>
