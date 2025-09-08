@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Search, MoreVertical } from "lucide-react";
+import { Search, MoreVertical, Users as UsersIcon } from "lucide-react";
 import { Link } from "react-router-dom";
 
 interface User {
@@ -17,8 +17,10 @@ const UserManagement: React.FC = () => {
   const [page, setPage] = useState(1);
   const [totalUsers, setTotalUsers] = useState(0);
   const [search, setSearch] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
   const [filterRole, setFilterRole] = useState("All Roles");
-  const [openMenu, setOpenMenu] = useState<number | null>(null); // dropdown state
+  const [openMenu, setOpenMenu] = useState<number | null>(null);
+  const [editingUser, setEditingUser] = useState<User | null>(null);
 
   const limit = 5;
 
@@ -26,7 +28,6 @@ const UserManagement: React.FC = () => {
     const fetchUsers = async () => {
       try {
         setLoading(true);
-
         const res = await fetch(
           `https://nearme-bn.onrender.com/user/all?page=${page}&limit=${limit}`,
           {
@@ -55,31 +56,79 @@ const UserManagement: React.FC = () => {
     fetchUsers();
   }, [page]);
 
-  const totalPages = Math.ceil(totalUsers / limit);
-
-  const handlePrev = () => setPage((prev) => Math.max(prev - 1, 1));
-  const handleNext = () => setPage((prev) => Math.min(prev + 1, totalPages));
-
-  const handleDelete = (id: number) => {
-    setUsers((prev) => prev.filter((u) => u.id !== id));
-    setOpenMenu(null);
-  };
-
-  const handleEdit = (id: number) => {
-    alert(`Edit user ${id}`);
-    setOpenMenu(null);
-  };
-
-  // ✅ filter users by search and role
+  // Filtered users based on search and role
   const filteredUsers = users.filter((u) => {
     const fullName = `${u.firstName} ${u.lastName}`.toLowerCase();
     const matchesSearch =
       fullName.includes(search.toLowerCase()) ||
       u.email.toLowerCase().includes(search.toLowerCase());
     const matchesRole =
-      filterRole === "All Roles" || u.role === filterRole.toLowerCase();
+      filterRole === "All Roles" ||
+      u.role.toLowerCase() === filterRole.toLowerCase();
     return matchesSearch && matchesRole;
   });
+
+  const totalPages = Math.ceil(totalUsers / limit);
+
+  const handlePrev = () => setPage((prev) => Math.max(prev - 1, 1));
+  const handleNext = () => setPage((prev) => Math.min(prev + 1, totalPages));
+
+  const handleDelete = async (id: number) => {
+    try {
+      const res = await fetch(
+        `https://nearme-bn.onrender.com/user/interest/${id}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+
+      if (!res.ok) throw new Error("Failed to delete user");
+
+      setUsers((prev) => prev.filter((u) => u.id !== id));
+      setOpenMenu(null);
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      alert("Failed to delete user. Try again.");
+    }
+  };
+
+  const handleSave = async (
+    id: number,
+    firstName: string,
+    lastName: string,
+    role: string
+  ) => {
+    try {
+      const res = await fetch(
+        `https://nearme-bn.onrender.com/user/names/${id}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+          body: JSON.stringify({ firstName, lastName, role }),
+        }
+      );
+
+      if (!res.ok) throw new Error("Failed to update user");
+
+      const updatedUser = await res.json();
+
+      setUsers((prev) =>
+        prev.map((u) => (u.id === id ? { ...u, ...updatedUser } : u))
+      );
+
+      setEditingUser(null);
+      setOpenMenu(null);
+    } catch (error) {
+      console.error("Error editing user:", error);
+      alert("Failed to edit user. Try again.");
+    }
+  };
 
   if (loading) return <p className="p-8">Loading users...</p>;
   if (users.length === 0)
@@ -94,7 +143,6 @@ const UserManagement: React.FC = () => {
         ← Back to Dashboard
       </Link>
 
-      {/* Title */}
       <h1 className="text-xl sm:text-2xl font-bold">User Management</h1>
       <p className="text-gray-500 mb-6 text-sm sm:text-base">
         Manage and view all platform users and their roles.
@@ -106,9 +154,12 @@ const UserManagement: React.FC = () => {
           <Search className="absolute left-3 top-3 text-gray-400" size={18} />
           <input
             type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
             placeholder="Search users by name or email..."
+            value={search}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setCurrentPage(1);
+            }}
             className="pl-10 pr-4 py-2 w-full rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none text-sm sm:text-base"
           />
         </div>
@@ -212,11 +263,10 @@ const UserManagement: React.FC = () => {
                         <MoreVertical />
                       </button>
 
-                      {/* Dropdown menu */}
                       {openMenu === u.id && (
                         <div className="absolute right-0 mt-2 w-32 bg-white border rounded shadow-lg z-10">
                           <button
-                            onClick={() => handleEdit(u.id)}
+                            onClick={() => setEditingUser(u)}
                             className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
                           >
                             Edit
@@ -238,7 +288,7 @@ const UserManagement: React.FC = () => {
         </div>
       </div>
 
-      {/*  Pagination  */}
+      {/* Pagination */}
       <div className="flex justify-center mt-6 gap-4 p-4">
         <button
           onClick={handlePrev}
@@ -257,6 +307,95 @@ const UserManagement: React.FC = () => {
         >
           Next
         </button>
+      </div>
+
+      {/* Edit Modal */}
+      {editingUser && (
+        <EditUserForm
+          user={editingUser}
+          onClose={() => setEditingUser(null)}
+          onSave={handleSave}
+        />
+      )}
+    </div>
+  );
+};
+
+// Edit Form Component
+interface EditFormProps {
+  user: User;
+  onClose: () => void;
+  onSave: (
+    id: number,
+    firstName: string,
+    lastName: string,
+    role: string
+  ) => void;
+}
+
+const EditUserForm: React.FC<EditFormProps> = ({ user, onClose, onSave }) => {
+  const [firstName, setFirstName] = useState(user.firstName);
+  const [lastName, setLastName] = useState(user.lastName);
+  const [role, setRole] = useState(user.role);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSave(user.id, firstName, lastName, role);
+  };
+
+  return (
+    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
+      <div className="bg-white rounded-xl p-6 w-96 shadow-lg">
+        <h2 className="text-lg font-semibold mb-4">Edit User</h2>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium">First Name</label>
+            <input
+              type="text"
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
+              className="w-full p-2 border rounded-lg"
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium">Last Name</label>
+            <input
+              type="text"
+              value={lastName}
+              onChange={(e) => setLastName(e.target.value)}
+              className="w-full p-2 border rounded-lg"
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium">Role</label>
+            <select
+              value={role}
+              onChange={(e) => setRole(e.target.value as User["role"])}
+              className="w-full p-2 border rounded-lg"
+            >
+              <option value="admin">Admin</option>
+              <option value="user">User</option>
+              <option value="moderator">Moderator</option>
+            </select>
+          </div>
+          <div className="flex justify-end gap-3">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 bg-gray-300 rounded-lg hover:bg-gray-400"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            >
+              Save
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );

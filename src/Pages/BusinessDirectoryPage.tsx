@@ -160,7 +160,7 @@ const BusinessDirectoryPage: React.FC = () => {
       {error && <p className="p-4 text-red-500">{error}</p>}
 
       {/* Business Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 ">
         {filteredBusinesses.map((business) => {
           const Icon = business.icon || Building;
           return (
@@ -172,7 +172,7 @@ const BusinessDirectoryPage: React.FC = () => {
                 <img
                   src={business.placeImg[0]}
                   alt={business.name}
-                  className="w-full h-40 object-cover"
+                  className="w-full h-70 object-cover "
                 />
               )}
 

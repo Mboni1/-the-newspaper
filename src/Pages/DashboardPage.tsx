@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 
 const allStats = [
   "Total Users",
@@ -12,19 +12,26 @@ const allStats = [
   "Notifications",
 ];
 
-const moderatorStats = [
-  "Total Users",
-  "Categories",
-  "Documents",
-  "Business",
-  "Reviews",
-  "Location",
-];
-
 const Dashboard: React.FC = () => {
-  const role = localStorage.getItem("role") || "moderator"; // default moderator
+  const [role, setRole] = useState(localStorage.getItem("role") || "moderator");
 
-  const statsToShow = role === "admin" ? allStats : moderatorStats;
+  // Update role automatically when storage changes
+  useEffect(() => {
+    const handleStorageChange = () => {
+      setRole(localStorage.getItem("role") || "moderator");
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+    };
+  }, []);
+
+  // If moderator → remove "Total Users"
+  const statsToShow =
+    role === "admin"
+      ? allStats
+      : allStats.filter((stat) => stat !== "Total Users");
 
   return (
     <div className="p-6 pt-20 bg-gray-50 min-h-screen">
