@@ -1,3 +1,4 @@
+// src/pages/ServiceCategories.tsx
 import React, { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import {
@@ -44,9 +45,15 @@ const ServiceCategories: React.FC = () => {
   const [page, setPage] = useState(1);
   const [totalCategories, setTotalCategories] = useState(0);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [formData, setFormData] = useState({
+    name: "",
+    isDoc: false,
+  });
 
   const limit = 9;
 
+  // Fetch categories
   useEffect(() => {
     const fetchCategories = async () => {
       try {
@@ -88,14 +95,38 @@ const ServiceCategories: React.FC = () => {
   const totalPages = Math.ceil(totalCategories / limit);
 
   const handlePrev = () => {
-    if (page > 1) {
-      setPage((prev) => prev - 1);
-    }
+    if (page > 1) setPage((prev) => prev - 1);
   };
 
   const handleNext = () => {
-    if (page < totalPages) {
-      setPage((prev) => prev + 1);
+    if (page < totalPages) setPage((prev) => prev + 1);
+  };
+
+  // Save new category
+  const handleSave = async () => {
+    if (!formData.name.trim()) {
+      alert("Name is required");
+      return;
+    }
+    try {
+      const res = await fetch("https://nearme-bn.onrender.com/category", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: JSON.stringify(formData),
+      });
+
+      if (!res.ok) throw new Error("Failed to add category");
+
+      const newCategory = await res.json();
+      setCategories([newCategory.data, ...categories]); // add to list
+      setIsModalOpen(false);
+      setFormData({ name: "", isDoc: false });
+    } catch (err) {
+      console.error(err);
+      alert("Failed to save category");
     }
   };
 
@@ -124,7 +155,7 @@ const ServiceCategories: React.FC = () => {
         </div>
 
         <button
-          onClick={() => navigate("/add-category")}
+          onClick={() => setIsModalOpen(true)}
           className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl shadow-md"
         >
           + New
@@ -198,6 +229,48 @@ const ServiceCategories: React.FC = () => {
           Next
         </button>
       </div>
+
+      {/* Modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center">
+          <div className="bg-white p-6 rounded-2xl shadow-lg w-full max-w-md">
+            <h2 className="text-xl font-semibold mb-4">Add New Category</h2>
+            <input
+              type="text"
+              placeholder="Category Name"
+              value={formData.name}
+              onChange={(e) =>
+                setFormData({ ...formData, name: e.target.value })
+              }
+              className="w-full border rounded-lg px-3 py-2 mb-3"
+            />
+            <label className="flex items-center gap-2 mb-4">
+              <input
+                type="checkbox"
+                checked={formData.isDoc}
+                onChange={(e) =>
+                  setFormData({ ...formData, isDoc: e.target.checked })
+                }
+              />
+              Is Document Category?
+            </label>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setIsModalOpen(false)}
+                className="px-4 py-2 border rounded-lg"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSave}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              >
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
