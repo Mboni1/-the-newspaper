@@ -3,6 +3,7 @@ import { Users } from "lucide-react";
 import StatCard from "./StatCard";
 import { Link } from "react-router-dom";
 import axios from "axios";
+import api from "../lib/axios";
 
 const TotalUsers: React.FC = () => {
   const [totalUsers, setTotalUsers] = useState<number>(0);
@@ -11,11 +12,7 @@ const TotalUsers: React.FC = () => {
   useEffect(() => {
     const fetchTotalUsers = async () => {
       try {
-        const res = await axios.get("https://nearme-bn.onrender.com/user/all", {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        });
+        const res = await api.get("/user/all");
 
         // Assuming backend returns { total: number }
         setTotalUsers(res.data.total || 0);

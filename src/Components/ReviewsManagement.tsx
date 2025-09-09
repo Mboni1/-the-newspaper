@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Star } from "lucide-react";
 import { Link } from "react-router-dom";
 import axios from "axios";
+import api from "../lib/axios";
 
 type Review = {
   id: number;
@@ -78,13 +79,8 @@ export default function ReviewsManagement() {
     const fetchReviews = async () => {
       setLoading(true);
       try {
-        const res = await axios.get(
-          `https://nearme-bn.onrender.com/review/admin/all?page=${page}&limit=${limit}`,
-          {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
-          }
+        const res = await api.get(
+          `/review/admin/all?page=${page}&limit=${limit}`
         );
 
         const reviewsData = Array.isArray(res.data.data) ? res.data.data : [];

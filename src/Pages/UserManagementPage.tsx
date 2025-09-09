@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Search, MoreVertical, Users as UsersIcon } from "lucide-react";
 import { Link } from "react-router-dom";
+import api from "../lib/axios";
 
 interface User {
   id: number;
@@ -28,16 +29,9 @@ const UserManagement: React.FC = () => {
     const fetchUsers = async () => {
       try {
         setLoading(true);
-        const res = await fetch(
-          `https://nearme-bn.onrender.com/user/all?page=${page}&limit=${limit}`,
-          {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
-          }
-        );
+        const res = await api.get(`/user/all?page=${page}&limit=${limit}`);
 
-        const responseData = await res.json();
+        const responseData = await res.data;
         if (Array.isArray(responseData.data)) {
           setUsers(responseData.data);
           setTotalUsers(responseData.total || responseData.data.length);
@@ -75,17 +69,9 @@ const UserManagement: React.FC = () => {
 
   const handleDelete = async (id: number) => {
     try {
-      const res = await fetch(
-        `https://nearme-bn.onrender.com/user/interest/${id}`,
-        {
-          method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        }
+      const res = await api.delete(
+        `https://nearme-bn.onrender.com/user/interest/${id}`
       );
-
-      if (!res.ok) throw new Error("Failed to delete user");
 
       setUsers((prev) => prev.filter((u) => u.id !== id));
       setOpenMenu(null);
@@ -102,21 +88,14 @@ const UserManagement: React.FC = () => {
     role: string
   ) => {
     try {
-      const res = await fetch(
+      const res = await api.put(
         `https://nearme-bn.onrender.com/user/names/${id}`,
         {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
           body: JSON.stringify({ firstName, lastName, role }),
         }
       );
 
-      if (!res.ok) throw new Error("Failed to update user");
-
-      const updatedUser = await res.json();
+      const updatedUser = await res.data;
 
       setUsers((prev) =>
         prev.map((u) => (u.id === id ? { ...u, ...updatedUser } : u))
@@ -264,16 +243,16 @@ const UserManagement: React.FC = () => {
                       </button>
 
                       {openMenu === u.id && (
-                        <div className="absolute right-0 mt-2 w-32 bg-white border rounded shadow-lg z-10">
+                        <div className="absolute right-10  w-16 -translate-y-12 bg-white border rounded-md shadow-lg z-10">
                           <button
                             onClick={() => setEditingUser(u)}
-                            className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+                            className="block w-full text-left px-3 py-1.5 text-sm hover:bg-gray-300"
                           >
                             Edit
                           </button>
                           <button
                             onClick={() => handleDelete(u.id)}
-                            className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                            className="block w-full text-left px-3 py-1.5 text-sm text-red-600 hover:bg-red-100"
                           >
                             Delete
                           </button>

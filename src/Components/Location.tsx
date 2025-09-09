@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { MapPin } from "lucide-react";
 import StatCard from "./StatCard";
 import { Link } from "react-router-dom";
-import axios from "axios";
+import api from "../lib/axios";
 
 const Location: React.FC = () => {
   const [totalLocations, setTotalLocations] = useState<number>(0);
@@ -11,14 +11,7 @@ const Location: React.FC = () => {
   useEffect(() => {
     const fetchTotalLocations = async () => {
       try {
-        const res = await axios.get(
-          "https://nearme-bn.onrender.com/location/admin/all",
-          {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
-          }
-        );
+        const res = await api.get("/location/admin/all");
 
         // Assuming backend returns { total: number }
         setTotalLocations(res.data.total || 0);

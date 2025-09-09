@@ -3,6 +3,7 @@ import { Grid } from "lucide-react";
 import StatCard from "./StatCard";
 import { Link } from "react-router-dom";
 import axios from "axios";
+import api from "../lib/axios";
 
 const Categories: React.FC = () => {
   const [totalCategories, setTotalCategories] = useState<number>(0);
@@ -11,11 +12,7 @@ const Categories: React.FC = () => {
   useEffect(() => {
     const fetchTotalCategories = async () => {
       try {
-        const res = await axios.get("https://nearme-bn.onrender.com/category", {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        });
+        const res = await api.get("/category");
 
         // Assuming backend returns { total: number }
         setTotalCategories(res.data.total || 0);

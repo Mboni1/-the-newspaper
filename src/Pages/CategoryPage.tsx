@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Plus, Search, X } from "lucide-react";
+import api from "../lib/axios";
 
 interface Category {
   id: number;
@@ -35,30 +36,14 @@ const CategoryPage: React.FC = () => {
 
         if (name) {
           // Fetch category info
-          const resOne = await fetch(
-            `https://nearme-bn.onrender.com/category/${name}`,
-            {
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${localStorage.getItem("token")}`,
-              },
-            }
-          );
-          const dataOne = await resOne.json();
+          const resOne = await api.get(`/category/${name}`);
+          const dataOne = await resOne.data;
           console.log("Category response:", dataOne);
           setCategory(dataOne.data || null);
 
           // Fetch subcategories/services for that category
-          const resServices = await fetch(
-            `https://nearme-bn.onrender.com/category/${name}`,
-            {
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${localStorage.getItem("token")}`,
-              },
-            }
-          );
-          const dataServices = await resServices.json();
+          const resServices = await api.get(`/category/${name}`);
+          const dataServices = await resServices.data;
           console.log("Services response:", dataServices);
           setCategories(
             Array.isArray(dataServices.data) ? dataServices.data : []

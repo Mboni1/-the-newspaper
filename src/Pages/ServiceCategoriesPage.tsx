@@ -14,6 +14,7 @@ import {
   ShoppingBag,
   MoreHorizontal,
 } from "lucide-react";
+import api from "../lib/axios";
 
 // Map string names from API -> Lucide icons
 const iconMap: Record<string, React.ElementType> = {
@@ -58,17 +59,11 @@ const ServiceCategories: React.FC = () => {
     const fetchCategories = async () => {
       try {
         setLoading(true);
-        const res = await fetch(
-          `https://nearme-bn.onrender.com/category?page=${page}&limit=${limit}&search=${searchTerm}`,
-          {
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
-          }
+        const res = await api.get(
+          `/category?page=${page}&limit=${limit}&search=${searchTerm}`
         );
 
-        const responseData = await res.json();
+        const responseData = await res.data;
         console.log(
           "Fetched categories:",
           JSON.stringify(responseData, null, 2)
@@ -109,18 +104,11 @@ const ServiceCategories: React.FC = () => {
       return;
     }
     try {
-      const res = await fetch("https://nearme-bn.onrender.com/category", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
+      const res = await api.post("/category", {
         body: JSON.stringify(formData),
       });
 
-      if (!res.ok) throw new Error("Failed to add category");
-
-      const newCategory = await res.json();
+      const newCategory = await res.data;
       setCategories([newCategory.data, ...categories]); // add to list
       setIsModalOpen(false);
       setFormData({ name: "", isDoc: false });

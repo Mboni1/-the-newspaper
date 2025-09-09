@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Search } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import api from "../lib/axios";
 
 interface Article {
   id: number;
@@ -41,12 +42,7 @@ const ArticlesPage: React.FC = () => {
   const fetchArticles = async () => {
     setLoading(true);
     try {
-      const res = await axios.get(
-        "https://nearme-bn.onrender.com/category/adminfetchdocs/all",
-        {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-        }
-      );
+      const res = await api.get("/category/adminfetchdocs/all");
       const fetchedArticles = Array.isArray(res.data.data)
         ? res.data.data.map((item: any) => ({
             id: item.id,
@@ -114,12 +110,7 @@ const ArticlesPage: React.FC = () => {
   const handleDelete = async (id: number) => {
     if (!confirm("Are you sure you want to delete this article?")) return;
     try {
-      await axios.delete(
-        `https://nearme-bn.onrender.com/category/adminfetchdocs/${id}`,
-        {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-        }
-      );
+      await api.delete(`/category/adminfetchdocs/${id}`);
       setArticles(articles.filter((a) => a.id !== id));
     } catch (err) {
       console.error(err);
@@ -133,14 +124,9 @@ const ArticlesPage: React.FC = () => {
     try {
       if (editingArticle) {
         // Update existing article
-        const res = await axios.put(
-          `https://nearme-bn.onrender.com/category/adminfetchdocs/${editingArticle.id}`,
-          formData,
-          {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
-          }
+        const res = await api.put(
+          `/category/adminfetchdocs/${editingArticle.id}`,
+          formData
         );
 
         // Update articles state immediately
@@ -149,15 +135,7 @@ const ArticlesPage: React.FC = () => {
         );
       } else {
         // Add new article
-        const res = await axios.post(
-          "https://nearme-bn.onrender.com/category/docitem",
-          formData,
-          {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
-          }
-        );
+        const res = await api.post("/category/docitem", formData);
 
         // Add the new article to state immediately
         setArticles((prev) => [res.data.data, ...prev]);
