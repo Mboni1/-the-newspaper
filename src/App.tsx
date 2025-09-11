@@ -17,6 +17,7 @@ import AddLocationPage from "./Pages/AddLocationPage";
 import AddBusinessPage from "./Pages/AddBusinessPage";
 import AddCategoryPage from "./Pages/AddCategoryPage";
 import CategoryPage from "./Pages/CategoryPage";
+import SubCategoryPage from "./Pages/SubCategoryPage";
 
 // Components (for Dashboard layout)
 import Navbar from "./Components/Navbar";
@@ -172,13 +173,22 @@ const App: React.FC = () => {
           }
         />
 
-        {/* 👉 Category detail route */}
+        {/* Category detail route */}
         <Route
           path="/category/:name"
           element={
             <div className="min-h-screen bg-gray-100">
               <Navbar />
               <CategoryPage />
+            </div>
+          }
+        />
+        <Route
+          path="/category/subCategory/:name"
+          element={
+            <div className="min-h-screen bg-gray-100">
+              <Navbar />
+              <SubCategoryPage />
             </div>
           }
         />

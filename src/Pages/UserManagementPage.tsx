@@ -5,6 +5,7 @@ import api from "../lib/axios";
 
 interface User {
   id: number;
+  names: string;
   firstName: string;
   lastName: string;
   email: string;
@@ -83,15 +84,15 @@ const UserManagement: React.FC = () => {
 
   const handleSave = async (
     id: number,
-    firstName: string,
-    lastName: string,
+    names: string,
+    email: string,
     role: string
   ) => {
     try {
       const res = await api.put(
         `https://nearme-bn.onrender.com/user/names/${id}`,
         {
-          body: JSON.stringify({ firstName, lastName, role }),
+          body: JSON.stringify({ name, email, role }),
         }
       );
 
@@ -304,22 +305,17 @@ const UserManagement: React.FC = () => {
 interface EditFormProps {
   user: User;
   onClose: () => void;
-  onSave: (
-    id: number,
-    firstName: string,
-    lastName: string,
-    role: string
-  ) => void;
+  onSave: (id: number, names: string, email: string, role: string) => void;
 }
 
 const EditUserForm: React.FC<EditFormProps> = ({ user, onClose, onSave }) => {
-  const [firstName, setFirstName] = useState(user.firstName);
-  const [lastName, setLastName] = useState(user.lastName);
+  const [names, setNames] = useState(user.names);
+  const [email, setEmail] = useState(user.email);
   const [role, setRole] = useState(user.role);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSave(user.id, firstName, lastName, role);
+    onSave(user.id, names, email, role);
   };
 
   return (
@@ -328,21 +324,21 @@ const EditUserForm: React.FC<EditFormProps> = ({ user, onClose, onSave }) => {
         <h2 className="text-lg font-semibold mb-4">Edit User</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium">First Name</label>
+            <label className="block text-sm font-medium">Names</label>
             <input
               type="text"
-              value={firstName}
-              onChange={(e) => setFirstName(e.target.value)}
+              value={names}
+              onChange={(e) => setNames(e.target.value)}
               className="w-full p-2 border rounded-lg"
               required
             />
           </div>
           <div>
-            <label className="block text-sm font-medium">Last Name</label>
+            <label className="block text-sm font-medium">Email</label>
             <input
               type="text"
-              value={lastName}
-              onChange={(e) => setLastName(e.target.value)}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               className="w-full p-2 border rounded-lg"
               required
             />
