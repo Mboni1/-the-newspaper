@@ -3,6 +3,7 @@ import { Mail, Lock, ArrowRight, Eye, EyeOff, Shield } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
 import logo1 from "../Assets/logo1.jpeg";
+import api from "../lib/axios";
 
 const LoginPage: React.FC = () => {
   const [email, setEmail] = useState("");
@@ -16,13 +17,10 @@ const LoginPage: React.FC = () => {
     setError("");
 
     try {
-      const res = await axios.post(
-        "https://nearme-bn.onrender.com/auth/login",
-        {
-          email,
-          password,
-        }
-      );
+      const res = await api.post("/auth/login", {
+        email,
+        password,
+      });
 
       const { token } = res.data;
       localStorage.setItem("token", token);

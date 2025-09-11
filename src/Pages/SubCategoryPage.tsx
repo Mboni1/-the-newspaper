@@ -2,34 +2,29 @@ import React, { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { Plus, Search, X } from "lucide-react";
 import api from "../lib/axios";
-import Business from "../Components/Business";
 
-interface Category {
+interface Business {
   id: number;
-  name: string;
+  title: string;
   description: string;
   image: string;
   services: number;
   featuredImage: string;
+  placeImg: string;
 }
-type SubCategory = {
-  id: number;
-  name: string;
-  description?: string;
-};
 
 const limit = 3;
 
-const CategoryPage: React.FC = () => {
-  const { name } = useParams<{ name: string }>();
-  const navigate = useNavigate();
-  const [category, setCategory] = useState<Category | null>(null);
-  const [categories, setCategories] = useState<Category[]>([]);
+const SubCategoryPage: React.FC = () => {
+  const [business, setBusiness] = useState<Business | null>(null);
+  const [businesses, setBusinesses] = useState<Business[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  const [editingBusiness, setEditingBusiness] = useState<Business | null>(null);
   const [page, setPage] = useState(1);
+  const { name } = useParams<{ name: string }>();
+  const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
     name: "",
@@ -37,125 +32,130 @@ const CategoryPage: React.FC = () => {
     image: "",
   });
 
+  // Fetch business and sub-businesses
   useEffect(() => {
-    const fetchCategoryAndServices = async () => {
+    const fetchBusinessAndServices = async () => {
       try {
         setLoading(true);
-
         if (name) {
-          const resOne = await api.get(`/category/${name}`);
+          const resOne = await api.get(`/category/subcategory/${name}`);
           const dataOne = await resOne.data;
-          setCategory(dataOne.data || null);
-
-          const resServices = await api.get(`/category/${name}`);
+          setBusiness(dataOne.data || null);
+          const resServices = await api.get(`/category/subcategory/${name}`);
           const dataServices = await resServices.data;
-          setCategories(
+
+          setBusinesses(
             Array.isArray(dataServices.data) ? dataServices.data : []
           );
         }
       } catch (error) {
-        console.error("Error fetching category:", error);
-        setCategory(null);
-        setCategories([]);
+        console.error("Error fetching business:", error);
+        setBusiness(null);
+        setBusinesses([]);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchCategoryAndServices();
+    fetchBusinessAndServices();
   }, [name]);
 
-  // Navigate to subcategory
-  const goToSubcategory = (subCategoryName: string) => {
-    navigate(`/category/subCategory/${subCategoryName}`);
-  };
-
-  // Add
+  // Modal handlers
   const handleAdd = () => {
-    setEditingCategory(null);
+    setEditingBusiness(null);
     setFormData({ name: "", description: "", image: "" });
     setIsModalOpen(true);
   };
 
-  // Edit
-  const handleEdit = (cat: Category, e: React.MouseEvent) => {
-    e.stopPropagation(); // prevent navigation
-    setEditingCategory(cat);
+  const handleEdit = (biz: Business, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setEditingBusiness(biz);
     setFormData({
-      name: cat.name,
-      description: cat.description,
-      image: cat.featuredImage,
+      name: biz.title || "",
+      description: biz.description || "",
+      image: biz.featuredImage || "",
     });
     setIsModalOpen(true);
   };
 
-  // Delete
   const handleDelete = (id: number, e: React.MouseEvent) => {
-    e.stopPropagation(); // prevent navigation
-    setCategories(categories.filter((c) => c.id !== id));
+    e.stopPropagation();
+    setBusinesses(businesses.filter((b) => b.id !== id));
   };
 
-  // Save
   const handleSave = () => {
     if (!formData.name.trim() || !formData.description.trim()) return;
 
-    if (editingCategory) {
-      setCategories(
-        categories.map((c) =>
-          c.id === editingCategory.id ? { ...c, ...formData } : c
+    if (editingBusiness) {
+      setBusinesses(
+        businesses.map((b) =>
+          b.id === editingBusiness.id
+            ? { ...b, ...formData, featuredImage: formData.image }
+            : b
         )
       );
-      if (category && category.id === editingCategory.id) {
-        setCategory({ ...category, ...formData });
+      if (business && business.id === editingBusiness.id) {
+        setBusiness({
+          ...business,
+          ...formData,
+          featuredImage: formData.image,
+        });
       }
     } else {
-      const newCategory: Category = {
+      const newBusiness: Business = {
         id: Date.now(),
         ...formData,
         services: 0,
         featuredImage: formData.image,
       };
-      setCategories([...categories, newCategory]);
+      setBusinesses([...businesses, newBusiness]);
     }
     setIsModalOpen(false);
   };
 
   // Search + Pagination
-  const filteredCategories = categories.filter((cat) =>
-    cat.name.toLowerCase().includes(search.toLowerCase())
-  );
-  const totalPages = Math.ceil(filteredCategories.length / limit);
-  const paginatedCategories = filteredCategories.slice(
+  const filteredBusinesses = businesses.filter((b) => {
+    const bizName = b.title?.toLowerCase() || "";
+    const bizDesc = b.description?.toLowerCase() || "";
+    const query = search.toLowerCase();
+    return bizName.includes(query) || bizDesc.includes(query);
+  });
+
+  const totalPages = Math.ceil(filteredBusinesses.length / limit);
+  const paginatedBusinesses = filteredBusinesses.slice(
     (page - 1) * limit,
     page * limit
   );
 
-  if (loading) return <p className="p-8">Loading categories...</p>;
-  if (!category) return <p className="p-8 text-red-500">Category not found.</p>;
-
+  if (loading) return <p className="p-8">Loading businesses...</p>;
+  if (!business) return <p className="p-8 text-red-500">Business not found.</p>;
   return (
     <div className="p-6 pt-20 max-w-3xl mx-auto">
-      <Link to="/service-categories" className="text-blue-600 hover:underline">
-        ← Back to Categories
-      </Link>
+      <button
+        onClick={() => navigate(-1)}
+        className="text-blue-600 hover:underline"
+      >
+        ← Back to Sub Category
+      </button>
 
       <div className="bg-white p-6 mt-6 rounded-2xl shadow">
-        <h1 className="text-3xl font-bold mb-2">{category.name}</h1>
-        <p className="text-gray-600 mb-2">{category.description}</p>
+        {/* Main business info */}
+        <h1 className="text-3xl font-bold mb-2">{business.title}</h1>
+        <p className="text-gray-600 mb-2">{business.description}</p>
         <p className="text-sm text-blue-600 mb-4">
-          {category.services} services available
+          {business.services} services available
         </p>
-        {category.featuredImage && (
+        {business.placeImg && (
           <img
-            src={category.featuredImage}
-            alt={category.name}
+            src={business.placeImg}
+            alt={business.title}
             className="w-full max-w-md object-cover rounded-xl mb-4"
           />
         )}
 
         {/* CRUD + Search */}
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold">Manage Categories</h2>
+          <h2 className="text-xl font-semibold">Manage Businesses</h2>
           <button
             onClick={handleAdd}
             className="bg-blue-600 text-white px-3 py-1 rounded-xl flex items-center hover:bg-blue-700"
@@ -168,7 +168,7 @@ const CategoryPage: React.FC = () => {
           <Search className="text-gray-400 w-5 h-5 mr-2" />
           <input
             type="text"
-            placeholder="Search categories..."
+            placeholder="Search businesses..."
             value={search}
             onChange={(e) => {
               setSearch(e.target.value);
@@ -177,37 +177,35 @@ const CategoryPage: React.FC = () => {
             className="w-full outline-none bg-transparent"
           />
         </div>
-
-        {/* Categories list with image on right */}
+        {/* Businesses list with image on right */}
         <div className="space-y-4">
-          {paginatedCategories.map((cat) => (
+          {paginatedBusinesses.map((biz) => (
             <div
-              key={cat.id}
-              onClick={() => goToSubcategory(cat.name)}
+              key={biz.id}
               className="flex justify-between items-center bg-gray-50 rounded-2xl shadow p-4 cursor-pointer hover:bg-gray-100 transition"
             >
               <div className="flex-1 pr-4">
-                <h3 className="font-semibold text-lg">{cat.name}</h3>
-                <p className="text-sm text-gray-500">{cat.description}</p>
+                <h3 className="font-semibold text-lg">{biz.title}</h3>
+                {/* Description */}
                 <div className="flex space-x-4 mt-2">
                   <button
-                    onClick={(e) => handleEdit(cat, e)}
+                    onClick={(e) => handleEdit(biz, e)}
                     className="text-blue-600 text-sm"
                   >
                     Edit
                   </button>
                   <button
-                    onClick={(e) => handleDelete(cat.id, e)}
+                    onClick={(e) => handleDelete(biz.id, e)}
                     className="text-red-600 text-sm"
                   >
                     Delete
                   </button>
                 </div>
               </div>
-              {cat.featuredImage && (
+              {biz.placeImg && (
                 <img
-                  src={cat.featuredImage}
-                  alt={cat.name}
+                  src={biz.placeImg}
+                  alt={biz.title}
                   className="w-24 h-20 object-cover rounded-xl"
                 />
               )}
@@ -215,7 +213,7 @@ const CategoryPage: React.FC = () => {
           ))}
         </div>
 
-        {/* Pagination Controls */}
+        {/* Pagination */}
         {totalPages > 1 && (
           <div className="flex justify-center items-center gap-4 mt-6">
             <button
@@ -223,7 +221,7 @@ const CategoryPage: React.FC = () => {
               onClick={() => setPage((p) => p - 1)}
               className="px-3 py-1 bg-blue-600 rounded disabled:opacity-50"
             >
-              Prev.
+              Prev
             </button>
             <span>
               Page {page} of {totalPages}
@@ -245,7 +243,7 @@ const CategoryPage: React.FC = () => {
           <div className="bg-white p-6 rounded-2xl shadow-lg w-full max-w-md">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-semibold">
-                {editingCategory ? "Edit Category" : "New Category"}
+                {editingBusiness ? "Edit Business" : "New Business"}
               </h2>
               <button
                 onClick={() => setIsModalOpen(false)}
@@ -258,7 +256,7 @@ const CategoryPage: React.FC = () => {
             <div className="space-y-4">
               <input
                 type="text"
-                placeholder="Category name"
+                placeholder="Business name"
                 value={formData.name}
                 onChange={(e) =>
                   setFormData({ ...formData, name: e.target.value })
@@ -305,4 +303,4 @@ const CategoryPage: React.FC = () => {
   );
 };
 
-export default CategoryPage;
+export default SubCategoryPage;

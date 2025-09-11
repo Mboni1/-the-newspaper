@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { Search, Filter, MoreHorizontal } from "lucide-react";
-import axios from "axios";
+import { Search, Filter, MoreHorizontal, Edit, Trash2, X } from "lucide-react";
+import api from "../lib/axios";
 
 interface Location {
   id: number;
@@ -24,18 +24,21 @@ const LocationsOverviewPage: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const limit = 3;
 
+  // Dropdown & editing state
+  const [openDropdownId, setOpenDropdownId] = useState<number | null>(null);
+  const [editingLocation, setEditingLocation] = useState<Location | null>(null);
+  const [formData, setFormData] = useState({
+    title: "",
+    location: "",
+    district: "",
+    province: "",
+    placeImg: "",
+  });
+
   useEffect(() => {
     const fetchLocations = async () => {
       try {
-        const res = await axios.get(
-          "https://nearme-bn.onrender.com/location/admin/all",
-          {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
-          }
-        );
-
+        const res = await api.get("/location/admin/all");
         const data = res.data.data || [];
         setLocations(data);
         setFilteredLocations(data);
@@ -48,7 +51,7 @@ const LocationsOverviewPage: React.FC = () => {
     fetchLocations();
   }, []);
 
-  // filter + search
+  // Filter + search
   useEffect(() => {
     let filtered = [...locations];
 
@@ -67,22 +70,70 @@ const LocationsOverviewPage: React.FC = () => {
     }
 
     setFilteredLocations(filtered);
-    setCurrentPage(1); // reset to first page on filter/search
+    setCurrentPage(1);
   }, [searchTerm, provinceFilter, locations]);
 
-  // Pagination
   const totalPages = Math.ceil(filteredLocations.length / limit);
   const paginatedLocations = filteredLocations.slice(
     (currentPage - 1) * limit,
     currentPage * limit
   );
 
+  // Handle delete
+  const handleDelete = async (id: number) => {
+    if (!confirm("Are you sure you want to delete this location?")) return;
+    try {
+      await api.delete(`/location/${id}`);
+      setLocations((prev) => prev.filter((loc) => loc.id !== id));
+      setFilteredLocations((prev) => prev.filter((loc) => loc.id !== id));
+    } catch (err: any) {
+      console.error(err);
+      alert("Failed to delete location");
+    }
+  };
+
+  // Open edit form
+  const handleEdit = (loc: Location) => {
+    setEditingLocation(loc);
+    setFormData({
+      title: loc.title,
+      location: loc.location,
+      district: loc.district,
+      province: loc.province || "",
+      placeImg: loc.placeImg[0] || "",
+    });
+  };
+
+  // Save edit
+  const handleSave = async () => {
+    if (!editingLocation) return;
+    try {
+      const res = await api.put(`/location/${editingLocation.id}`, {
+        title: formData.title,
+        location: formData.location,
+        district: formData.district,
+        province: formData.province,
+        placeImg: [formData.placeImg],
+      });
+
+      setLocations((prev) =>
+        prev.map((loc) => (loc.id === editingLocation.id ? res.data.data : loc))
+      );
+      setFilteredLocations((prev) =>
+        prev.map((loc) => (loc.id === editingLocation.id ? res.data.data : loc))
+      );
+      setEditingLocation(null);
+    } catch (err: any) {
+      console.error(err);
+      alert("Failed to update location");
+    }
+  };
+
   if (loading) return <p className="p-6 pt-20">Loading locations...</p>;
   if (error) return <p className="p-6 pt-20 text-red-500">{error}</p>;
 
   return (
     <div className="p-6 pt-20 min-h-screen bg-gray-50">
-      {/* Back link */}
       <Link
         to="/dashboard"
         className="text-blue-600 hover:underline inline-block mb-4"
@@ -90,7 +141,6 @@ const LocationsOverviewPage: React.FC = () => {
         ← Back to Dashboard
       </Link>
 
-      {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-3xl font-bold">Locations Overview</h1>
@@ -108,7 +158,6 @@ const LocationsOverviewPage: React.FC = () => {
       </div>
 
       {/* Search + Filter */}
-
       <div className="flex flex-col sm:flex-row gap-3 w-full mb-4">
         <div className="flex items-center w-full px-3 py-2 rounded-xl bg-white shadow-sm">
           <Search className="text-gray-400 w-5 h-5 mr-2" />
@@ -125,7 +174,7 @@ const LocationsOverviewPage: React.FC = () => {
           <select
             value={provinceFilter}
             onChange={(e) => setProvinceFilter(e.target.value)}
-            className="flex flex-col rounded-xl px-3 py-2  bg-white shadow-sm"
+            className="flex flex-col rounded-xl px-3 py-2 bg-white shadow-sm"
           >
             <option value="All">All Provinces</option>
             <option value="Northern">Northern</option>
@@ -138,19 +187,18 @@ const LocationsOverviewPage: React.FC = () => {
       </div>
 
       {/* Locations Grid */}
-
-      <div className="p-6   px-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="p-6 px-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {paginatedLocations.length > 0 ? (
           paginatedLocations.map((location) => (
             <div
               key={location.id}
-              className="bg-white rounded-xl shadow-sm  p-3 hover:shadow-md transition w-full"
+              className="bg-white rounded-2xl shadow-sm p-3 hover:shadow-md transition w-full relative"
             >
               {location.placeImg?.length > 0 && (
                 <img
                   src={location.placeImg[0]}
                   alt={location.name}
-                  className="w-full h-40 object-cover rounded-lg"
+                  className="w-full h-70 object-cover rounded-lg"
                 />
               )}
               <div className="mt-3">
@@ -161,10 +209,103 @@ const LocationsOverviewPage: React.FC = () => {
                     </h2>
                     <p className="text-gray-500 text-sm">{location.location}</p>
                   </div>
-                  <button className="text-gray-400 hover:text-gray-600">
-                    <MoreHorizontal />
-                  </button>
+
+                  {/* MoreHorizontal Dropdown */}
+                  <div className="relative">
+                    <button
+                      onClick={() =>
+                        setOpenDropdownId(
+                          openDropdownId === location.id ? null : location.id
+                        )
+                      }
+                      className="text-gray-400 hover:text-gray-600"
+                    >
+                      <MoreHorizontal />
+                    </button>
+
+                    {openDropdownId === location.id && !editingLocation && (
+                      <div className="absolute right-0 mt-2 w-32 bg-white border rounded-md shadow-lg z-10">
+                        <button
+                          onClick={() => handleEdit(location)}
+                          className="flex items-center w-full px-3 py-2 text-left hover:bg-gray-100"
+                        >
+                          <Edit className="w-4 h-4 mr-2" /> Edit
+                        </button>
+                        <button
+                          onClick={() => handleDelete(location.id)}
+                          className="flex items-center w-full px-3 py-2 text-left hover:bg-gray-100 text-red-600"
+                        >
+                          <Trash2 className="w-4 h-4 mr-2" /> Delete
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
+
+                {/* Edit form */}
+                {editingLocation?.id === location.id && (
+                  <div className="mt-3 border-t pt-3 space-y-2">
+                    <input
+                      type="text"
+                      value={formData.title}
+                      onChange={(e) =>
+                        setFormData({ ...formData, title: e.target.value })
+                      }
+                      placeholder="Title"
+                      className="w-full border rounded-lg px-3 py-2 outline-none"
+                    />
+                    <input
+                      type="text"
+                      value={formData.location}
+                      onChange={(e) =>
+                        setFormData({ ...formData, location: e.target.value })
+                      }
+                      placeholder="Location"
+                      className="w-full border rounded-lg px-3 py-2 outline-none"
+                    />
+                    <input
+                      type="text"
+                      value={formData.district}
+                      onChange={(e) =>
+                        setFormData({ ...formData, district: e.target.value })
+                      }
+                      placeholder="District"
+                      className="w-full border rounded-lg px-3 py-2 outline-none"
+                    />
+                    <input
+                      type="text"
+                      value={formData.province}
+                      onChange={(e) =>
+                        setFormData({ ...formData, province: e.target.value })
+                      }
+                      placeholder="Province"
+                      className="w-full border rounded-lg px-3 py-2 outline-none"
+                    />
+                    <input
+                      type="text"
+                      value={formData.placeImg}
+                      onChange={(e) =>
+                        setFormData({ ...formData, placeImg: e.target.value })
+                      }
+                      placeholder="Image URL"
+                      className="w-full border rounded-lg px-3 py-2 outline-none"
+                    />
+                    <div className="flex gap-2">
+                      <button
+                        onClick={handleSave}
+                        className="bg-blue-600 text-white px-4 py-2 rounded"
+                      >
+                        Save
+                      </button>
+                      <button
+                        onClick={() => setEditingLocation(null)}
+                        className="bg-gray-300 px-4 py-2 rounded flex items-center gap-1"
+                      >
+                        <X className="w-4 h-4" /> Cancel
+                      </button>
+                    </div>
+                  </div>
+                )}
 
                 {/* Badges */}
                 <div className="flex gap-2 mt-2 flex-wrap">
@@ -193,7 +334,7 @@ const LocationsOverviewPage: React.FC = () => {
             disabled={currentPage === 1}
             className="px-3 py-1 bg-blue-600 rounded disabled:opacity-50"
           >
-            Prev
+            Prev.
           </button>
           <span>
             Page {currentPage} of {totalPages}

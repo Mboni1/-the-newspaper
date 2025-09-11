@@ -3,6 +3,7 @@ import { Star } from "lucide-react";
 import StatCard from "./StatCard";
 import { Link } from "react-router-dom";
 import axios from "axios";
+import api from "../lib/axios";
 
 const Reviews: React.FC = () => {
   const [count, setCount] = useState<number | null>(null);
@@ -12,14 +13,7 @@ const Reviews: React.FC = () => {
   useEffect(() => {
     const fetchReviewsCount = async () => {
       try {
-        const res = await axios.get(
-          "https://nearme-bn.onrender.com/review/admin/all",
-          {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
-          }
-        );
+        const res = await api.get("/review/admin/all");
         // assuming backend returns { data: [...], total: number }
         const totalReviews = res.data.total ?? res.data.data?.length ?? 0;
         setCount(totalReviews);

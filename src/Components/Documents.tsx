@@ -3,6 +3,7 @@ import { FileText } from "lucide-react";
 import StatCard from "./StatCard";
 import { Link } from "react-router-dom";
 import axios from "axios";
+import api from "../lib/axios";
 
 const Documents: React.FC = () => {
   const [totalDocs, setTotalDocs] = useState<number>(0);
@@ -11,14 +12,7 @@ const Documents: React.FC = () => {
   useEffect(() => {
     const fetchTotalDocuments = async () => {
       try {
-        const res = await axios.get(
-          "https://nearme-bn.onrender.com/category/adminfetchdocs/all",
-          {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
-          }
-        );
+        const res = await api.get("/category/adminfetchdocs/all");
 
         // Assuming backend returns { total: number }
         setTotalDocs(res.data.total || 0);
