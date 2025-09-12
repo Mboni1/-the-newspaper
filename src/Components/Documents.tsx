@@ -12,7 +12,7 @@ const Documents: React.FC = () => {
   useEffect(() => {
     const fetchTotalDocuments = async () => {
       try {
-        const res = await api.get("/category/adminfetchdocs/all");
+        const res = await api.get("/doc-item/admin/all");
 
         // Assuming backend returns { total: number }
         setTotalDocs(res.data.total || 0);

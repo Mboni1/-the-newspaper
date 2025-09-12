@@ -32,16 +32,16 @@ const SubCategoryPage: React.FC = () => {
     image: "",
   });
 
-  // Fetch business and sub-businesses
+  // Fetch business from sub categories
   useEffect(() => {
     const fetchBusinessAndServices = async () => {
       try {
         setLoading(true);
         if (name) {
-          const resOne = await api.get(`/category/subcategory/${name}`);
+          const resOne = await api.get(`/place-item/subcategory/${name}`);
           const dataOne = await resOne.data;
           setBusiness(dataOne.data || null);
-          const resServices = await api.get(`/category/subcategory/${name}`);
+          const resServices = await api.get(`/place-item/subcategory/${name}`);
           const dataServices = await resServices.data;
 
           setBusinesses(
