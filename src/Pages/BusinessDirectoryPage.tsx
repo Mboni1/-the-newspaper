@@ -121,7 +121,7 @@ const BusinessDirectoryPage: React.FC = () => {
     try {
       setLoading(true);
       const res = await api.get(
-        `/category/adminfetchbuz/all?page=${currentPage}&limit=${limit}&search=${searchTerm}`
+        `/place-item/all?page=${currentPage}&limit=${limit}&search=${searchTerm}`
       );
       const mappedData: Business[] = (res.data.data || []).map((item: any) => ({
         id: item.id,

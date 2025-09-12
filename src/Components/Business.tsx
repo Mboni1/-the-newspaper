@@ -11,7 +11,7 @@ const Business: React.FC = () => {
   useEffect(() => {
     const fetchTotalBusinesses = async () => {
       try {
-        const res = await api.get("/category/adminfetchbuz/all", {
+        const res = await api.get("/place-item/all", {
           params: {
             limit: 1, // we only need total count, not all records
             page: 1,
