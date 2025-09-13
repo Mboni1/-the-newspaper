@@ -34,10 +34,12 @@ const CategoryPage: React.FC = () => {
   const [page, setPage] = useState(1);
 
   const [formData, setFormData] = useState<{
+    subCategoryId: undefined;
     subCategoryName: string;
     categoryName: string;
     featuredImage: File | null;
   }>({
+    subCategoryId: undefined,
     subCategoryName: "",
     categoryName: name || "",
     featuredImage: null,
@@ -81,6 +83,7 @@ const CategoryPage: React.FC = () => {
   const handleAdd = () => {
     setEditingSubCategory(null);
     setFormData({
+      subCategoryId: undefined,
       subCategoryName: "",
       categoryName: name || "",
       featuredImage: null,
@@ -93,6 +96,7 @@ const CategoryPage: React.FC = () => {
     e.stopPropagation();
     setEditingSubCategory(sub);
     setFormData({
+      subCategoryId: undefined,
       subCategoryName: sub.name,
       categoryName: name || "",
       featuredImage: null,
@@ -128,9 +132,14 @@ const CategoryPage: React.FC = () => {
         data.append("featuredImage", formData.featuredImage);
       }
 
+      for (const [key, value] of data.entries()) {
+        console.log(key, value);
+      }
+
       if (editingSubCategory) {
+        console.log("Updating subCategory ID:", editingSubCategory.id);
         // EDIT
-        const res = await api.put(
+        const res = await api.patch(
           `/category/subcategory/${editingSubCategory.id}`,
           data,
           { headers: { "Content-Type": "multipart/form-data" } }
@@ -153,6 +162,7 @@ const CategoryPage: React.FC = () => {
       setIsModalOpen(false);
       setEditingSubCategory(null);
       setFormData({
+        subCategoryId: undefined,
         subCategoryName: "",
         categoryName: name || "",
         featuredImage: null,

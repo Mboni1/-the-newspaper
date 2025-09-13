@@ -1,22 +1,27 @@
+// src/Pages/SubCategoryPage.tsx
 import React, { useEffect, useState } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { Plus, Search, X } from "lucide-react";
 import api from "../lib/axios";
+import toast, { Toaster } from "react-hot-toast";
 
 interface Business {
   id: number;
   title: string;
   description: string;
-  image: string;
-  services: number;
-  featuredImage: string;
+  workingHours: string;
+  location: string;
+  businessEmail: string;
+  phoneNumber: string;
+  subCategoryName: string;
+  latitude: string;
+  longitude: string;
   placeImg: string;
 }
 
 const limit = 3;
 
 const SubCategoryPage: React.FC = () => {
-  const [business, setBusiness] = useState<Business | null>(null);
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -27,43 +32,56 @@ const SubCategoryPage: React.FC = () => {
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
-    name: "",
+    title: "",
     description: "",
-    image: "",
+    workingHours: "",
+    location: "",
+    businessEmail: "",
+    phoneNumber: "",
+    subCategoryName: name || "",
+    latitude: "",
+    longitude: "",
+    placeImg: "",
   });
 
-  // Fetch business from sub categories
+  const [imagePreview, setImagePreview] = useState<string>("");
+
+  // Fetch businesses
   useEffect(() => {
-    const fetchBusinessAndServices = async () => {
+    const fetchBusinesses = async () => {
       try {
         setLoading(true);
         if (name) {
-          const resOne = await api.get(`/place-item/subcategory/${name}`);
-          const dataOne = await resOne.data;
-          setBusiness(dataOne.data || null);
-          const resServices = await api.get(`/place-item/subcategory/${name}`);
-          const dataServices = await resServices.data;
-
-          setBusinesses(
-            Array.isArray(dataServices.data) ? dataServices.data : []
-          );
+          const res = await api.get(`/place-item/subcategory/${name}`);
+          const data = await res.data;
+          if (Array.isArray(data.data)) setBusinesses(data.data);
         }
-      } catch (error) {
-        console.error("Error fetching business:", error);
-        setBusiness(null);
+      } catch (err) {
+        console.error("Error fetching businesses:", err);
         setBusinesses([]);
       } finally {
         setLoading(false);
       }
     };
-
-    fetchBusinessAndServices();
+    fetchBusinesses();
   }, [name]);
 
   // Modal handlers
   const handleAdd = () => {
     setEditingBusiness(null);
-    setFormData({ name: "", description: "", image: "" });
+    setFormData({
+      title: "",
+      description: "",
+      workingHours: "",
+      location: "",
+      businessEmail: "",
+      phoneNumber: "",
+      subCategoryName: name || "",
+      latitude: "",
+      longitude: "",
+      placeImg: "",
+    });
+    setImagePreview("");
     setIsModalOpen(true);
   };
 
@@ -71,55 +89,84 @@ const SubCategoryPage: React.FC = () => {
     e.stopPropagation();
     setEditingBusiness(biz);
     setFormData({
-      name: biz.title || "",
+      title: biz.title || "",
       description: biz.description || "",
-      image: biz.featuredImage || "",
+      workingHours: biz.workingHours || "",
+      location: biz.location || "",
+      businessEmail: biz.businessEmail || "",
+      phoneNumber: biz.phoneNumber || "",
+      subCategoryName: biz.subCategoryName || name || "",
+      latitude: biz.latitude || "",
+      longitude: biz.longitude || "",
+      placeImg: biz.placeImg || "",
     });
+    setImagePreview(biz.placeImg || "");
     setIsModalOpen(true);
   };
 
-  const handleDelete = (id: number, e: React.MouseEvent) => {
+  const handleDelete = async (id: number, e: React.MouseEvent) => {
     e.stopPropagation();
-    setBusinesses(businesses.filter((b) => b.id !== id));
+    try {
+      await api.delete(`/place-item/${id}`);
+      setBusinesses(businesses.filter((b) => b.id !== id));
+      toast.success("Business deleted successfully");
+    } catch (err) {
+      console.error("Error deleting business:", err);
+      toast.error("Failed to delete business");
+    }
   };
 
-  const handleSave = () => {
-    if (!formData.name.trim() || !formData.description.trim()) return;
-
-    if (editingBusiness) {
-      setBusinesses(
-        businesses.map((b) =>
-          b.id === editingBusiness.id
-            ? { ...b, ...formData, featuredImage: formData.image }
-            : b
-        )
-      );
-      if (business && business.id === editingBusiness.id) {
-        setBusiness({
-          ...business,
-          ...formData,
-          featuredImage: formData.image,
-        });
-      }
-    } else {
-      const newBusiness: Business = {
-        id: Date.now(),
-        ...formData,
-        services: 0,
-        featuredImage: formData.image,
-      };
-      setBusinesses([...businesses, newBusiness]);
+  // Handle image selection
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setFormData({ ...formData, placeImg: file as any });
+      setImagePreview(URL.createObjectURL(file));
     }
-    setIsModalOpen(false);
+  };
+
+  const handleSave = async () => {
+    try {
+      if (!formData.title.trim()) {
+        toast.error("Title is required");
+        return;
+      }
+
+      const submitData = new FormData();
+      Object.entries(formData).forEach(([key, value]) => {
+        submitData.append(key, value as any);
+      });
+
+      if (editingBusiness) {
+        const res = await api.patch(
+          `/place-item/${editingBusiness.id}`,
+          submitData,
+          { headers: { "Content-Type": "multipart/form-data" } }
+        );
+        setBusinesses(
+          businesses.map((b) =>
+            b.id === editingBusiness.id ? res.data.data : b
+          )
+        );
+        toast.success("Business updated successfully");
+      } else {
+        const res = await api.post(`/place-item`, submitData, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+        setBusinesses([...businesses, res.data.data]);
+        toast.success("Business added successfully");
+      }
+      setIsModalOpen(false);
+    } catch (err) {
+      console.error("Error saving business:", err);
+      toast.error("Failed to save business");
+    }
   };
 
   // Search + Pagination
-  const filteredBusinesses = businesses.filter((b) => {
-    const bizName = b.title?.toLowerCase() || "";
-    const bizDesc = b.description?.toLowerCase() || "";
-    const query = search.toLowerCase();
-    return bizName.includes(query) || bizDesc.includes(query);
-  });
+  const filteredBusinesses = businesses.filter((b) =>
+    b.title.toLowerCase().includes(search.toLowerCase())
+  );
 
   const totalPages = Math.ceil(filteredBusinesses.length / limit);
   const paginatedBusinesses = filteredBusinesses.slice(
@@ -128,9 +175,12 @@ const SubCategoryPage: React.FC = () => {
   );
 
   if (loading) return <p className="p-8">Loading businesses...</p>;
-  if (!business) return <p className="p-8 text-red-500">Business not found.</p>;
+  if (!businesses.length)
+    return <p className="p-8 text-red-500">No businesses found.</p>;
+
   return (
     <div className="p-6 pt-20 max-w-3xl mx-auto">
+      <Toaster position="top-right" />
       <button
         onClick={() => navigate(-1)}
         className="text-blue-600 hover:underline"
@@ -139,21 +189,6 @@ const SubCategoryPage: React.FC = () => {
       </button>
 
       <div className="bg-white p-6 mt-6 rounded-2xl shadow">
-        {/* Main business info */}
-        <h1 className="text-3xl font-bold mb-2">{business.title}</h1>
-        <p className="text-gray-600 mb-2">{business.description}</p>
-        <p className="text-sm text-blue-600 mb-4">
-          {business.services} services available
-        </p>
-        {business.placeImg && (
-          <img
-            src={business.placeImg}
-            alt={business.title}
-            className="w-full max-w-md object-cover rounded-xl mb-4"
-          />
-        )}
-
-        {/* CRUD + Search */}
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-semibold">Manage Businesses</h2>
           <button
@@ -177,7 +212,8 @@ const SubCategoryPage: React.FC = () => {
             className="w-full outline-none bg-transparent"
           />
         </div>
-        {/* Businesses list with image on right */}
+
+        {/* Businesses list */}
         <div className="space-y-4">
           {paginatedBusinesses.map((biz) => (
             <div
@@ -186,7 +222,7 @@ const SubCategoryPage: React.FC = () => {
             >
               <div className="flex-1 pr-4">
                 <h3 className="font-semibold text-lg">{biz.title}</h3>
-                {/* Description */}
+                {/* Description hidden */}
                 <div className="flex space-x-4 mt-2">
                   <button
                     onClick={(e) => handleEdit(biz, e)}
@@ -212,86 +248,134 @@ const SubCategoryPage: React.FC = () => {
             </div>
           ))}
         </div>
-
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="flex justify-center items-center gap-4 mt-6">
-            <button
-              disabled={page === 1}
-              onClick={() => setPage((p) => p - 1)}
-              className="px-3 py-1 bg-blue-600 rounded disabled:opacity-50"
-            >
-              Prev
-            </button>
-            <span>
-              Page {page} of {totalPages}
-            </span>
-            <button
-              disabled={page === totalPages}
-              onClick={() => setPage((p) => p + 1)}
-              className="px-3 py-1 bg-blue-600 rounded disabled:opacity-50"
-            >
-              Next
-            </button>
-          </div>
-        )}
       </div>
-
       {/* Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center">
-          <div className="bg-white p-6 rounded-2xl shadow-lg w-full max-w-md">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold">
+        <div className="fixed inset-0 bg-gray-300 bg-opacity-40 flex items-center justify-center z-50 p-4">
+          <div className="bg-white w-full max-w-full max-h-[90vh] p-6 md:p-12 overflow-y-auto rounded-2xl relative flex flex-col">
+            {/* Header */}
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-semibold">
                 {editingBusiness ? "Edit Business" : "New Business"}
               </h2>
               <button
                 onClick={() => setIsModalOpen(false)}
                 className="text-gray-500 hover:text-gray-700"
               >
-                <X className="w-5 h-5" />
+                <X className="w-6 h-6" />
               </button>
             </div>
 
-            <div className="space-y-4">
+            {/* Form */}
+            <div className="flex flex-col gap-4">
               <input
                 type="text"
-                placeholder="Business name"
-                value={formData.name}
+                placeholder="Title"
+                value={formData.title}
                 onChange={(e) =>
-                  setFormData({ ...formData, name: e.target.value })
+                  setFormData({ ...formData, title: e.target.value })
                 }
-                className="w-full border rounded-lg px-3 py-2 outline-none"
+                className="w-full border rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-400"
               />
+
               <textarea
                 placeholder="Description"
                 value={formData.description}
                 onChange={(e) =>
                   setFormData({ ...formData, description: e.target.value })
                 }
-                className="w-full border rounded-lg px-3 py-2 outline-none"
+                className="w-full border rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-400 h-36"
               />
+
               <input
                 type="text"
-                placeholder="Image URL"
-                value={formData.image}
+                placeholder="Working Hours"
+                value={formData.workingHours}
                 onChange={(e) =>
-                  setFormData({ ...formData, image: e.target.value })
+                  setFormData({ ...formData, workingHours: e.target.value })
                 }
-                className="w-full border rounded-lg px-3 py-2 outline-none"
+                className="w-full border rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-400"
               />
+
+              <input
+                type="text"
+                placeholder="Location"
+                value={formData.location}
+                onChange={(e) =>
+                  setFormData({ ...formData, location: e.target.value })
+                }
+                className="w-full border rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-400"
+              />
+
+              <input
+                type="email"
+                placeholder="Business Email"
+                value={formData.businessEmail}
+                onChange={(e) =>
+                  setFormData({ ...formData, businessEmail: e.target.value })
+                }
+                className="w-full border rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-400"
+              />
+
+              <input
+                type="text"
+                placeholder="Phone Number"
+                value={formData.phoneNumber}
+                onChange={(e) =>
+                  setFormData({ ...formData, phoneNumber: e.target.value })
+                }
+                className="w-full border rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-400"
+              />
+
+              <input
+                type="text"
+                placeholder="Latitude"
+                value={formData.latitude}
+                onChange={(e) =>
+                  setFormData({ ...formData, latitude: e.target.value })
+                }
+                className="w-full border rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-400"
+              />
+
+              <input
+                type="text"
+                placeholder="Longitude"
+                value={formData.longitude}
+                onChange={(e) =>
+                  setFormData({ ...formData, longitude: e.target.value })
+                }
+                className="w-full border rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-400"
+              />
+
+              {/* Image upload */}
+              <div>
+                <label className="block mb-1 font-medium">Business Image</label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                />
+                {imagePreview && (
+                  <img
+                    src={imagePreview}
+                    alt="Preview"
+                    className="w-full h-52 object-cover mt-2 rounded-lg"
+                  />
+                )}
+              </div>
             </div>
 
-            <div className="flex justify-end mt-6 space-x-3">
+            {/* Buttons */}
+            <div className="flex justify-end gap-4 mt-6">
               <button
                 onClick={() => setIsModalOpen(false)}
-                className="px-4 py-2 rounded-lg border"
+                className="px-6 py-3 border rounded-lg hover:bg-gray-100"
               >
                 Cancel
               </button>
               <button
                 onClick={handleSave}
-                className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700"
+                className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
               >
                 Save
               </button>
