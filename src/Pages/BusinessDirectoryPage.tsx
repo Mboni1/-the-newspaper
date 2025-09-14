@@ -185,7 +185,7 @@ const BusinessDirectoryPage: React.FC = () => {
     if (editImage) formData.append("placeImg", editImage);
 
     try {
-      await api.put(`/business/${editingBusiness.id}`, formData, {
+      await api.patch(`/business/${editingBusiness.id}`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
       // Update locally

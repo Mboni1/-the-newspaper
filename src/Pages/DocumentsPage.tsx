@@ -303,60 +303,92 @@ const ArticlesPage: React.FC = () => {
             <h2 className="text-2xl md:text-3xl font-semibold mb-6 text-center md:text-left">
               {editingArticle ? "Edit Article" : "New Article"}
             </h2>
-
             {/* Form */}
-            <div className="flex flex-col gap-4 w-full">
-              <input
-                type="text"
-                placeholder="Title"
-                value={formData.title}
-                onChange={(e) =>
-                  setFormData({ ...formData, title: e.target.value })
-                }
-                className="w-full border rounded-lg px-3 py-3"
-              />
+            <div className="flex flex-col gap-6 w-full">
+              {/* Title */}
+              <div className="flex flex-col">
+                <label className="text-sm font-medium text-gray-600 mb-1">
+                  Title
+                </label>
+                <input
+                  type="text"
+                  placeholder="Enter title"
+                  value={formData.title}
+                  onChange={(e) =>
+                    setFormData({ ...formData, title: e.target.value })
+                  }
+                  className="w-full border-b border-gray-300 px-1 py-2 focus:outline-none focus:border-blue-500"
+                />
+              </div>
 
-              <textarea
-                placeholder="Description"
-                value={formData.description}
-                onChange={(e) =>
-                  setFormData({ ...formData, description: e.target.value })
-                }
-                className="w-full border rounded-lg px-3 py-3 h-72"
-              />
+              {/* Description */}
+              <div className="flex flex-col">
+                <label className="text-sm font-medium text-gray-600 mb-1">
+                  Description
+                </label>
+                <textarea
+                  placeholder="Write full description..."
+                  value={formData.description}
+                  onChange={(e) =>
+                    setFormData({ ...formData, description: e.target.value })
+                  }
+                  className="w-full border-b border-gray-300 px-1 py-2 h-32 resize-none focus:outline-none focus:border-blue-500"
+                />
+              </div>
 
-              <textarea
-                placeholder="Summary"
-                value={formData.summary}
-                onChange={(e) =>
-                  setFormData({ ...formData, summary: e.target.value })
-                }
-                className="w-full border rounded-lg px-3 py-3 h-32"
-              />
+              {/* Summary */}
+              <div className="flex flex-col">
+                <label className="text-sm font-medium text-gray-600 mb-1">
+                  Summary
+                </label>
+                <textarea
+                  placeholder="Short summary..."
+                  value={formData.summary}
+                  onChange={(e) =>
+                    setFormData({ ...formData, summary: e.target.value })
+                  }
+                  className="w-full border-b border-gray-300 px-1 py-2 h-20 resize-none focus:outline-none focus:border-blue-500"
+                />
+              </div>
 
-              <input
-                type="text"
-                placeholder="CategoryName"
-                value={formData.categoryName}
-                onChange={(e) =>
-                  setFormData({ ...formData, categoryName: e.target.value })
-                }
-                className="w-full border rounded-lg px-3 py-3"
-              />
+              {/* Category + Location in one row */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="flex flex-col">
+                  <label className="text-sm font-medium text-gray-600 mb-1">
+                    Category
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Category name"
+                    value={formData.categoryName}
+                    onChange={(e) =>
+                      setFormData({ ...formData, categoryName: e.target.value })
+                    }
+                    className="w-full border-b border-gray-300 px-1 py-2 focus:outline-none focus:border-blue-500"
+                  />
+                </div>
 
-              <input
-                type="text"
-                placeholder="Location"
-                value={formData.location}
-                onChange={(e) =>
-                  setFormData({ ...formData, location: e.target.value })
-                }
-                className="w-full border rounded-lg px-3 py-3"
-              />
+                <div className="flex flex-col">
+                  <label className="text-sm font-medium text-gray-600 mb-1">
+                    Location
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Enter location"
+                    value={formData.location}
+                    onChange={(e) =>
+                      setFormData({ ...formData, location: e.target.value })
+                    }
+                    className="w-full border-b border-gray-300 px-1 py-2 focus:outline-none focus:border-blue-500"
+                  />
+                </div>
+              </div>
 
               {/* Image upload */}
-              <div>
-                <label className="block mb-1 font-medium">Featured Image</label>
+              <div className="flex flex-col">
+                <label className="text-sm font-medium text-gray-600 mb-2">
+                  Featured Image
+                </label>
                 <input
                   type="file"
                   accept="image/*"
@@ -366,7 +398,7 @@ const ArticlesPage: React.FC = () => {
                   <img
                     src={imagePreview}
                     alt="Preview"
-                    className="w-full h-60 md:h-72 object-cover rounded-lg mt-2"
+                    className="w-2xl h-100 object-cover rounded-lg mt-3 shadow"
                   />
                 )}
               </div>
