@@ -265,9 +265,9 @@ const SubCategoryPage: React.FC = () => {
                 <X className="w-6 h-6" />
               </button>
             </div>
-
             {/* Form */}
             <div className="flex flex-col gap-4">
+              {/* Title */}
               <input
                 type="text"
                 placeholder="Title"
@@ -275,9 +275,10 @@ const SubCategoryPage: React.FC = () => {
                 onChange={(e) =>
                   setFormData({ ...formData, title: e.target.value })
                 }
-                className="w-full border rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-400"
+                className="w-full border rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-100"
               />
 
+              {/* Description */}
               <textarea
                 placeholder="Description"
                 value={formData.description}
@@ -287,65 +288,71 @@ const SubCategoryPage: React.FC = () => {
                 className="w-full border rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-400 h-36"
               />
 
-              <input
-                type="text"
-                placeholder="Working Hours"
-                value={formData.workingHours}
-                onChange={(e) =>
-                  setFormData({ ...formData, workingHours: e.target.value })
-                }
-                className="w-full border rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-400"
-              />
+              {/* Working Hours + Location same row */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <input
+                  type="text"
+                  placeholder="Working Hours"
+                  value={formData.workingHours}
+                  onChange={(e) =>
+                    setFormData({ ...formData, workingHours: e.target.value })
+                  }
+                  className="w-full border rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-400"
+                />
+                <input
+                  type="text"
+                  placeholder="Location"
+                  value={formData.location}
+                  onChange={(e) =>
+                    setFormData({ ...formData, location: e.target.value })
+                  }
+                  className="w-full border rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-400"
+                />
+              </div>
 
-              <input
-                type="text"
-                placeholder="Location"
-                value={formData.location}
-                onChange={(e) =>
-                  setFormData({ ...formData, location: e.target.value })
-                }
-                className="w-full border rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-400"
-              />
+              {/* Business Email + Phone Number same row */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <input
+                  type="email"
+                  placeholder="Business Email"
+                  value={formData.businessEmail}
+                  onChange={(e) =>
+                    setFormData({ ...formData, businessEmail: e.target.value })
+                  }
+                  className="w-full border rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-400"
+                />
+                <input
+                  type="text"
+                  placeholder="Phone Number"
+                  value={formData.phoneNumber}
+                  onChange={(e) =>
+                    setFormData({ ...formData, phoneNumber: e.target.value })
+                  }
+                  className="w-full border rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-400"
+                />
+              </div>
 
-              <input
-                type="email"
-                placeholder="Business Email"
-                value={formData.businessEmail}
-                onChange={(e) =>
-                  setFormData({ ...formData, businessEmail: e.target.value })
-                }
-                className="w-full border rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-400"
-              />
-
-              <input
-                type="text"
-                placeholder="Phone Number"
-                value={formData.phoneNumber}
-                onChange={(e) =>
-                  setFormData({ ...formData, phoneNumber: e.target.value })
-                }
-                className="w-full border rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-400"
-              />
-
-              <input
-                type="text"
-                placeholder="Latitude"
-                value={formData.latitude}
-                onChange={(e) =>
-                  setFormData({ ...formData, latitude: e.target.value })
-                }
-                className="w-full border rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-400"
-              />
-
-              <input
-                type="text"
-                placeholder="Longitude"
-                value={formData.longitude}
-                onChange={(e) =>
-                  setFormData({ ...formData, longitude: e.target.value })
-                }
-                className="w-full border rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-400"
-              />
+              {/* Latitude + Longitude same row */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <input
+                  type="text"
+                  placeholder="Latitude"
+                  value={formData.latitude}
+                  onChange={(e) =>
+                    setFormData({ ...formData, latitude: e.target.value })
+                  }
+                  className="w-full border rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-400"
+                />
+                <input
+                  type="text"
+                  placeholder="Longitude"
+                  value={formData.longitude}
+                  onChange={(e) =>
+                    setFormData({ ...formData, longitude: e.target.value })
+                  }
+                  className="w-full border rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-400"
+                />
+              </div>
 
               {/* Image upload */}
               <div>
@@ -359,7 +366,7 @@ const SubCategoryPage: React.FC = () => {
                   <img
                     src={imagePreview}
                     alt="Preview"
-                    className="w-full h-52 object-cover mt-2 rounded-lg"
+                    className="w-2xl h-100 object-cover mt-2 rounded-lg"
                   />
                 )}
               </div>
