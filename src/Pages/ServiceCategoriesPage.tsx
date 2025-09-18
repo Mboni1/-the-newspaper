@@ -259,7 +259,7 @@ const ServiceCategories: React.FC = () => {
         <button
           onClick={handlePrev}
           disabled={page === 1}
-          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+          className="px-4 py-2 bg-blue-600 text-black rounded hover:bg-blue-700 disabled:opacity-50"
         >
           Prev
         </button>
@@ -269,7 +269,7 @@ const ServiceCategories: React.FC = () => {
         <button
           onClick={handleNext}
           disabled={page === totalPages}
-          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+          className="px-4 py-2 bg-blue-600 text-black rounded hover:bg-blue-700 disabled:opacity-50"
         >
           Next
         </button>
@@ -289,7 +289,7 @@ const ServiceCategories: React.FC = () => {
               onChange={(e) =>
                 setFormData({ ...formData, name: e.target.value })
               }
-              className="w-full border rounded-lg px-3 py-2 mb-3"
+              className="w-full border  border-gray-300 rounded-lg px-3 py-2 mb-3"
             />
             <label className="flex items-center gap-2 mb-4">
               <input
@@ -307,7 +307,7 @@ const ServiceCategories: React.FC = () => {
                   setIsModalOpen(false);
                   setEditingCategory(null);
                 }}
-                className="px-4 py-2 border rounded-lg"
+                className="px-4 py-2 border  border-gray-300 rounded-lg"
               >
                 Cancel
               </button>

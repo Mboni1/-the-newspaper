@@ -31,7 +31,7 @@ const AddArticle: React.FC = () => {
     <div className="min-h-screen bg-gray-100 p-6 pt-20">
       <Link
         to="/documents"
-        className="text-blue-600 hover:underline inline-block mb-4"
+        className="text-blue-500 hover:underline inline-block mb-4"
       >
         ← Back to Documents
       </Link>
@@ -79,7 +79,7 @@ const AddArticle: React.FC = () => {
               />
               <label
                 htmlFor="fileUpload"
-                className="cursor-pointer text-blue-600 font-medium"
+                className="cursor-pointer text-blue-500 font-medium"
               >
                 {image ? "Change Image" : "Click to upload image"}
               </label>
@@ -114,7 +114,7 @@ const AddArticle: React.FC = () => {
             {/* Publish */}
             <button
               type="submit"
-              className="flex-1 bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition"
+              className="flex-1 bg-blue-500 text-white py-2 rounded-md hover:bg-blue-700 transition"
             >
               Add Article
             </button>

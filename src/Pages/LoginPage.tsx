@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { Mail, Lock, ArrowRight, Eye, EyeOff, Shield } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
-import axios from "axios";
 import logo1 from "../Assets/logo1.jpeg";
 import api from "../lib/axios";
 
@@ -121,7 +120,7 @@ const LoginPage: React.FC = () => {
           {/* Button */}
           <button
             type="submit"
-            className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition"
+            className="w-full flex items-center justify-center gap-2 bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-700 transition"
           >
             Sign In to Dashboard <ArrowRight className="w-4 h-4" />
           </button>

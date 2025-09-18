@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 
-const AddLocation: React.FC = () => {
+const AddBusiness: React.FC = () => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [image, setImage] = useState<File | null>(null);
@@ -30,13 +30,13 @@ const AddLocation: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-100 p-6 pt-20">
       <Link
-        to="/locations-overview"
+        to="/business-directory"
         className="text-blue-600 hover:underline inline-block mb-4"
       >
-        ← Back to Location
+        ← Back to Business Directory
       </Link>
       <div className="max-w-3xl mx-auto bg-white shadow-md rounded-2xl p-6">
-        <h1 className="text-2xl font-bold mb-6">Add New Location</h1>
+        <h1 className="text-2xl font-bold mb-6">Add New Business</h1>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Title */}
@@ -69,7 +69,7 @@ const AddLocation: React.FC = () => {
             <label className="block text-lg font-semibold mb-2">
               Add Image
             </label>
-            <div className="border-2 border-dashed border-gray-400 rounded-md p-6 text-center">
+            <div className="border-2 border-dashed border-gray-300 rounded-md p-6 text-center">
               <input
                 type="file"
                 accept="image/*"
@@ -79,7 +79,7 @@ const AddLocation: React.FC = () => {
               />
               <label
                 htmlFor="fileUpload"
-                className="cursor-pointer text-blue-600 font-medium"
+                className="cursor-pointer text-blue-500 font-medium"
               >
                 {image ? "Change Image" : "Click to upload image"}
               </label>
@@ -114,9 +114,9 @@ const AddLocation: React.FC = () => {
             {/* Publish */}
             <button
               type="submit"
-              className="flex-1 bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition"
+              className="flex-1 bg-blue-500 text-white py-2 rounded-md hover:bg-blue-700 transition"
             >
-              Add Location
+              Add Business
             </button>
           </div>
         </form>
@@ -125,4 +125,4 @@ const AddLocation: React.FC = () => {
   );
 };
 
-export default AddLocation;
+export default AddBusiness;

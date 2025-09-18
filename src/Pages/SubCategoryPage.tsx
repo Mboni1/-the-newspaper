@@ -4,6 +4,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { Plus, Search, X } from "lucide-react";
 import api from "../lib/axios";
 import toast, { Toaster } from "react-hot-toast";
+import Description from "../Components/Description";
 
 interface Business {
   id: number;
@@ -267,26 +268,33 @@ const SubCategoryPage: React.FC = () => {
             </div>
             {/* Form */}
             <div className="flex flex-col gap-4">
-              {/* Title */}
-              <input
-                type="text"
-                placeholder="Title"
-                value={formData.title}
-                onChange={(e) =>
-                  setFormData({ ...formData, title: e.target.value })
-                }
-                className="w-full border rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-100"
-              />
+              {/* Title + Category Name */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <input
+                  type="text"
+                  placeholder="Title"
+                  value={formData.title}
+                  onChange={(e) =>
+                    setFormData({ ...formData, title: e.target.value })
+                  }
+                  className="w-full border  border-gray-300 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-100"
+                />
+                <input
+                  type="text"
+                  placeholder="SubCategory Name"
+                  value={formData.subCategoryName}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      subCategoryName: e.target.value,
+                    })
+                  }
+                  className="w-full border  border-gray-300 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-400"
+                />
+              </div>
 
               {/* Description */}
-              <textarea
-                placeholder="Description"
-                value={formData.description}
-                onChange={(e) =>
-                  setFormData({ ...formData, description: e.target.value })
-                }
-                className="w-full border rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-400 h-36"
-              />
+              <Description />
 
               {/* Working Hours + Location same row */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -297,7 +305,7 @@ const SubCategoryPage: React.FC = () => {
                   onChange={(e) =>
                     setFormData({ ...formData, workingHours: e.target.value })
                   }
-                  className="w-full border rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-400"
+                  className="w-full border  border-gray-300 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-400"
                 />
                 <input
                   type="text"
@@ -306,7 +314,7 @@ const SubCategoryPage: React.FC = () => {
                   onChange={(e) =>
                     setFormData({ ...formData, location: e.target.value })
                   }
-                  className="w-full border rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-400"
+                  className="w-full border  border-gray-300 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-400"
                 />
               </div>
 
@@ -319,7 +327,7 @@ const SubCategoryPage: React.FC = () => {
                   onChange={(e) =>
                     setFormData({ ...formData, businessEmail: e.target.value })
                   }
-                  className="w-full border rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-400"
+                  className="w-full border   border-gray-300 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-400"
                 />
                 <input
                   type="text"
@@ -328,7 +336,7 @@ const SubCategoryPage: React.FC = () => {
                   onChange={(e) =>
                     setFormData({ ...formData, phoneNumber: e.target.value })
                   }
-                  className="w-full border rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-400"
+                  className="w-full border  border-gray-300  rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-400"
                 />
               </div>
 
@@ -341,7 +349,7 @@ const SubCategoryPage: React.FC = () => {
                   onChange={(e) =>
                     setFormData({ ...formData, latitude: e.target.value })
                   }
-                  className="w-full border rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-400"
+                  className="w-full border  border-gray-300  rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-400"
                 />
                 <input
                   type="text"
@@ -350,7 +358,7 @@ const SubCategoryPage: React.FC = () => {
                   onChange={(e) =>
                     setFormData({ ...formData, longitude: e.target.value })
                   }
-                  className="w-full border rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-400"
+                  className="w-full border   border-gray-300 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-400"
                 />
               </div>
 
@@ -376,13 +384,13 @@ const SubCategoryPage: React.FC = () => {
             <div className="flex justify-end gap-4 mt-6">
               <button
                 onClick={() => setIsModalOpen(false)}
-                className="px-6 py-3 border rounded-lg hover:bg-gray-100"
+                className="px-6 py-3 border  border-gray-300 rounded-lg hover:bg-gray-300"
               >
                 Cancel
               </button>
               <button
                 onClick={handleSave}
-                className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                className="px-6 py-3 bg-blue-500 border border-gray-300 text-white rounded-lg hover:bg-blue-700"
               >
                 Save
               </button>

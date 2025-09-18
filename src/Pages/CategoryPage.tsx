@@ -214,7 +214,7 @@ const CategoryPage: React.FC = () => {
           <h2 className="text-xl font-semibold">Manage Subcategories</h2>
           <button
             onClick={handleAdd}
-            className="bg-blue-600 text-white px-3 py-1 rounded-xl flex items-center hover:bg-blue-700"
+            className="bg-blue-500 text-white px-3 py-1 rounded-xl flex items-center hover:bg-blue-700"
           >
             <Plus className="w-4 h-4 mr-1" /> New
           </button>
@@ -247,7 +247,7 @@ const CategoryPage: React.FC = () => {
                 <div className="flex space-x-4 mt-2">
                   <button
                     onClick={(e) => handleEdit(sub, e)}
-                    className="text-blue-600 text-sm"
+                    className="text-blue-500 text-sm"
                   >
                     Edit
                   </button>
@@ -276,7 +276,7 @@ const CategoryPage: React.FC = () => {
             <button
               disabled={page === 1}
               onClick={() => setPage((p) => p - 1)}
-              className="px-3 py-1 bg-blue-600 text-white rounded disabled:opacity-50"
+              className="px-3 py-1 bg-blue-500 text-white rounded disabled:opacity-50"
             >
               Prev.
             </button>
@@ -286,7 +286,7 @@ const CategoryPage: React.FC = () => {
             <button
               disabled={page === totalPages}
               onClick={() => setPage((p) => p + 1)}
-              className="px-3 py-1 bg-blue-600 text-white rounded disabled:opacity-50"
+              className="px-3 py-1 bg-blue-500 text-white rounded disabled:opacity-50"
             >
               Next
             </button>
@@ -318,7 +318,7 @@ const CategoryPage: React.FC = () => {
                 onChange={(e) =>
                   setFormData({ ...formData, subCategoryName: e.target.value })
                 }
-                className="w-full border rounded-lg px-3 py-2 outline-none"
+                className="w-full border  border-gray-300 rounded-lg px-3 py-2 outline-none"
               />
               <input
                 type="text"
@@ -327,7 +327,7 @@ const CategoryPage: React.FC = () => {
                 onChange={(e) =>
                   setFormData({ ...formData, categoryName: e.target.value })
                 }
-                className="w-full border rounded-lg px-3 py-2 outline-none"
+                className="w-full border   border-gray-300 rounded-lg px-3 py-2 outline-none"
               />
               <input
                 type="file"
@@ -338,7 +338,7 @@ const CategoryPage: React.FC = () => {
                     featuredImage: e.target.files?.[0] || null,
                   })
                 }
-                className="w-full border rounded-lg px-3 py-2 outline-none"
+                className="w-full border  border-gray-300 rounded-lg px-3 py-2 outline-none"
               />
 
               {formData.featuredImage ? (
@@ -347,7 +347,7 @@ const CategoryPage: React.FC = () => {
                   <img
                     src={URL.createObjectURL(formData.featuredImage)}
                     alt="Preview"
-                    className="w-full h-40 object-cover rounded-lg border"
+                    className="w-full h-40 object-cover rounded-lg border  border-gray-300"
                   />
                 </div>
               ) : editingSubCategory?.featuredImage ? (
@@ -365,13 +365,13 @@ const CategoryPage: React.FC = () => {
             <div className="flex justify-end mt-6 space-x-3">
               <button
                 onClick={() => setIsModalOpen(false)}
-                className="px-4 py-2 rounded-lg border"
+                className="px-4 py-2 rounded-lg border  border-gray-300  hover:bg-gray-200"
               >
                 Cancel
               </button>
               <button
                 onClick={handleSave}
-                className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700"
+                className="px-4 py-2 rounded-lg bg-blue-500 text-white hover:bg-blue-700"
               >
                 Save
               </button>

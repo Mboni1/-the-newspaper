@@ -12,10 +12,9 @@ import DocumentsPage from "./Pages/DocumentsPage";
 import ReviewsPage from "./Pages/ReviewsPage";
 import VisitorAnalyticsPage from "./Pages/VisitorAnalyticsPage";
 import LocationsOverviewPage from "./Pages/LocationsOverviewPage";
-import AddArticlePage from "./Pages/AddArticlePage";
-import AddLocationPage from "./Pages/AddLocationPage";
-import AddBusinessPage from "./Pages/AddBusinessPage";
-import AddCategoryPage from "./Pages/AddCategoryPage";
+import AddArticle from "./Components/AddArticle";
+import AddBusiness from "./Components/AddBusiness";
+import AddCategory from "./Components/AddCategory";
 import CategoryPage from "./Pages/CategoryPage";
 import SubCategoryPage from "./Pages/SubCategoryPage";
 
@@ -129,17 +128,7 @@ const App: React.FC = () => {
           element={
             <div className="min-h-screen bg-gray-100">
               <Navbar />
-              <AddArticlePage />
-            </div>
-          }
-        />
-
-        <Route
-          path="/add-location"
-          element={
-            <div className="min-h-screen bg-gray-100">
-              <Navbar />
-              <AddLocationPage />
+              <AddArticle />
             </div>
           }
         />
@@ -149,7 +138,7 @@ const App: React.FC = () => {
           element={
             <div className="min-h-screen bg-gray-100">
               <Navbar />
-              <AddBusinessPage />
+              <AddBusiness />
             </div>
           }
         />
@@ -159,7 +148,7 @@ const App: React.FC = () => {
           element={
             <div className="min-h-screen bg-gray-100">
               <Navbar />
-              <AddCategoryPage />
+              <AddCategory />
             </div>
           }
         />

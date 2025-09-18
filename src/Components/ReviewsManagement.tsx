@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Star } from "lucide-react";
 import { Link } from "react-router-dom";
-import axios from "axios";
 import api from "../lib/axios";
 
 type Review = {
@@ -15,7 +14,7 @@ type Review = {
   categoryColor: string;
   title: string;
   content: string;
-  status: "Published" | "Pending";
+  status: "Published" | "Flagged";
   statusColor: string;
 };
 
@@ -71,9 +70,10 @@ export default function ReviewsManagement() {
     "All" | "Published" | "Pending"
   >("All");
   const [loading, setLoading] = useState(true);
+  const [totalCategories, setTotalCategories] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
-  const limit = 20; // limit ya page 1
+  const limit = 20; // limit
 
   useEffect(() => {
     const fetchReviews = async () => {
@@ -102,7 +102,7 @@ export default function ReviewsManagement() {
           status:
             item.status?.toLowerCase() === "published"
               ? "Published"
-              : "Pending",
+              : "Flagged",
           statusColor:
             item.status?.toLowerCase() === "published"
               ? "bg-green-100 text-green-700"
@@ -119,6 +119,11 @@ export default function ReviewsManagement() {
 
     fetchReviews();
   }, [page]);
+
+  const totalPages = Math.ceil(totalCategories / limit);
+
+  const handlePrev = () => page > 1 && setPage((prev) => prev - 1);
+  const handleNext = () => page < totalPages && setPage((prev) => prev + 1);
 
   const filteredReviews = reviews.filter(
     (review) =>
@@ -159,7 +164,7 @@ export default function ReviewsManagement() {
         >
           <option value="All">All Status</option>
           <option value="Published">Published</option>
-          <option value="Pending">Pending</option>
+          <option value="Pending">Flagged</option>
         </select>
       </div>
 
@@ -170,19 +175,21 @@ export default function ReviewsManagement() {
       </div>
 
       {/* Pagination */}
-      <div className="flex justify-center gap-4 mt-6">
+      <div className="flex justify-center mt-6 gap-4">
         <button
-          onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
-          className=" text-white px-4 py-2 bg-blue-600 rounded hover:bg-blue-700"
+          onClick={handlePrev}
           disabled={page === 1}
+          className="px-4 py-2 bg-blue-600 text-black rounded hover:bg-blue-700 disabled:opacity-50"
         >
-          Previous
+          Prev
         </button>
-        <span className="px-4 py-2">{page}</span>
+        <span className="px-4 py-2">
+          Page {page} of {totalPages}
+        </span>
         <button
-          onClick={() => setPage((prev) => prev + 1)}
-          className=" text-white px-4 py-2 bg-blue-600 rounded hover:bg-blue-700"
-          disabled={reviews.length < limit}
+          onClick={handleNext}
+          disabled={page === totalPages}
+          className="px-4 py-2 bg-blue-600 text-black rounded hover:bg-blue-700 disabled:opacity-50"
         >
           Next
         </button>

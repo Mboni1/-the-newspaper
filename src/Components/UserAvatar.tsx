@@ -7,17 +7,16 @@ const UserAvatar: React.FC = () => {
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    // Gusiba token/session
     localStorage.removeItem("token");
     console.log("Logged out");
-    navigate("/login"); // Redirect kuri LoginPage
+    navigate("/login");
   };
 
   return (
     <div className="relative">
       {/* Avatar */}
       <div
-        className="w-10 h-10 rounded-full overflow-hidden bg-blue-500 flex items-center justify-center cursor-pointer"
+        className="w-10 h-10 rounded-full overflow-hidden bg-blue-600 flex items-center justify-center cursor-pointer"
         onClick={() => setIsOpen(!isOpen)}
       >
         <User className="w-6 h-6 text-white" />

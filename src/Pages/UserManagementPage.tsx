@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Search, MoreVertical, Users as UsersIcon } from "lucide-react";
 import { Link } from "react-router-dom";
 import api from "../lib/axios";
+import toast, { Toaster } from "react-hot-toast";
 
 interface User {
   id: number;
@@ -70,15 +71,14 @@ const UserManagement: React.FC = () => {
 
   const handleDelete = async (id: number) => {
     try {
-      const res = await api.delete(
-        `https://nearme-bn.onrender.com/user/interest/${id}`
-      );
+      const res = await api.delete(`/user/interest/${id}`);
 
       setUsers((prev) => prev.filter((u) => u.id !== id));
       setOpenMenu(null);
+      toast.success("User deleted successfully");
     } catch (error) {
       console.error("Error deleting user:", error);
-      alert("Failed to delete user. Try again.");
+      toast.error("Failed to delete user");
     }
   };
 
@@ -89,12 +89,9 @@ const UserManagement: React.FC = () => {
     role: string
   ) => {
     try {
-      const res = await api.put(
-        `https://nearme-bn.onrender.com/user/names/${id}`,
-        {
-          body: JSON.stringify({ name, email, role }),
-        }
-      );
+      const res = await api.patch(`/user/names/${id}`, {
+        body: JSON.stringify({ names, email, role }),
+      });
 
       const updatedUser = await res.data;
 
@@ -104,9 +101,10 @@ const UserManagement: React.FC = () => {
 
       setEditingUser(null);
       setOpenMenu(null);
+      toast.success("User updated successfully");
     } catch (error) {
       console.error("Error editing user:", error);
-      alert("Failed to edit user. Try again.");
+      toast.error("Failed to update user");
     }
   };
 
@@ -199,7 +197,7 @@ const UserManagement: React.FC = () => {
                         className={`px-2 py-1 rounded-full text-xs sm:text-sm font-medium
                           ${u.role === "admin" ? "bg-red-100 text-red-600" : ""}
                           ${
-                            u.role === "user" ? "bg-blue-100 text-blue-600" : ""
+                            u.role === "user" ? "bg-blue-100 text-blue-500" : ""
                           }
                           ${
                             u.role === "moderator"
@@ -273,7 +271,7 @@ const UserManagement: React.FC = () => {
         <button
           onClick={handlePrev}
           disabled={page === 1}
-          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+          className="px-4 py-2 bg-blue-500 text-black rounded hover:bg-blue-700 disabled:opacity-50"
         >
           Prev.
         </button>
@@ -283,7 +281,7 @@ const UserManagement: React.FC = () => {
         <button
           onClick={handleNext}
           disabled={page === totalPages}
-          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+          className="px-4 py-2 bg-blue-500 text-black rounded hover:bg-blue-700 disabled:opacity-50"
         >
           Next
         </button>
@@ -359,13 +357,13 @@ const EditUserForm: React.FC<EditFormProps> = ({ user, onClose, onSave }) => {
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 bg-gray-300 rounded-lg hover:bg-gray-400"
+              className="px-4 py-2 bg-gray-300 rounded-lg hover:bg-gray-300"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-700"
             >
               Save
             </button>

@@ -65,7 +65,7 @@ const UserLocation: React.FC = () => {
       {/* Chart + Legend */}
       <div className="flex flex-col sm:flex-row items-center px-10 pt-10 gap-10">
         {/* Donut Chart */}
-        <ResponsiveContainer width={200} height={200}>
+        <ResponsiveContainer width="100%" height={300}>
           <PieChart>
             <Pie
               data={data}
