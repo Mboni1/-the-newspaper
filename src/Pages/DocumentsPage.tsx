@@ -3,6 +3,7 @@ import { Search, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import api from "../lib/axios";
 import toast, { Toaster } from "react-hot-toast";
+import Description from "../Components/Description";
 
 interface Article {
   id: number;
@@ -12,7 +13,6 @@ interface Article {
   location: string;
   categoryName: string;
   featuredImg: string;
-  description: string;
   summary: string;
 }
 
@@ -30,7 +30,6 @@ const ArticlesPage: React.FC = () => {
   const [editingArticle, setEditingArticle] = useState<Article | null>(null);
   const [formData, setFormData] = useState({
     title: "",
-    description: "",
     summary: "",
     categoryName: "",
     location: "",
@@ -51,7 +50,6 @@ const ArticlesPage: React.FC = () => {
             author: item.authorName || "Admin",
             date: item.date || item.createdAt || new Date().toISOString(),
             featuredImg: item.featuredImg || "https://via.placeholder.com/150",
-            description: item.description || "",
             summary: item.summary || "",
             categoryName: item.categoryName || "",
             location: item.location || "",
@@ -87,7 +85,6 @@ const ArticlesPage: React.FC = () => {
     setEditingArticle(null);
     setFormData({
       title: "",
-      description: "",
       summary: "",
       categoryName: "",
       location: "",
@@ -102,7 +99,6 @@ const ArticlesPage: React.FC = () => {
     setEditingArticle(article);
     setFormData({
       title: article.title,
-      description: article.description,
       summary: article.summary,
       categoryName: article.categoryName,
       location: article.location,
@@ -142,7 +138,6 @@ const ArticlesPage: React.FC = () => {
     try {
       const data = new FormData();
       data.append("title", formData.title);
-      data.append("description", formData.description);
       data.append("summary", formData.summary);
       data.append("categoryName", formData.categoryName);
       data.append("location", formData.location);
@@ -167,7 +162,6 @@ const ArticlesPage: React.FC = () => {
       setIsModalOpen(false);
       setFormData({
         title: "",
-        description: "",
         summary: "",
         categoryName: "",
         location: "",
@@ -193,7 +187,7 @@ const ArticlesPage: React.FC = () => {
       <Toaster position="top-right" />
       <button
         onClick={() => navigate("/dashboard")}
-        className="text-blue-600 hover:underline inline-block mb-4"
+        className="text-blue-500 hover:underline inline-block mb-4"
       >
         ← Back to Dashboard
       </button>
@@ -207,7 +201,7 @@ const ArticlesPage: React.FC = () => {
         </div>
         <button
           onClick={handleAdd}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl shadow-md"
+          className="bg-blue-500 hover:bg-blue-700 text-white px-4 py-2 rounded-xl shadow-md"
         >
           + New
         </button>
@@ -272,7 +266,7 @@ const ArticlesPage: React.FC = () => {
           <button
             onClick={handlePrev}
             disabled={currentPage === 1}
-            className="px-3 py-1 bg-blue-600 rounded disabled:opacity-50"
+            className="px-3 py-1 bg-blue-500 rounded disabled:opacity-50"
           >
             Prev
           </button>
@@ -282,12 +276,13 @@ const ArticlesPage: React.FC = () => {
           <button
             onClick={handleNext}
             disabled={currentPage === totalPages}
-            className="px-3 py-1 bg-blue-600 rounded disabled:opacity-50"
+            className="px-3 py-1 bg-blue-500 rounded disabled:opacity-50"
           >
             Next
           </button>
         </div>
       )}
+
       {isModalOpen && (
         <div className="fixed inset-0 bg-white bg-opacity-40 flex items-center justify-center z-50 p-4">
           <div className="bg-white w-full max-w-full max-h-[90vh] p-6 md:p-12 overflow-y-auto rounded-2xl relative flex flex-col">
@@ -303,6 +298,7 @@ const ArticlesPage: React.FC = () => {
             <h2 className="text-2xl md:text-3xl font-semibold mb-6 text-center md:text-left">
               {editingArticle ? "Edit Article" : "New Article"}
             </h2>
+
             {/* Form */}
             <div className="flex flex-col gap-6 w-full">
               {/* Title */}
@@ -317,24 +313,12 @@ const ArticlesPage: React.FC = () => {
                   onChange={(e) =>
                     setFormData({ ...formData, title: e.target.value })
                   }
-                  className="w-full border-b border-gray-300 px-1 py-2 focus:outline-none focus:border-blue-500"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500"
                 />
               </div>
 
               {/* Description */}
-              <div className="flex flex-col">
-                <label className="text-sm font-medium text-gray-600 mb-1">
-                  Description
-                </label>
-                <textarea
-                  placeholder="Write full description..."
-                  value={formData.description}
-                  onChange={(e) =>
-                    setFormData({ ...formData, description: e.target.value })
-                  }
-                  className="w-full border-b border-gray-300 px-1 py-2 h-32 resize-none focus:outline-none focus:border-blue-500"
-                />
-              </div>
+              <Description />
 
               {/* Summary */}
               <div className="flex flex-col">
@@ -347,7 +331,7 @@ const ArticlesPage: React.FC = () => {
                   onChange={(e) =>
                     setFormData({ ...formData, summary: e.target.value })
                   }
-                  className="w-full border-b border-gray-300 px-1 py-2 h-20 resize-none focus:outline-none focus:border-blue-500"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 h-24 resize-none focus:outline-none focus:border-blue-500"
                 />
               </div>
 
@@ -364,7 +348,7 @@ const ArticlesPage: React.FC = () => {
                     onChange={(e) =>
                       setFormData({ ...formData, categoryName: e.target.value })
                     }
-                    className="w-full border-b border-gray-300 px-1 py-2 focus:outline-none focus:border-blue-500"
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500"
                   />
                 </div>
 
@@ -379,7 +363,7 @@ const ArticlesPage: React.FC = () => {
                     onChange={(e) =>
                       setFormData({ ...formData, location: e.target.value })
                     }
-                    className="w-full border-b border-gray-300 px-1 py-2 focus:outline-none focus:border-blue-500"
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500"
                   />
                 </div>
               </div>
@@ -393,6 +377,7 @@ const ArticlesPage: React.FC = () => {
                   type="file"
                   accept="image/*"
                   onChange={handleImageChange}
+                  className=" border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500"
                 />
                 {imagePreview && (
                   <img
@@ -408,13 +393,13 @@ const ArticlesPage: React.FC = () => {
             <div className="flex justify-end gap-4 mt-6">
               <button
                 onClick={() => setIsModalOpen(false)}
-                className="px-6 py-3 border rounded-lg hover:bg-gray-100"
+                className="px-6 py-3 border rounded-lg hover:bg-gray-300"
               >
                 Cancel
               </button>
               <button
                 onClick={handleSave}
-                className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-700"
               >
                 Save
               </button>

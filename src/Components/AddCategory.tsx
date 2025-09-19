@@ -28,10 +28,10 @@ const AddCategory: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 p-6 pt-20">
+    <div className="min-h-screen bg-gray-300 p-6 pt-20">
       <Link
         to="/service-categories"
-        className="text-blue-600 hover:underline inline-block mb-4"
+        className="text-blue-500 hover:underline inline-block mb-4"
       >
         ← Back to ServiceCategries
       </Link>
@@ -94,7 +94,7 @@ const AddCategory: React.FC = () => {
             {/* Publish */}
             <button
               type="submit"
-              className="flex-1 bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition"
+              className="flex-1 bg-blue-500 text-white py-2 rounded-md hover:bg-blue-700 transition"
             >
               Add Category
             </button>

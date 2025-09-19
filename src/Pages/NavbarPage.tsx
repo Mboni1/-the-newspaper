@@ -1,7 +1,6 @@
 import React from "react";
-import NotificationBell from "./NotificationBell";
-import UserAvatar from "./UserAvatar";
-import DropDownIcon from "./DropDownIcon";
+import UserAvatar from "../Components/UserAvatar";
+import DropDownIcon from "../Components/DropDownIcon";
 import logo1 from "../Assets/logo1.jpeg";
 
 const Navbar: React.FC = () => {
@@ -14,7 +13,6 @@ const Navbar: React.FC = () => {
 
       {/* Right side - Notification + User */}
       <div className="flex items-center gap-3">
-        <NotificationBell />
         <div className="flex items-center gap-2 px-4">
           <UserAvatar />
           <DropDownIcon />

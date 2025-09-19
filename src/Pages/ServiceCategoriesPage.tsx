@@ -1,6 +1,7 @@
 // src/pages/ServiceCategories.tsx
 import React, { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import SearchInput from "../Components/SearchInput";
 import {
   Search,
   Plane,
@@ -77,6 +78,9 @@ const ServiceCategories: React.FC = () => {
       setLoading(false);
     }
   };
+  useEffect(() => {
+    setPage(1);
+  }, [searchTerm]);
 
   useEffect(() => {
     fetchCategories();
@@ -185,24 +189,14 @@ const ServiceCategories: React.FC = () => {
       </div>
 
       {/* Search Bar */}
-      <div className="flex flex-col sm:flex-row items-center gap-3 bg-white p-1.5 rounded-xl shadow mb-8">
-        <div className="flex items-center flex-1 rounded-lg px-3 py-2">
-          <Search className="text-gray-400 w-5 h-5 mr-2" />
-          <input
-            type="text"
-            placeholder="Search Category"
-            value={searchTerm}
-            onChange={(e) => {
-              setPage(1);
-              setSearchTerm(e.target.value);
-            }}
-            className="flex-1 outline-none"
-          />
-        </div>
-      </div>
+      <SearchInput
+        placeholder="Search Category"
+        value={searchTerm} // bind searchTerm muri parent
+        onSearch={(query) => setSearchTerm(query)}
+      />
 
       {/* Categories Grid */}
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
         {categories.map((category) => {
           return (
             <div
@@ -259,7 +253,7 @@ const ServiceCategories: React.FC = () => {
         <button
           onClick={handlePrev}
           disabled={page === 1}
-          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+          className="px-4 py-2 bg-blue-600 text-black rounded hover:bg-blue-700 disabled:opacity-50"
         >
           Prev
         </button>
@@ -269,7 +263,7 @@ const ServiceCategories: React.FC = () => {
         <button
           onClick={handleNext}
           disabled={page === totalPages}
-          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+          className="px-4 py-2 bg-blue-600 text-black rounded hover:bg-blue-700 disabled:opacity-50"
         >
           Next
         </button>
@@ -289,7 +283,7 @@ const ServiceCategories: React.FC = () => {
               onChange={(e) =>
                 setFormData({ ...formData, name: e.target.value })
               }
-              className="w-full border rounded-lg px-3 py-2 mb-3"
+              className="w-full border  border-gray-300 rounded-lg px-3 py-2 mb-3"
             />
             <label className="flex items-center gap-2 mb-4">
               <input
@@ -307,7 +301,7 @@ const ServiceCategories: React.FC = () => {
                   setIsModalOpen(false);
                   setEditingCategory(null);
                 }}
-                className="px-4 py-2 border rounded-lg"
+                className="px-4 py-2 border  border-gray-300 rounded-lg"
               >
                 Cancel
               </button>

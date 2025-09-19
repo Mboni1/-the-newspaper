@@ -12,15 +12,15 @@ import DocumentsPage from "./Pages/DocumentsPage";
 import ReviewsPage from "./Pages/ReviewsPage";
 import VisitorAnalyticsPage from "./Pages/VisitorAnalyticsPage";
 import LocationsOverviewPage from "./Pages/LocationsOverviewPage";
-import AddArticlePage from "./Pages/AddArticlePage";
-import AddLocationPage from "./Pages/AddLocationPage";
-import AddBusinessPage from "./Pages/AddBusinessPage";
-import AddCategoryPage from "./Pages/AddCategoryPage";
+import AddArticle from "./Components/AddArticle";
+import AddBusiness from "./Components/AddBusiness";
+import AddCategory from "./Components/AddCategory";
 import CategoryPage from "./Pages/CategoryPage";
 import SubCategoryPage from "./Pages/SubCategoryPage";
+import NavbarPage from "./Pages/NavbarPage";
 
 // Components (for Dashboard layout)
-import Navbar from "./Components/Navbar";
+
 import Dashboard from "./Components/Dashboard";
 import Analytics from "./Components/Analytics";
 
@@ -37,7 +37,7 @@ const App: React.FC = () => {
           path="/dashboard"
           element={
             <div className="min-h-screen bg-gray-100">
-              <Navbar />
+              <NavbarPage />
               <Dashboard />
               <Analytics />
             </div>
@@ -48,7 +48,7 @@ const App: React.FC = () => {
           path="/user-management"
           element={
             <div className="min-h-screen bg-gray-100">
-              <Navbar />
+              <NavbarPage />
               <UserManagementPage />
             </div>
           }
@@ -58,7 +58,7 @@ const App: React.FC = () => {
           path="/service-categories"
           element={
             <div className="min-h-screen bg-gray-100">
-              <Navbar />
+              <NavbarPage />
               <ServiceCategoriesPage />
             </div>
           }
@@ -68,7 +68,7 @@ const App: React.FC = () => {
           path="/business"
           element={
             <div className="min-h-screen bg-gray-100">
-              <Navbar />
+              <NavbarPage />
               <BusinessDirectoryPage />
             </div>
           }
@@ -78,7 +78,7 @@ const App: React.FC = () => {
           path="/business-directory"
           element={
             <div className="min-h-screen bg-gray-100">
-              <Navbar />
+              <NavbarPage />
               <BusinessDirectoryPage />
             </div>
           }
@@ -88,7 +88,7 @@ const App: React.FC = () => {
           path="/documents"
           element={
             <div className="min-h-screen bg-gray-100">
-              <Navbar />
+              <NavbarPage />
               <DocumentsPage />
             </div>
           }
@@ -98,7 +98,7 @@ const App: React.FC = () => {
           path="/reviews"
           element={
             <div className="min-h-screen bg-gray-100">
-              <Navbar />
+              <NavbarPage />
               <ReviewsPage />
             </div>
           }
@@ -108,7 +108,7 @@ const App: React.FC = () => {
           path="/visitor-analytics"
           element={
             <div className="min-h-screen bg-gray-100">
-              <Navbar />
+              <NavbarPage />
               <VisitorAnalyticsPage />
             </div>
           }
@@ -118,7 +118,7 @@ const App: React.FC = () => {
           path="/locations-overview"
           element={
             <div className="min-h-screen bg-gray-100">
-              <Navbar />
+              <NavbarPage />
               <LocationsOverviewPage />
             </div>
           }
@@ -128,18 +128,8 @@ const App: React.FC = () => {
           path="/add-article"
           element={
             <div className="min-h-screen bg-gray-100">
-              <Navbar />
-              <AddArticlePage />
-            </div>
-          }
-        />
-
-        <Route
-          path="/add-location"
-          element={
-            <div className="min-h-screen bg-gray-100">
-              <Navbar />
-              <AddLocationPage />
+              <NavbarPage />
+              <AddArticle />
             </div>
           }
         />
@@ -148,8 +138,8 @@ const App: React.FC = () => {
           path="/add-business"
           element={
             <div className="min-h-screen bg-gray-100">
-              <Navbar />
-              <AddBusinessPage />
+              <NavbarPage />
+              <AddBusiness />
             </div>
           }
         />
@@ -158,8 +148,8 @@ const App: React.FC = () => {
           path="/add-category"
           element={
             <div className="min-h-screen bg-gray-100">
-              <Navbar />
-              <AddCategoryPage />
+              <NavbarPage />
+              <AddCategory />
             </div>
           }
         />
@@ -178,7 +168,7 @@ const App: React.FC = () => {
           path="/category/:name"
           element={
             <div className="min-h-screen bg-gray-100">
-              <Navbar />
+              <NavbarPage />
               <CategoryPage />
             </div>
           }
@@ -187,7 +177,7 @@ const App: React.FC = () => {
           path="/category/subCategory/:name"
           element={
             <div className="min-h-screen bg-gray-100">
-              <Navbar />
+              <NavbarPage />
               <SubCategoryPage />
             </div>
           }

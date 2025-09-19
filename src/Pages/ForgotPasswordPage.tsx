@@ -17,7 +17,7 @@ const ForgotPasswordPage: React.FC = () => {
         {/* Icon */}
         <div className="flex justify-center mb-4">
           <div className="bg-blue-100 p-3 rounded-full">
-            <Shield className="w-8 h-8 text-blue-600" />
+            <Shield className="w-8 h-8 text-blue-500" />
           </div>
         </div>
 
@@ -36,7 +36,7 @@ const ForgotPasswordPage: React.FC = () => {
               Email Address
             </label>
             <div className="relative">
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-300 w-5 h-5" />
               <input
                 type="email"
                 placeholder="Enter your email address"
@@ -51,7 +51,7 @@ const ForgotPasswordPage: React.FC = () => {
           {/* Button */}
           <button
             type="submit"
-            className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition"
+            className="w-full flex items-center justify-center gap-2 bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-700 transition"
           >
             Send Reset Link <ArrowRight className="w-4 h-4" />
           </button>
@@ -59,7 +59,7 @@ const ForgotPasswordPage: React.FC = () => {
 
         <p className="text-center text-gray-500 text-sm mt-6">
           Remembered your password?{" "}
-          <Link to="/" className="text-blue-600 hover:underline font-medium">
+          <Link to="/" className="text-blue-500 hover:underline font-medium">
             Go back to Login
           </Link>
         </p>
