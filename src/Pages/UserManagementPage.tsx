@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Search, MoreVertical, Users as UsersIcon } from "lucide-react";
+import { Search, MoreVertical } from "lucide-react";
 import { Link } from "react-router-dom";
 import api from "../lib/axios";
 import toast, { Toaster } from "react-hot-toast";
@@ -19,50 +19,66 @@ const UserManagement: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [totalUsers, setTotalUsers] = useState(0);
-  const [search, setSearch] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
+
+  // Search states
+  const [searchInput, setSearchInput] = useState(""); // For input box
+  const [searchQuery, setSearchQuery] = useState(""); // For API request
   const [filterRole, setFilterRole] = useState("All Roles");
+
   const [openMenu, setOpenMenu] = useState<number | null>(null);
   const [editingUser, setEditingUser] = useState<User | null>(null);
 
   const limit = 5;
 
+  // Debounce search input (500ms)
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setPage(1);
+      setSearchQuery(searchInput);
+    }, 500);
+
+    return () => clearTimeout(handler);
+  }, [searchInput]);
+
+  // Fetch users from API
   useEffect(() => {
     const fetchUsers = async () => {
       try {
         setLoading(true);
-        const res = await api.get(`/user/all?page=${page}&limit=${limit}`);
 
-        const responseData = await res.data;
-        if (Array.isArray(responseData.data)) {
-          setUsers(responseData.data);
-          setTotalUsers(responseData.total || responseData.data.length);
+        const roleParam =
+          filterRole !== "All Roles" ? filterRole.toLowerCase() : undefined;
+
+        const res = await api.get("/user/all", {
+          params: {
+            page,
+            limit,
+            search: searchQuery,
+            ...(roleParam && { role: roleParam }),
+          },
+        });
+
+        const data = res.data;
+
+        if (Array.isArray(data.data)) {
+          setUsers(data.data);
+          setTotalUsers(data.total || data.data.length);
         } else {
           setUsers([]);
           setTotalUsers(0);
         }
       } catch (error) {
         console.error("Error fetching users:", error);
+        toast.error("Failed to fetch users");
         setUsers([]);
+        setTotalUsers(0);
       } finally {
         setLoading(false);
       }
     };
 
     fetchUsers();
-  }, [page]);
-
-  // Filtered users based on search and role
-  const filteredUsers = users.filter((u) => {
-    const fullName = `${u.firstName} ${u.lastName}`.toLowerCase();
-    const matchesSearch =
-      fullName.includes(search.toLowerCase()) ||
-      u.email.toLowerCase().includes(search.toLowerCase());
-    const matchesRole =
-      filterRole === "All Roles" ||
-      u.role.toLowerCase() === filterRole.toLowerCase();
-    return matchesSearch && matchesRole;
-  });
+  }, [page, searchQuery, filterRole]);
 
   const totalPages = Math.ceil(totalUsers / limit);
 
@@ -71,8 +87,7 @@ const UserManagement: React.FC = () => {
 
   const handleDelete = async (id: number) => {
     try {
-      const res = await api.delete(`/user/interest/${id}`);
-
+      await api.delete(`/user/interest/${id}`);
       setUsers((prev) => prev.filter((u) => u.id !== id));
       setOpenMenu(null);
       toast.success("User deleted successfully");
@@ -92,13 +107,10 @@ const UserManagement: React.FC = () => {
       const res = await api.patch(`/user/names/${id}`, {
         body: JSON.stringify({ names, email, role }),
       });
-
-      const updatedUser = await res.data;
-
+      const updatedUser = res.data;
       setUsers((prev) =>
         prev.map((u) => (u.id === id ? { ...u, ...updatedUser } : u))
       );
-
       setEditingUser(null);
       setOpenMenu(null);
       toast.success("User updated successfully");
@@ -108,12 +120,9 @@ const UserManagement: React.FC = () => {
     }
   };
 
-  if (loading) return <p className="p-8">Loading users...</p>;
-  if (users.length === 0)
-    return <p className="p-8 text-red-500">No users found.</p>;
-
   return (
     <div className="p-6 pt-20 px-10 py-10 bg-gray-50 min-h-screen">
+      <Toaster />
       <Link
         to="/dashboard"
         className="text-blue-600 hover:underline inline-block mb-4"
@@ -132,12 +141,9 @@ const UserManagement: React.FC = () => {
           <Search className="absolute left-3 top-3 text-gray-400" size={18} />
           <input
             type="text"
-            placeholder="Search users by name or email..."
-            value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              setCurrentPage(1);
-            }}
+            value={searchInput}
+            placeholder="Search users by name, email..."
+            onChange={(e) => setSearchInput(e.target.value)}
             className="pl-10 pr-4 py-2 w-full rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none text-sm sm:text-base"
           />
         </div>
@@ -154,138 +160,151 @@ const UserManagement: React.FC = () => {
         </select>
       </div>
 
-      {/* Table */}
-      <div className="bg-white shadow-md rounded-lg overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[600px]">
-            <thead className="bg-gray-100 text-gray-600 text-xs sm:text-sm uppercase">
-              <tr>
-                <th className="text-left p-3">User</th>
-                <th className="text-left p-3">Role</th>
-                <th className="text-left p-3">Status</th>
-                <th className="text-right p-3">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredUsers.map((u) => {
-                const fullName = `${u.firstName ?? ""} ${
-                  u.lastName ?? ""
-                }`.trim();
-
-                return (
-                  <tr key={u.id} className="border-t">
-                    <td className="p-3 flex items-center gap-3">
-                      <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-purple-500 flex items-center justify-center text-white font-semibold text-xs sm:text-sm">
-                        {fullName
-                          .split(" ")
-                          .map((n) => n[0])
-                          .join("")
-                          .toUpperCase()}
-                      </div>
-                      <div>
-                        <p className="font-medium text-sm sm:text-base">
-                          {fullName}
-                        </p>
-                        <p className="text-xs sm:text-sm text-gray-500">
-                          {u.email}
-                        </p>
-                      </div>
-                    </td>
-
-                    <td className="p-3">
-                      <span
-                        className={`px-2 py-1 rounded-full text-xs sm:text-sm font-medium
-                          ${u.role === "admin" ? "bg-red-100 text-red-600" : ""}
-                          ${
-                            u.role === "user" ? "bg-blue-100 text-blue-500" : ""
-                          }
-                          ${
-                            u.role === "moderator"
-                              ? "bg-green-100 text-green-600"
-                              : ""
-                          }
-                        `}
-                      >
-                        {u.role}
-                      </span>
-                    </td>
-
-                    <td className="p-3">
-                      <span
-                        className={`flex items-center gap-1 text-xs sm:text-sm font-medium
-                          ${
-                            u.status === "Active"
-                              ? "text-green-600"
-                              : "text-gray-400"
-                          }
-                        `}
-                      >
-                        <span
-                          className={`w-2 h-2 rounded-full ${
-                            u.status === "Active"
-                              ? "bg-green-500"
-                              : "bg-gray-400"
-                          }`}
-                        ></span>
-                        {u.status ?? "Inactive"}
-                      </span>
-                    </td>
-
-                    <td className="p-3 text-right relative">
-                      <button
-                        className="text-gray-500 hover:text-gray-800"
-                        onClick={() =>
-                          setOpenMenu((prev) => (prev === u.id ? null : u.id))
-                        }
-                      >
-                        <MoreVertical />
-                      </button>
-
-                      {openMenu === u.id && (
-                        <div className="absolute right-10  w-16 -translate-y-12 bg-white border rounded-md shadow-lg z-10">
-                          <button
-                            onClick={() => setEditingUser(u)}
-                            className="block w-full text-left px-3 py-1.5 text-sm hover:bg-gray-300"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            onClick={() => handleDelete(u.id)}
-                            className="block w-full text-left px-3 py-1.5 text-sm text-red-600 hover:bg-red-100"
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      )}
-                    </td>
+      {loading ? (
+        <p className="p-8 text-center">Loading users...</p>
+      ) : users.length === 0 ? (
+        <p className="p-8 text-red-500 text-center">No users found.</p>
+      ) : (
+        <>
+          {/* Table */}
+          <div className="bg-white shadow-md rounded-lg overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[600px]">
+                <thead className="bg-gray-100 text-gray-600 text-xs sm:text-sm uppercase">
+                  <tr>
+                    <th className="text-left p-3">User</th>
+                    <th className="text-left p-3">Role</th>
+                    <th className="text-left p-3">Status</th>
+                    <th className="text-right p-3">Actions</th>
                   </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      </div>
+                </thead>
+                <tbody>
+                  {users.map((u) => {
+                    const fullName = `${u.firstName ?? ""} ${
+                      u.lastName ?? ""
+                    }`.trim();
 
-      {/* Pagination */}
-      <div className="flex justify-center mt-6 gap-4 p-4">
-        <button
-          onClick={handlePrev}
-          disabled={page === 1}
-          className="px-4 py-2 bg-blue-500 text-black rounded hover:bg-blue-700 disabled:opacity-50"
-        >
-          Prev.
-        </button>
-        <span className="px-4 py-2">
-          Page {page} of {totalPages}
-        </span>
-        <button
-          onClick={handleNext}
-          disabled={page === totalPages}
-          className="px-4 py-2 bg-blue-500 text-black rounded hover:bg-blue-700 disabled:opacity-50"
-        >
-          Next
-        </button>
-      </div>
+                    return (
+                      <tr key={u.id} className="border-t border-gray-300">
+                        <td className="p-3 flex items-center gap-3">
+                          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-purple-500 flex items-center justify-center text-white font-semibold text-xs sm:text-sm">
+                            {fullName
+                              .split(" ")
+                              .map((n) => n[0])
+                              .join("")
+                              .toUpperCase()}
+                          </div>
+                          <div>
+                            <p className="font-medium text-sm sm:text-base">
+                              {fullName}
+                            </p>
+                            <p className="text-xs sm:text-sm text-gray-500">
+                              {u.email}
+                            </p>
+                          </div>
+                        </td>
+                        <td className="p-3">
+                          <span
+                            className={`px-2 py-1 rounded-full text-xs sm:text-sm font-medium
+                              ${
+                                u.role === "admin"
+                                  ? "bg-red-100 text-red-600"
+                                  : ""
+                              }
+                              ${
+                                u.role === "user"
+                                  ? "bg-blue-100 text-blue-500"
+                                  : ""
+                              }
+                              ${
+                                u.role === "moderator"
+                                  ? "bg-green-100 text-green-600"
+                                  : ""
+                              }
+                            `}
+                          >
+                            {u.role}
+                          </span>
+                        </td>
+                        <td className="p-3">
+                          <span
+                            className={`flex items-center gap-1 text-xs sm:text-sm font-medium
+                              ${
+                                u.status === "Active"
+                                  ? "text-green-600"
+                                  : "text-gray-400"
+                              }
+                            `}
+                          >
+                            <span
+                              className={`w-2 h-2 rounded-full ${
+                                u.status === "Active"
+                                  ? "bg-green-500"
+                                  : "bg-gray-400"
+                              }`}
+                            ></span>
+                            {u.status ?? "Inactive"}
+                          </span>
+                        </td>
+                        <td className="p-3 text-right relative">
+                          <button
+                            className="text-gray-500 hover:text-gray-800"
+                            onClick={() =>
+                              setOpenMenu((prev) =>
+                                prev === u.id ? null : u.id
+                              )
+                            }
+                          >
+                            <MoreVertical />
+                          </button>
+
+                          {openMenu === u.id && (
+                            <div className="absolute right-10 w-16 -translate-y-12 bg-white border rounded-md shadow-lg z-10">
+                              <button
+                                onClick={() => setEditingUser(u)}
+                                className="block w-full text-left px-3 py-1.5 text-sm hover:bg-gray-300"
+                              >
+                                Edit
+                              </button>
+                              <button
+                                onClick={() => handleDelete(u.id)}
+                                className="block w-full text-left px-3 py-1.5 text-sm text-red-600 hover:bg-red-100"
+                              >
+                                Delete
+                              </button>
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Pagination */}
+          <div className="flex justify-center mt-6 gap-4 p-4">
+            <button
+              onClick={handlePrev}
+              disabled={page === 1}
+              className="px-4 py-2 bg-blue-500 text-black rounded hover:bg-blue-700 disabled:opacity-50"
+            >
+              Prev.
+            </button>
+            <span className="px-4 py-2">
+              Page {page} of {totalPages}
+            </span>
+            <button
+              onClick={handleNext}
+              disabled={page === totalPages}
+              className="px-4 py-2 bg-blue-500 text-black rounded hover:bg-blue-700 disabled:opacity-50"
+            >
+              Next
+            </button>
+          </div>
+        </>
+      )}
 
       {/* Edit Modal */}
       {editingUser && (

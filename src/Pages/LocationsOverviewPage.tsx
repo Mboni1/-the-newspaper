@@ -4,6 +4,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { Search, Filter, MoreHorizontal, X } from "lucide-react";
 import api from "../lib/axios";
 import toast, { Toaster } from "react-hot-toast";
+import Description from "../Components/Description";
 
 interface Location {
   id: number;
@@ -355,8 +356,8 @@ const LocationsOverviewPage: React.FC = () => {
 
       {/* Add/Edit Modal */}
       {(isAddModalOpen || isEditModalOpen) && (
-        <div className="fixed inset-0 bg-gray-300 bg-opacity-40 flex items-center justify-center z-50 p-4">
-          <div className="bg-white w-full max-full max-h-[90vh] p-6 md:p-12 overflow-y-auto rounded-2xl relative flex flex-col">
+        <div className="fixed inset-0 bg-white bg-opacity-40 flex items-center justify-center z-50 p-4">
+          <div className="bg-white w-screen h-screen p-30 overflow-y-auto relative flex flex-col">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-bold">
                 {isEditModalOpen ? "Edit Location" : "Add New Location"}
@@ -387,7 +388,7 @@ const LocationsOverviewPage: React.FC = () => {
                     setFormData({ ...formData, title: e.target.value })
                   }
                   placeholder="Enter title"
-                  className="w-full border rounded-lg px-3 py-2 outline-none"
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 outline-none"
                 />
               </div>
 
@@ -402,23 +403,12 @@ const LocationsOverviewPage: React.FC = () => {
                     setFormData({ ...formData, address: e.target.value })
                   }
                   placeholder="Enter address"
-                  className="w-full border rounded-lg px-3 py-2 outline-none"
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 outline-none"
                 />
               </div>
 
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium mb-1">
-                  Description
-                </label>
-                <textarea
-                  value={formData.description}
-                  onChange={(e) =>
-                    setFormData({ ...formData, description: e.target.value })
-                  }
-                  placeholder="Enter description"
-                  className="w-full border rounded-lg px-3 py-2 outline-none min-h-[100px]"
-                />
-              </div>
+              {/* Description */}
+              <Description />
 
               <div>
                 <label className="block text-sm font-medium mb-1">
@@ -431,7 +421,7 @@ const LocationsOverviewPage: React.FC = () => {
                     setFormData({ ...formData, latitude: e.target.value })
                   }
                   placeholder="Enter latitude"
-                  className="w-full border rounded-lg px-3 py-2 outline-none"
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 outline-none"
                 />
               </div>
 
@@ -446,7 +436,7 @@ const LocationsOverviewPage: React.FC = () => {
                     setFormData({ ...formData, longitude: e.target.value })
                   }
                   placeholder="Enter longitude"
-                  className="w-full border rounded-lg px-3 py-2 outline-none"
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 outline-none"
                 />
               </div>
 
@@ -462,7 +452,7 @@ const LocationsOverviewPage: React.FC = () => {
                     onChange={(e) =>
                       setFormData({ ...formData, provinceName: e.target.value })
                     }
-                    className="w-full border rounded-lg px-3 py-2 outline-none"
+                    className="w-full border border-gray-200 rounded-lg px-3 py-2 outline-none"
                   >
                     <option value="">Select province</option>
                     <option value="Northern">Northern</option>
@@ -482,7 +472,7 @@ const LocationsOverviewPage: React.FC = () => {
                     type="file"
                     accept="image/*"
                     onChange={handleImageChange}
-                    className="w-full border rounded-lg px-3 py-2 outline-none"
+                    className="w-full border border-gray-200 rounded-lg px-3 py-2 outline-none"
                   />
                   {imagePreview && (
                     <img
@@ -504,7 +494,7 @@ const LocationsOverviewPage: React.FC = () => {
                   setImagePreview("");
                   setImageFile(null);
                 }}
-                className="px-6 py-2 border rounded-lg"
+                className="px-6 py-2 border border-gray-200 rounded-lg"
               >
                 Cancel
               </button>
