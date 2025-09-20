@@ -1,36 +1,11 @@
 // src/pages/ServiceCategories.tsx
 import React, { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import SearchInput from "../Components/SearchInput";
-import {
-  Search,
-  Plane,
-  Bus,
-  Bed,
-  Wifi,
-  CreditCard,
-  Heart,
-  Utensils,
-  Map,
-  ShoppingBag,
-  MoreHorizontal,
-} from "lucide-react";
+import { MoreHorizontal, Search } from "lucide-react";
 import api from "../lib/axios";
 import toast, { Toaster } from "react-hot-toast";
-
-// Map string names from API -> Lucide icons
-const iconMap: Record<string, React.ElementType> = {
-  Plane,
-  Bus,
-  Bed,
-  Wifi,
-  CreditCard,
-  Heart,
-  Utensils,
-  Map,
-  ShoppingBag,
-  MoreHorizontal,
-};
+import SearchInput from "../Components/SearchInput";
+import Pagination from "../Components/Pagination";
 
 interface Category {
   id: number;
@@ -45,6 +20,7 @@ const ServiceCategories: React.FC = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [totalCategories, setTotalCategories] = useState(0);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -59,17 +35,34 @@ const ServiceCategories: React.FC = () => {
   const fetchCategories = async () => {
     try {
       setLoading(true);
-      const res = await api.get(
-        `/category?page=${page}&limit=${limit}&search=${searchTerm}`
-      );
-      const responseData = await res.data;
 
-      if (Array.isArray(responseData.data)) {
-        setCategories(responseData.data);
-        setTotalCategories(responseData.total || responseData.data.length);
+      let res;
+      if (searchTerm.trim()) {
+        // Search endpoint
+        res = await api.get(
+          `/category/search/all?query=${encodeURIComponent(searchTerm)}`
+        );
+        const responseData = res.data;
+
+        if (Array.isArray(responseData)) {
+          setCategories(responseData);
+          setTotalCategories(responseData.length);
+        } else {
+          setCategories([]);
+          setTotalCategories(0);
+        }
       } else {
-        setCategories([]);
-        setTotalCategories(0);
+        // Default paginated endpoint
+        res = await api.get(`/category?page=${page}&limit=${limit}`);
+        const responseData = res.data;
+
+        if (Array.isArray(responseData.data)) {
+          setCategories(responseData.data);
+          setTotalCategories(responseData.total || responseData.data.length);
+        } else {
+          setCategories([]);
+          setTotalCategories(0);
+        }
       }
     } catch (error) {
       console.error("Error fetching categories:", error);
@@ -78,10 +71,13 @@ const ServiceCategories: React.FC = () => {
       setLoading(false);
     }
   };
+
+  // Reset page when searchTerm changes
   useEffect(() => {
     setPage(1);
   }, [searchTerm]);
 
+  // Fetch data when page or search changes
   useEffect(() => {
     fetchCategories();
   }, [page, searchTerm]);
@@ -97,7 +93,7 @@ const ServiceCategories: React.FC = () => {
 
   const handleEdit = (category: Category) => {
     setEditingCategory(category);
-    setFormData({ name: category.name, isDoc: false }); // Adjust isDoc if needed
+    setFormData({ name: category.name, isDoc: false });
     setIsModalOpen(true);
     setOpenDropdownId(null);
   };
@@ -122,8 +118,6 @@ const ServiceCategories: React.FC = () => {
 
     try {
       if (editingCategory) {
-        console.log("Updating category ID:", editingCategory.id);
-
         const res = await api.patch(`/category/${editingCategory.id}`, {
           name: formData.name,
           isDoc: formData.isDoc,
@@ -157,8 +151,6 @@ const ServiceCategories: React.FC = () => {
   };
 
   if (loading) return <p className="p-8">Loading categories...</p>;
-  if (categories.length === 0)
-    return <p className="p-8 text-red-500">No categories found.</p>;
 
   return (
     <div className="p-6 pt-20 px-10 py-10 bg-gray-50 min-h-screen">
@@ -170,7 +162,7 @@ const ServiceCategories: React.FC = () => {
         ← Back to Dashboard
       </Link>
 
-      {/* Header Row */}
+      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold">Service Categories</h1>
@@ -188,25 +180,25 @@ const ServiceCategories: React.FC = () => {
         </button>
       </div>
 
-      {/* Search Bar */}
+      {/* Search */}
       <SearchInput
-        placeholder="Search Category"
-        value={searchTerm} // bind searchTerm muri parent
-        onSearch={(query) => setSearchTerm(query)}
+        value={search}
+        onSearch={(val) => setSearch(val)}
+        placeholder="Search categories..."
       />
 
       {/* Categories Grid */}
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
-        {categories.map((category) => {
-          return (
+      {categories.length === 0 ? (
+        <p className="p-8 text-red-500">No categories found.</p>
+      ) : (
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
+          {categories.map((category) => (
             <div
               key={category.id}
               className="relative bg-white p-6 rounded-2xl shadow hover:shadow-lg transition"
             >
               <div className="flex items-center gap-3 mb-3 justify-between">
-                <div className="flex items-center gap-3">
-                  <h2 className="text-xl font-semibold">{category.name}</h2>
-                </div>
+                <h2 className="text-xl font-semibold">{category.name}</h2>
                 <div className="relative">
                   <MoreHorizontal
                     className="w-5 h-5 cursor-pointer"
@@ -244,30 +236,16 @@ const ServiceCategories: React.FC = () => {
                 EXPLORE CATEGORY →
               </button>
             </div>
-          );
-        })}
-      </div>
+          ))}
+        </div>
+      )}
 
       {/* Pagination */}
-      <div className="flex justify-center mt-6 gap-4">
-        <button
-          onClick={handlePrev}
-          disabled={page === 1}
-          className="px-4 py-2 bg-blue-600 text-black rounded hover:bg-blue-700 disabled:opacity-50"
-        >
-          Prev
-        </button>
-        <span className="px-4 py-2">
-          Page {page} of {totalPages}
-        </span>
-        <button
-          onClick={handleNext}
-          disabled={page === totalPages}
-          className="px-4 py-2 bg-blue-600 text-black rounded hover:bg-blue-700 disabled:opacity-50"
-        >
-          Next
-        </button>
-      </div>
+      <Pagination
+        page={page}
+        totalPages={totalPages}
+        onPageChange={(p) => setPage(p)}
+      />
 
       {/* Modal */}
       {isModalOpen && (
@@ -283,7 +261,7 @@ const ServiceCategories: React.FC = () => {
               onChange={(e) =>
                 setFormData({ ...formData, name: e.target.value })
               }
-              className="w-full border  border-gray-300 rounded-lg px-3 py-2 mb-3"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 mb-3"
             />
             <label className="flex items-center gap-2 mb-4">
               <input
@@ -301,7 +279,7 @@ const ServiceCategories: React.FC = () => {
                   setIsModalOpen(false);
                   setEditingCategory(null);
                 }}
-                className="px-4 py-2 border  border-gray-300 rounded-lg"
+                className="px-4 py-2 border border-gray-300 rounded-lg"
               >
                 Cancel
               </button>

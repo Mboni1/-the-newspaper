@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Star } from "lucide-react";
 import { Link } from "react-router-dom";
 import api from "../lib/axios";
+import Pagination from "../Components/Pagination";
 
 type Review = {
   id: number;
@@ -175,25 +176,11 @@ export default function ReviewsManagement() {
       </div>
 
       {/* Pagination */}
-      <div className="flex justify-center mt-6 gap-4">
-        <button
-          onClick={handlePrev}
-          disabled={page === 1}
-          className="px-4 py-2 bg-blue-600 text-black rounded hover:bg-blue-700 disabled:opacity-50"
-        >
-          Prev
-        </button>
-        <span className="px-4 py-2">
-          Page {page} of {totalPages}
-        </span>
-        <button
-          onClick={handleNext}
-          disabled={page === totalPages}
-          className="px-4 py-2 bg-blue-600 text-black rounded hover:bg-blue-700 disabled:opacity-50"
-        >
-          Next
-        </button>
-      </div>
+      <Pagination
+        page={page}
+        totalPages={totalPages}
+        onPageChange={(p) => setPage(p)}
+      />
     </div>
   );
 }

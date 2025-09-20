@@ -3,6 +3,8 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 import { Plus, Search, X } from "lucide-react";
 import api from "../lib/axios";
 import toast, { Toaster } from "react-hot-toast";
+import SearchInput from "../Components/SearchInput";
+import Pagination from "../Components/Pagination";
 
 interface Category {
   id: number;
@@ -220,79 +222,55 @@ const CategoryPage: React.FC = () => {
           </button>
         </div>
 
-        <div className="flex items-center border rounded-xl px-3 py-2 mb-4 bg-white shadow-sm">
-          <Search className="text-gray-400 w-5 h-5 mr-2" />
-          <input
-            type="text"
-            placeholder="Search subcategories..."
-            value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              setPage(1);
-            }}
-            className="w-full outline-none bg-transparent"
-          />
-        </div>
-
-        {/* Subcategories list */}
-        <div className="space-y-4">
-          {paginatedSubCategories.map((sub) => (
-            <div
-              key={sub.id}
-              onClick={() => goToSubcategory(sub.name)}
-              className="flex justify-between items-center bg-gray-50 rounded-2xl shadow p-4 cursor-pointer hover:bg-gray-100 transition"
-            >
-              <div className="flex-1 pr-4">
-                <h3 className="font-semibold text-lg">{sub.name}</h3>
-                <div className="flex space-x-4 mt-2">
-                  <button
-                    onClick={(e) => handleEdit(sub, e)}
-                    className="text-blue-500 text-sm"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={(e) => handleDelete(sub.id, e)}
-                    className="text-red-600 text-sm"
-                  >
-                    Delete
-                  </button>
-                </div>
-              </div>
-              {sub.featuredImage && (
-                <img
-                  src={sub.featuredImage}
-                  alt={sub.name}
-                  className="w-24 h-20 object-cover rounded-xl"
-                />
-              )}
-            </div>
-          ))}
-        </div>
-
-        {/* Pagination Controls */}
-        {totalPages > 1 && (
-          <div className="flex justify-center items-center gap-4 mt-6">
-            <button
-              disabled={page === 1}
-              onClick={() => setPage((p) => p - 1)}
-              className="px-3 py-1 bg-blue-500 text-white rounded disabled:opacity-50"
-            >
-              Prev.
-            </button>
-            <span>
-              Page {page} of {totalPages}
-            </span>
-            <button
-              disabled={page === totalPages}
-              onClick={() => setPage((p) => p + 1)}
-              className="px-3 py-1 bg-blue-500 text-white rounded disabled:opacity-50"
-            >
-              Next
-            </button>
-          </div>
-        )}
+        {/* Search */}
+        <SearchInput
+          value={search}
+          onSearch={(val) => setSearch(val)}
+          placeholder="Search categories..."
+        />
       </div>
+      {/* Subcategories list */}
+      <div className="space-y-4">
+        {paginatedSubCategories.map((sub) => (
+          <div
+            key={sub.id}
+            onClick={() => goToSubcategory(sub.name)}
+            className="flex justify-between items-center bg-gray-50 rounded-2xl shadow p-4 cursor-pointer hover:bg-gray-100 transition"
+          >
+            <div className="flex-1 pr-4">
+              <h3 className="font-semibold text-lg">{sub.name}</h3>
+              <div className="flex space-x-4 mt-2">
+                <button
+                  onClick={(e) => handleEdit(sub, e)}
+                  className="text-blue-500 text-sm"
+                >
+                  Edit
+                </button>
+                <button
+                  onClick={(e) => handleDelete(sub.id, e)}
+                  className="text-red-600 text-sm"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+            {sub.featuredImage && (
+              <img
+                src={sub.featuredImage}
+                alt={sub.name}
+                className="w-24 h-20 object-cover rounded-xl"
+              />
+            )}
+          </div>
+        ))}
+      </div>
+
+      {/* Pagination */}
+      <Pagination
+        page={page}
+        totalPages={totalPages}
+        onPageChange={(p) => setPage(p)}
+      />
 
       {/* Modal */}
       {isModalOpen && (

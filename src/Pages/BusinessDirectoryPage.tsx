@@ -5,6 +5,8 @@ import { Building, MoreHorizontal, Search, X } from "lucide-react";
 import api from "../lib/axios";
 import toast, { Toaster } from "react-hot-toast";
 import Description from "../Components/Description";
+import SearchInput from "../Components/SearchInput";
+import Pagination from "../Components/Pagination";
 
 //  Interfaces
 interface Business {
@@ -72,7 +74,7 @@ const BusinessDirectoryPage: React.FC = () => {
   const [error, setError] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [category, setCategory] = useState("All");
-  const [currentPage, setCurrentPage] = useState(1);
+  const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [openDropdownId, setOpenDropdownId] = useState<number | null>(null);
 
@@ -99,7 +101,7 @@ const BusinessDirectoryPage: React.FC = () => {
     try {
       setLoading(true);
       const res = await api.get(
-        `/place-item/all?page=${currentPage}&limit=${limit}&search=${searchTerm}`
+        `/place-item/all?page=${page}&limit=${limit}&search=${searchTerm}`
       );
       const mappedData: Business[] = (res.data.data || []).map((item: any) => ({
         id: item.id,
@@ -132,7 +134,7 @@ const BusinessDirectoryPage: React.FC = () => {
 
   useEffect(() => {
     fetchBusinesses();
-  }, [currentPage, searchTerm, category]);
+  }, [page, searchTerm, category]);
 
   //  Modal Handlers
   const handleAdd = () => {
@@ -324,27 +326,12 @@ const BusinessDirectoryPage: React.FC = () => {
           );
         })}
       </div>
-
       {/* Pagination */}
-      <div className="flex justify-center items-center gap-4 mt-6">
-        <button
-          disabled={currentPage === 1}
-          onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-          className="px-4 py-2 bg-blue-500 rounded disabled:opacity-50"
-        >
-          Prev
-        </button>
-        <span>
-          Page {currentPage} of {totalPages}
-        </span>
-        <button
-          disabled={currentPage === totalPages}
-          onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-          className="px-4 py-2 bg-blue-500 rounded disabled:opacity-50"
-        >
-          Next
-        </button>
-      </div>
+      <Pagination
+        page={page}
+        totalPages={totalPages}
+        onPageChange={(p) => setPage(p)}
+      />
 
       {/* Modal */}
       {isModalOpen && (

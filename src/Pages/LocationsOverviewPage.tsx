@@ -5,6 +5,7 @@ import { Search, Filter, MoreHorizontal, X } from "lucide-react";
 import api from "../lib/axios";
 import toast, { Toaster } from "react-hot-toast";
 import Description from "../Components/Description";
+import Pagination from "../Components/Pagination";
 
 interface Location {
   id: number;
@@ -27,7 +28,7 @@ const LocationsOverviewPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [provinceFilter, setProvinceFilter] = useState("All");
-  const [currentPage, setCurrentPage] = useState(1);
+  const [page, setPage] = useState(1);
 
   // Dropdown & editing
   const [openDropdownId, setOpenDropdownId] = useState<number | null>(null);
@@ -68,33 +69,36 @@ const LocationsOverviewPage: React.FC = () => {
     };
     fetchLocations();
   }, []);
-
   // Filter + search
   useEffect(() => {
     let filtered = [...locations];
 
-    if (searchTerm) {
+    const query = (searchTerm ?? "").toLowerCase();
+
+    if (query) {
       filtered = filtered.filter(
         (loc) =>
-          loc.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          loc.address.toLowerCase().includes(searchTerm.toLowerCase())
+          (loc?.title ?? "").toLowerCase().includes(query) ||
+          (loc?.address ?? "").toLowerCase().includes(query)
       );
     }
 
     if (provinceFilter !== "All") {
       filtered = filtered.filter(
-        (loc) => loc.provinceName.toLowerCase() === provinceFilter.toLowerCase()
+        (loc) =>
+          (loc?.provinceName ?? "").toLowerCase() ===
+          provinceFilter.toLowerCase()
       );
     }
 
     setFilteredLocations(filtered);
-    setCurrentPage(1);
+    setPage(1);
   }, [searchTerm, provinceFilter, locations]);
 
   const totalPages = Math.ceil(filteredLocations.length / limit);
   const paginatedLocations = filteredLocations.slice(
-    (currentPage - 1) * limit,
-    currentPage * limit
+    (page - 1) * limit,
+    page * limit
   );
 
   // Delete
@@ -332,28 +336,11 @@ const LocationsOverviewPage: React.FC = () => {
       </div>
 
       {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex justify-center items-center gap-4 mt-6">
-          <button
-            onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
-            disabled={currentPage === 1}
-            className="px-3 py-1 bg-blue-500 text-white rounded disabled:opacity-50"
-          >
-            Prev
-          </button>
-          <span>
-            Page {currentPage} of {totalPages}
-          </span>
-          <button
-            onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
-            disabled={currentPage === totalPages}
-            className="px-3 py-1 bg-blue-500 text-white rounded disabled:opacity-50"
-          >
-            Next
-          </button>
-        </div>
-      )}
-
+      <Pagination
+        page={page}
+        totalPages={totalPages}
+        onPageChange={(p) => setPage(p)}
+      />
       {/* Add/Edit Modal */}
       {(isAddModalOpen || isEditModalOpen) && (
         <div className="fixed inset-0 bg-white bg-opacity-40 flex items-center justify-center z-50 p-4">
