@@ -5,6 +5,8 @@ import { Plus, Search, X } from "lucide-react";
 import api from "../lib/axios";
 import toast, { Toaster } from "react-hot-toast";
 import Description from "../Components/Description";
+import Pagination from "../Components/Pagination";
+import SearchInput from "../Components/SearchInput";
 
 interface Business {
   id: number;
@@ -20,7 +22,7 @@ interface Business {
   placeImg: string;
 }
 
-const limit = 3;
+const limit = 1;
 
 const SubCategoryPage: React.FC = () => {
   const [businesses, setBusinesses] = useState<Business[]>([]);
@@ -200,30 +202,22 @@ const SubCategoryPage: React.FC = () => {
           </button>
         </div>
 
-        <div className="flex items-center border rounded-xl px-3 py-2 mb-4 bg-white shadow-sm">
-          <Search className="text-gray-400 w-5 h-5 mr-2" />
-          <input
-            type="text"
-            placeholder="Search businesses..."
-            value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              setPage(1);
-            }}
-            className="w-full outline-none bg-transparent"
-          />
-        </div>
+        {/* Search bar */}
+        <SearchInput
+          value={search}
+          onSearch={(val) => setSearch(val)}
+          placeholder="Search Business..."
+        />
 
         {/* Businesses list */}
         <div className="space-y-4">
           {paginatedBusinesses.map((biz) => (
             <div
               key={biz.id}
-              className="flex justify-between items-center bg-gray-50 rounded-2xl shadow p-4 cursor-pointer hover:bg-gray-100 transition"
+              className="flex justify-between items-center bg-gray-50 rounded-2xl shadow p-4 cursor-pointer hover:bg-gray-100 transition mt-6"
             >
               <div className="flex-1 pr-4">
                 <h3 className="font-semibold text-lg">{biz.title}</h3>
-                {/* Description hidden */}
                 <div className="flex space-x-4 mt-2">
                   <button
                     onClick={(e) => handleEdit(biz, e)}
@@ -249,7 +243,14 @@ const SubCategoryPage: React.FC = () => {
             </div>
           ))}
         </div>
+        {/* Pagination */}
+        <Pagination
+          page={page}
+          totalPages={totalPages}
+          onPageChange={(p) => setPage(p)}
+        />
       </div>
+
       {/* Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-gray-300 bg-opacity-40 flex items-center justify-center z-50 p-4">
@@ -266,9 +267,10 @@ const SubCategoryPage: React.FC = () => {
                 <X className="w-6 h-6" />
               </button>
             </div>
+
             {/* Form */}
             <div className="flex flex-col gap-4">
-              {/* Title + Category Name */}
+              {/* Title + SubCategory */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <input
                   type="text"
@@ -277,7 +279,7 @@ const SubCategoryPage: React.FC = () => {
                   onChange={(e) =>
                     setFormData({ ...formData, title: e.target.value })
                   }
-                  className="w-full border  border-gray-300 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-100"
+                  className="w-full border border-gray-300 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-100"
                 />
                 <input
                   type="text"
@@ -289,14 +291,14 @@ const SubCategoryPage: React.FC = () => {
                       subCategoryName: e.target.value,
                     })
                   }
-                  className="w-full border  border-gray-300 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-400"
+                  className="w-full border border-gray-300 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-400"
                 />
               </div>
 
               {/* Description */}
               <Description />
 
-              {/* Working Hours + Location same row */}
+              {/* Working Hours + Location */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <input
                   type="text"
@@ -305,7 +307,7 @@ const SubCategoryPage: React.FC = () => {
                   onChange={(e) =>
                     setFormData({ ...formData, workingHours: e.target.value })
                   }
-                  className="w-full border  border-gray-300 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-400"
+                  className="w-full border border-gray-300 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-400"
                 />
                 <input
                   type="text"
@@ -314,11 +316,11 @@ const SubCategoryPage: React.FC = () => {
                   onChange={(e) =>
                     setFormData({ ...formData, location: e.target.value })
                   }
-                  className="w-full border  border-gray-300 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-400"
+                  className="w-full border border-gray-300 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-400"
                 />
               </div>
 
-              {/* Business Email + Phone Number same row */}
+              {/* Email + Phone */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <input
                   type="email"
@@ -327,7 +329,7 @@ const SubCategoryPage: React.FC = () => {
                   onChange={(e) =>
                     setFormData({ ...formData, businessEmail: e.target.value })
                   }
-                  className="w-full border   border-gray-300 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-400"
+                  className="w-full border border-gray-300 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-400"
                 />
                 <input
                   type="text"
@@ -336,11 +338,11 @@ const SubCategoryPage: React.FC = () => {
                   onChange={(e) =>
                     setFormData({ ...formData, phoneNumber: e.target.value })
                   }
-                  className="w-full border  border-gray-300  rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-400"
+                  className="w-full border border-gray-300 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-400"
                 />
               </div>
 
-              {/* Latitude + Longitude same row */}
+              {/* Latitude + Longitude */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <input
                   type="text"
@@ -349,7 +351,7 @@ const SubCategoryPage: React.FC = () => {
                   onChange={(e) =>
                     setFormData({ ...formData, latitude: e.target.value })
                   }
-                  className="w-full border  border-gray-300  rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-400"
+                  className="w-full border border-gray-300 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-400"
                 />
                 <input
                   type="text"
@@ -358,7 +360,7 @@ const SubCategoryPage: React.FC = () => {
                   onChange={(e) =>
                     setFormData({ ...formData, longitude: e.target.value })
                   }
-                  className="w-full border   border-gray-300 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-400"
+                  className="w-full border border-gray-300 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-400"
                 />
               </div>
 
@@ -384,7 +386,7 @@ const SubCategoryPage: React.FC = () => {
             <div className="flex justify-end gap-4 mt-6">
               <button
                 onClick={() => setIsModalOpen(false)}
-                className="px-6 py-3 border  border-gray-300 rounded-lg hover:bg-gray-300"
+                className="px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-300"
               >
                 Cancel
               </button>

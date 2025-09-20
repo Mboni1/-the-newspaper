@@ -4,6 +4,8 @@ import { useNavigate } from "react-router-dom";
 import api from "../lib/axios";
 import toast, { Toaster } from "react-hot-toast";
 import Description from "../Components/Description";
+import Pagination from "../Components/Pagination";
+import SearchInput from "../Components/SearchInput";
 
 interface Article {
   id: number;
@@ -25,6 +27,7 @@ const ArticlesPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingArticle, setEditingArticle] = useState<Article | null>(null);
@@ -73,12 +76,11 @@ const ArticlesPage: React.FC = () => {
   );
   const totalPages = Math.ceil(filteredArticles.length / limit);
   const paginatedArticles = filteredArticles.slice(
-    (currentPage - 1) * limit,
-    currentPage * limit
+    (page - 1) * limit,
+    page * limit
   );
-  const handlePrev = () => setCurrentPage((prev) => Math.max(prev - 1, 1));
-  const handleNext = () =>
-    setCurrentPage((prev) => Math.min(prev + 1, totalPages));
+  const handlePrev = () => setPage((prev) => Math.max(prev - 1, 1));
+  const handleNext = () => setPage((prev) => Math.min(prev + 1, totalPages));
 
   // Modal handlers
   const handleAdd = () => {
@@ -207,26 +209,19 @@ const ArticlesPage: React.FC = () => {
         </button>
       </div>
 
-      <div className="flex items-center bg-white rounded-xl shadow px-4 py-2 mb-6">
-        <Search className="w-5 h-5 text-gray-400" />
-        <input
-          type="text"
-          placeholder="Search articles"
-          value={search}
-          onChange={(e) => {
-            setSearch(e.target.value);
-            setCurrentPage(1);
-          }}
-          className="ml-2 w-full outline-none text-gray-700"
-        />
-      </div>
+      {/* Search */}
+      <SearchInput
+        value={search}
+        onSearch={(val) => setSearch(val)}
+        placeholder="Search categories..."
+      />
 
       <div className="space-y-4">
         {paginatedArticles.length > 0 ? (
           paginatedArticles.map((article) => (
             <div
               key={article.id}
-              className="flex items-center justify-between bg-white rounded-2xl shadow-md p-4"
+              className="flex items-center justify-between bg-white rounded-2xl shadow-md p-4 mt-6"
             >
               <div>
                 <h2 className="text-lg font-semibold">{article.title}</h2>
@@ -261,27 +256,11 @@ const ArticlesPage: React.FC = () => {
       </div>
 
       {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex justify-center items-center gap-4 mt-6">
-          <button
-            onClick={handlePrev}
-            disabled={currentPage === 1}
-            className="px-3 py-1 bg-blue-500 rounded disabled:opacity-50"
-          >
-            Prev
-          </button>
-          <span>
-            Page {currentPage} of {totalPages}
-          </span>
-          <button
-            onClick={handleNext}
-            disabled={currentPage === totalPages}
-            className="px-3 py-1 bg-blue-500 rounded disabled:opacity-50"
-          >
-            Next
-          </button>
-        </div>
-      )}
+      <Pagination
+        page={page}
+        totalPages={totalPages}
+        onPageChange={(p) => setPage(p)}
+      />
 
       {isModalOpen && (
         <div className="fixed inset-0 bg-white bg-opacity-40 flex items-center justify-center z-50 p-4">
@@ -393,7 +372,7 @@ const ArticlesPage: React.FC = () => {
             <div className="flex justify-end gap-4 mt-6">
               <button
                 onClick={() => setIsModalOpen(false)}
-                className="px-6 py-3 border rounded-lg hover:bg-gray-300"
+                className="px-6 py-3 border rounded-lg hover:bg-gray-200"
               >
                 Cancel
               </button>
