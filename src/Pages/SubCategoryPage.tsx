@@ -1,7 +1,7 @@
 // src/Pages/SubCategoryPage.tsx
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Plus, Search, X } from "lucide-react";
+import { Plus, X } from "lucide-react";
 import api from "../lib/axios";
 import toast, { Toaster } from "react-hot-toast";
 import Description from "../Components/Description";
@@ -49,25 +49,34 @@ const SubCategoryPage: React.FC = () => {
 
   const [imagePreview, setImagePreview] = useState<string>("");
 
-  // Fetch businesses
+  // Fetch businesses (search integrated)
   useEffect(() => {
+    if (!name) return;
+
     const fetchBusinesses = async () => {
       try {
         setLoading(true);
-        if (name) {
-          const res = await api.get(`/place-item/subcategory/${name}`);
-          const data = await res.data;
-          if (Array.isArray(data.data)) setBusinesses(data.data);
+        let res;
+        if (search.trim()) {
+          res = await api.get("/place-item/search/all", {
+            params: { query: search, subCategoryName: name },
+          });
+        } else {
+          res = await api.get(`/place-item/subcategory/${name}`);
         }
+        setBusinesses(Array.isArray(res.data.data) ? res.data.data : []);
       } catch (err) {
         console.error("Error fetching businesses:", err);
         setBusinesses([]);
+        toast.error("Failed to fetch businesses!");
       } finally {
         setLoading(false);
       }
     };
-    fetchBusinesses();
-  }, [name]);
+
+    const timeout = setTimeout(fetchBusinesses, 200); // debounce
+    return () => clearTimeout(timeout);
+  }, [name, search]);
 
   // Modal handlers
   const handleAdd = () => {
@@ -114,7 +123,7 @@ const SubCategoryPage: React.FC = () => {
       setBusinesses(businesses.filter((b) => b.id !== id));
       toast.success("Business deleted successfully");
     } catch (err) {
-      console.error("Error deleting business:", err);
+      console.error(err);
       toast.error("Failed to delete business");
     }
   };
@@ -128,6 +137,7 @@ const SubCategoryPage: React.FC = () => {
     }
   };
 
+  // Save business (add or edit)
   const handleSave = async () => {
     try {
       if (!formData.title.trim()) {
@@ -144,7 +154,9 @@ const SubCategoryPage: React.FC = () => {
         const res = await api.patch(
           `/place-item/${editingBusiness.id}`,
           submitData,
-          { headers: { "Content-Type": "multipart/form-data" } }
+          {
+            headers: { "Content-Type": "multipart/form-data" },
+          }
         );
         setBusinesses(
           businesses.map((b) =>
@@ -159,20 +171,18 @@ const SubCategoryPage: React.FC = () => {
         setBusinesses([...businesses, res.data.data]);
         toast.success("Business added successfully");
       }
+
       setIsModalOpen(false);
+      setEditingBusiness(null);
     } catch (err) {
-      console.error("Error saving business:", err);
+      console.error(err);
       toast.error("Failed to save business");
     }
   };
 
-  // Search + Pagination
-  const filteredBusinesses = businesses.filter((b) =>
-    b.title.toLowerCase().includes(search.toLowerCase())
-  );
-
-  const totalPages = Math.ceil(filteredBusinesses.length / limit);
-  const paginatedBusinesses = filteredBusinesses.slice(
+  // Pagination
+  const totalPages = Math.ceil(businesses.length / limit);
+  const paginatedBusinesses = businesses.slice(
     (page - 1) * limit,
     page * limit
   );
@@ -184,11 +194,12 @@ const SubCategoryPage: React.FC = () => {
   return (
     <div className="p-6 pt-20 max-w-3xl mx-auto">
       <Toaster position="top-right" />
+
       <button
         onClick={() => navigate(-1)}
         className="text-blue-600 hover:underline"
       >
-        ← Back to Sub Category
+        ← Back
       </button>
 
       <div className="bg-white p-6 mt-6 rounded-2xl shadow">
@@ -202,15 +213,13 @@ const SubCategoryPage: React.FC = () => {
           </button>
         </div>
 
-        {/* Search bar */}
         <SearchInput
           value={search}
           onSearch={(val) => setSearch(val)}
           placeholder="Search Business..."
         />
 
-        {/* Businesses list */}
-        <div className="space-y-4">
+        <div className="space-y-4 mt-4">
           {paginatedBusinesses.map((biz) => (
             <div
               key={biz.id}
@@ -243,7 +252,7 @@ const SubCategoryPage: React.FC = () => {
             </div>
           ))}
         </div>
-        {/* Pagination */}
+
         <Pagination
           page={page}
           totalPages={totalPages}
@@ -254,8 +263,7 @@ const SubCategoryPage: React.FC = () => {
       {/* Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-gray-300 bg-opacity-40 flex items-center justify-center z-50 p-4">
-          <div className="bg-white w-full max-w-full max-h-[90vh] p-6 md:p-12 overflow-y-auto rounded-2xl relative flex flex-col">
-            {/* Header */}
+          <div className="bg-white w-full max-w-3xl p-6 md:p-12 overflow-y-auto rounded-2xl relative flex flex-col">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-semibold">
                 {editingBusiness ? "Edit Business" : "New Business"}
@@ -268,9 +276,7 @@ const SubCategoryPage: React.FC = () => {
               </button>
             </div>
 
-            {/* Form */}
             <div className="flex flex-col gap-4">
-              {/* Title + SubCategory */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <input
                   type="text"
@@ -279,7 +285,7 @@ const SubCategoryPage: React.FC = () => {
                   onChange={(e) =>
                     setFormData({ ...formData, title: e.target.value })
                   }
-                  className="w-full border border-gray-300 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-100"
+                  className="w-full border border-gray-300 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-400"
                 />
                 <input
                   type="text"
@@ -295,10 +301,8 @@ const SubCategoryPage: React.FC = () => {
                 />
               </div>
 
-              {/* Description */}
               <Description />
 
-              {/* Working Hours + Location */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <input
                   type="text"
@@ -320,7 +324,6 @@ const SubCategoryPage: React.FC = () => {
                 />
               </div>
 
-              {/* Email + Phone */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <input
                   type="email"
@@ -342,7 +345,6 @@ const SubCategoryPage: React.FC = () => {
                 />
               </div>
 
-              {/* Latitude + Longitude */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <input
                   type="text"
@@ -364,7 +366,6 @@ const SubCategoryPage: React.FC = () => {
                 />
               </div>
 
-              {/* Image upload */}
               <div>
                 <label className="block mb-1 font-medium">Business Image</label>
                 <input
@@ -382,7 +383,6 @@ const SubCategoryPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Buttons */}
             <div className="flex justify-end gap-4 mt-6">
               <button
                 onClick={() => setIsModalOpen(false)}

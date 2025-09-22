@@ -1,11 +1,10 @@
 // src/pages/BusinessDirectoryPage.tsx
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { Link } from "react-router-dom";
 import { Building, MoreHorizontal, Search, X } from "lucide-react";
 import api from "../lib/axios";
 import toast, { Toaster } from "react-hot-toast";
 import Description from "../Components/Description";
-import SearchInput from "../Components/SearchInput";
 import Pagination from "../Components/Pagination";
 
 //  Interfaces
@@ -65,7 +64,7 @@ const SearchFilterBar: React.FC<SearchFilterBarProps> = ({
   </div>
 );
 
-//  Main Page
+// Main Page
 const limit = 3;
 
 const BusinessDirectoryPage: React.FC = () => {
@@ -81,7 +80,6 @@ const BusinessDirectoryPage: React.FC = () => {
   // Modal states
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingBusiness, setEditingBusiness] = useState<Business | null>(null);
-
   const [formData, setFormData] = useState({
     title: "",
     workingHours: "",
@@ -93,19 +91,24 @@ const BusinessDirectoryPage: React.FC = () => {
     longitude: "",
     placeImg: "" as any,
   });
-
   const [imagePreview, setImagePreview] = useState<string>("");
 
-  // Fetch Businesses
-  const fetchBusinesses = async () => {
+  const searchTimeout = useRef<NodeJS.Timeout | null>(null);
+
+  // Fetch all businesses
+  const fetchAllBusinesses = async () => {
     try {
       setLoading(true);
-      const res = await api.get(
-        `/place-item/all?page=${page}&limit=${limit}&search=${searchTerm}`
-      );
+      setError("");
+
+      const res = await api.get("/place-item/all", {
+        params: { page, limit },
+      });
+
       const mappedData: Business[] = (res.data.data || []).map((item: any) => ({
         id: item.id,
         title: item.title,
+        description: item.description,
         workingHours: item.workingHours,
         businessEmail: item.businessEmail,
         phoneNumber: item.phoneNumber,
@@ -117,12 +120,7 @@ const BusinessDirectoryPage: React.FC = () => {
         icon: Building,
       }));
 
-      const filteredData =
-        category === "All"
-          ? mappedData
-          : mappedData.filter((b) => b.subCategoryName === category);
-
-      setBusinesses(filteredData);
+      setBusinesses(mappedData);
       setTotalPages(Math.ceil(res.data.total / limit) || 1);
     } catch (err) {
       console.error(err);
@@ -132,11 +130,59 @@ const BusinessDirectoryPage: React.FC = () => {
     }
   };
 
-  useEffect(() => {
-    fetchBusinesses();
-  }, [page, searchTerm, category]);
+  // Fetch search results
+  const fetchSearchResults = async () => {
+    if (!searchTerm) return fetchAllBusinesses();
 
-  //  Modal Handlers
+    try {
+      setLoading(true);
+      setError("");
+
+      const params: any = { query: searchTerm, page, limit };
+      if (category !== "All") params.category = category;
+
+      const res = await api.get("/place-item/search/all", { params });
+
+      const mappedData: Business[] = (res.data.data || []).map((item: any) => ({
+        id: item.id,
+        title: item.title,
+        description: item.description,
+        workingHours: item.workingHours,
+        businessEmail: item.businessEmail,
+        phoneNumber: item.phoneNumber,
+        subCategoryName: item.subCategory?.name || "Uncategorized",
+        location: item.location,
+        placeImg: item.placeImg || [],
+        latitude: item.latitude,
+        longitude: item.longitude,
+        icon: Building,
+      }));
+
+      setBusinesses(mappedData);
+      setTotalPages(Math.ceil(res.data.total / limit) || 1);
+    } catch (err) {
+      console.error(err);
+      setError("Failed to fetch search results.");
+      setBusinesses([]);
+      setTotalPages(1);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Debounce search
+  useEffect(() => {
+    if (searchTimeout.current) clearTimeout(searchTimeout.current);
+    searchTimeout.current = setTimeout(() => {
+      if (searchTerm) {
+        fetchSearchResults();
+      } else {
+        fetchAllBusinesses();
+      }
+    }, 500); // 500ms debounce
+  }, [searchTerm, category, page]);
+
+  // Modal handlers
   const handleAdd = () => {
     setEditingBusiness(null);
     setFormData({
@@ -183,7 +229,6 @@ const BusinessDirectoryPage: React.FC = () => {
     }
   };
 
-  //Save/Add/Edit
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
@@ -326,6 +371,7 @@ const BusinessDirectoryPage: React.FC = () => {
           );
         })}
       </div>
+
       {/* Pagination */}
       <Pagination
         page={page}

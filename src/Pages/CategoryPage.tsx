@@ -1,6 +1,7 @@
+// src/pages/CategoryPage.tsx
 import React, { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { Plus, Search, X } from "lucide-react";
+import { Plus, X } from "lucide-react";
 import api from "../lib/axios";
 import toast, { Toaster } from "react-hot-toast";
 import SearchInput from "../Components/SearchInput";
@@ -26,6 +27,7 @@ const limit = 3;
 const CategoryPage: React.FC = () => {
   const { name } = useParams<{ name: string }>();
   const navigate = useNavigate();
+
   const [category, setCategory] = useState<Category | null>(null);
   const [subCategories, setSubCategories] = useState<SubCategory[]>([]);
   const [loading, setLoading] = useState(true);
@@ -36,7 +38,7 @@ const CategoryPage: React.FC = () => {
   const [page, setPage] = useState(1);
 
   const [formData, setFormData] = useState<{
-    subCategoryId: undefined;
+    subCategoryId?: number;
     subCategoryName: string;
     categoryName: string;
     featuredImage: File | null;
@@ -47,41 +49,60 @@ const CategoryPage: React.FC = () => {
     featuredImage: null,
   });
 
-  // Fetch category + subcategories
+  // Fetch category
   useEffect(() => {
-    const fetchCategoryAndSubCategories = async () => {
+    const fetchCategory = async () => {
       try {
         setLoading(true);
-        if (name) {
-          const resCategory = await api.get(`/category/${name}`);
-          setCategory(resCategory.data.data || null);
+        if (!name) return;
 
-          const resSubCategories = await api.get(`/category/${name}`);
-          setSubCategories(
-            Array.isArray(resSubCategories.data.data)
-              ? resSubCategories.data.data
-              : []
-          );
-        }
-      } catch (error) {
-        console.error("Error fetching category:", error);
-        toast.error("Failed to fetch category data!");
+        const res = await api.get(`/category/${name}`);
+        setCategory(res.data.data || null);
+      } catch (err) {
+        console.error(err);
+        toast.error("Failed to fetch category!");
         setCategory(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchCategory();
+  }, [name]);
+
+  // Fetch subcategories with search + debounce
+  useEffect(() => {
+    if (!name) return;
+    const fetchSubCategories = async () => {
+      try {
+        setLoading(true);
+        let res;
+        if (search.trim()) {
+          res = await api.get(`/category/search/subcategory/all`, {
+            params: { query: search, categoryName: name },
+          });
+        } else {
+          res = await api.get(`/category/${name}`);
+        }
+        setSubCategories(Array.isArray(res.data.data) ? res.data.data : []);
+      } catch (err) {
+        console.error(err);
+        toast.error("Failed to fetch subcategories!");
         setSubCategories([]);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchCategoryAndSubCategories();
-  }, [name]);
+    const timeout = setTimeout(fetchSubCategories, 300);
+    return () => clearTimeout(timeout);
+  }, [search, name]);
 
-  // Navigate to subcategory
-  const goToSubcategory = (subCategoryName: string) => {
-    navigate(`/category/subCategory/${subCategoryName}`);
+  // Navigate to subcategory page
+  const goToSubcategory = (subName: string) => {
+    navigate(`/category/subCategory/${subName}`);
   };
 
-  // Add
+  // Add or Edit Modal
   const handleAdd = () => {
     setEditingSubCategory(null);
     setFormData({
@@ -93,12 +114,11 @@ const CategoryPage: React.FC = () => {
     setIsModalOpen(true);
   };
 
-  // Edit
   const handleEdit = (sub: SubCategory, e: React.MouseEvent) => {
     e.stopPropagation();
     setEditingSubCategory(sub);
     setFormData({
-      subCategoryId: undefined,
+      subCategoryId: sub.id,
       subCategoryName: sub.name,
       categoryName: name || "",
       featuredImage: null,
@@ -106,20 +126,18 @@ const CategoryPage: React.FC = () => {
     setIsModalOpen(true);
   };
 
-  // Delete
   const handleDelete = async (id: number, e: React.MouseEvent) => {
     e.stopPropagation();
     try {
       await api.delete(`/category/subcategory/${id}`);
       setSubCategories(subCategories.filter((s) => s.id !== id));
-      toast.success("Subcategory deleted successfully!");
-    } catch (error) {
-      console.error("Error deleting subcategory:", error);
+      toast.success("Subcategory deleted!");
+    } catch (err) {
+      console.error(err);
       toast.error("Failed to delete subcategory!");
     }
   };
 
-  // Save (Add or Edit) with toast
   const handleSave = async () => {
     if (!formData.subCategoryName.trim() || !formData.categoryName.trim()) {
       toast.error("Please fill in all required fields!");
@@ -130,35 +148,28 @@ const CategoryPage: React.FC = () => {
       const data = new FormData();
       data.append("subCategoryName", formData.subCategoryName);
       data.append("categoryName", formData.categoryName);
-      if (formData.featuredImage) {
+      if (formData.featuredImage)
         data.append("featuredImage", formData.featuredImage);
-      }
-
-      for (const [key, value] of data.entries()) {
-        console.log(key, value);
-      }
 
       if (editingSubCategory) {
-        console.log("Updating subCategory ID:", editingSubCategory.id);
-        // EDIT
         const res = await api.patch(
           `/category/subcategory/${editingSubCategory.id}`,
           data,
-          { headers: { "Content-Type": "multipart/form-data" } }
+          {
+            headers: { "Content-Type": "multipart/form-data" },
+          }
         );
         const updated = res.data.data;
         setSubCategories((prev) =>
           prev.map((s) => (s.id === editingSubCategory.id ? updated : s))
         );
-        toast.success("Subcategory updated successfully!");
+        toast.success("Subcategory updated!");
       } else {
-        // ADD
-        const res = await api.post("/category/subcategory", data, {
+        const res = await api.post(`/category/subcategory`, data, {
           headers: { "Content-Type": "multipart/form-data" },
         });
-        const newSubCategory = res.data.data;
-        setSubCategories((prev) => [...prev, newSubCategory]);
-        toast.success("Subcategory added successfully!");
+        setSubCategories((prev) => [...prev, res.data.data]);
+        toast.success("Subcategory added!");
       }
 
       setIsModalOpen(false);
@@ -169,28 +180,24 @@ const CategoryPage: React.FC = () => {
         categoryName: name || "",
         featuredImage: null,
       });
-    } catch (error) {
-      console.error("Error saving subcategory:", error);
+    } catch (err) {
+      console.error(err);
       toast.error("Failed to save subcategory!");
     }
   };
 
-  // Search + Pagination
-  const filteredSubCategories = subCategories.filter((sub) =>
-    sub.name.toLowerCase().includes(search.toLowerCase())
-  );
-  const totalPages = Math.ceil(filteredSubCategories.length / limit);
-  const paginatedSubCategories = filteredSubCategories.slice(
+  // Pagination
+  const totalPages = Math.ceil(subCategories.length / limit);
+  const paginatedSubCategories = subCategories.slice(
     (page - 1) * limit,
     page * limit
   );
 
-  if (loading) return <p className="p-8">Loading categories...</p>;
+  if (loading) return <p className="p-8">Loading...</p>;
   if (!category) return <p className="p-8 text-red-500">Category not found.</p>;
 
   return (
     <div className="p-6 pt-20 max-w-3xl mx-auto">
-      {/* Toast Provider */}
       <Toaster position="top-right" reverseOrder={false} />
 
       <Link to="/service-categories" className="text-blue-600 hover:underline">
@@ -211,7 +218,6 @@ const CategoryPage: React.FC = () => {
           />
         )}
 
-        {/* CRUD + Search */}
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-semibold">Manage Subcategories</h2>
           <button
@@ -222,15 +228,14 @@ const CategoryPage: React.FC = () => {
           </button>
         </div>
 
-        {/* Search */}
         <SearchInput
           value={search}
           onSearch={(val) => setSearch(val)}
-          placeholder="Search categories..."
+          placeholder="Search subcategories..."
         />
       </div>
-      {/* Subcategories list */}
-      <div className="space-y-4">
+
+      <div className="space-y-4 mt-4">
         {paginatedSubCategories.map((sub) => (
           <div
             key={sub.id}
@@ -265,14 +270,12 @@ const CategoryPage: React.FC = () => {
         ))}
       </div>
 
-      {/* Pagination */}
       <Pagination
         page={page}
         totalPages={totalPages}
         onPageChange={(p) => setPage(p)}
       />
 
-      {/* Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center">
           <div className="bg-white p-6 rounded-2xl shadow-lg w-full max-w-md">
@@ -296,7 +299,7 @@ const CategoryPage: React.FC = () => {
                 onChange={(e) =>
                   setFormData({ ...formData, subCategoryName: e.target.value })
                 }
-                className="w-full border  border-gray-300 rounded-lg px-3 py-2 outline-none"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 outline-none"
               />
               <input
                 type="text"
@@ -305,7 +308,7 @@ const CategoryPage: React.FC = () => {
                 onChange={(e) =>
                   setFormData({ ...formData, categoryName: e.target.value })
                 }
-                className="w-full border   border-gray-300 rounded-lg px-3 py-2 outline-none"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 outline-none"
               />
               <input
                 type="file"
@@ -316,7 +319,7 @@ const CategoryPage: React.FC = () => {
                     featuredImage: e.target.files?.[0] || null,
                   })
                 }
-                className="w-full border  border-gray-300 rounded-lg px-3 py-2 outline-none"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 outline-none"
               />
 
               {formData.featuredImage ? (
@@ -325,7 +328,7 @@ const CategoryPage: React.FC = () => {
                   <img
                     src={URL.createObjectURL(formData.featuredImage)}
                     alt="Preview"
-                    className="w-full h-40 object-cover rounded-lg border  border-gray-300"
+                    className="w-full h-40 object-cover rounded-lg border border-gray-300"
                   />
                 </div>
               ) : editingSubCategory?.featuredImage ? (
@@ -343,7 +346,7 @@ const CategoryPage: React.FC = () => {
             <div className="flex justify-end mt-6 space-x-3">
               <button
                 onClick={() => setIsModalOpen(false)}
-                className="px-4 py-2 rounded-lg border  border-gray-300  hover:bg-gray-200"
+                className="px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-200"
               >
                 Cancel
               </button>

@@ -213,7 +213,7 @@ const ArticlesPage: React.FC = () => {
       <SearchInput
         value={search}
         onSearch={(val) => setSearch(val)}
-        placeholder="Search categories..."
+        placeholder="Search Articles..."
       />
 
       <div className="space-y-4">

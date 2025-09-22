@@ -1,7 +1,7 @@
 // src/pages/ServiceCategories.tsx
 import React, { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { MoreHorizontal, Search } from "lucide-react";
+import { MoreHorizontal } from "lucide-react";
 import api from "../lib/axios";
 import toast, { Toaster } from "react-hot-toast";
 import SearchInput from "../Components/SearchInput";
@@ -19,7 +19,6 @@ interface Category {
 const ServiceCategories: React.FC = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [totalCategories, setTotalCategories] = useState(0);
@@ -32,64 +31,39 @@ const ServiceCategories: React.FC = () => {
   const limit = 9;
 
   // Fetch categories
-  const fetchCategories = async () => {
-    try {
-      setLoading(true);
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        setLoading(true);
+        let res;
 
-      let res;
-      if (searchTerm.trim()) {
-        // Search endpoint
-        res = await api.get(
-          `/category/search/all?query=${encodeURIComponent(searchTerm)}`
-        );
-        const responseData = res.data;
-
-        if (Array.isArray(responseData)) {
+        if (search.trim()) {
+          res = await api.get(`/category/search/category/all`, {
+            params: { query: search },
+          });
+          const responseData = res.data.data || [];
           setCategories(responseData);
           setTotalCategories(responseData.length);
         } else {
-          setCategories([]);
-          setTotalCategories(0);
+          res = await api.get(`/category`, { params: { page, limit } });
+          const responseData = res.data;
+          setCategories(responseData.data || []);
+          setTotalCategories(responseData.total || 0);
         }
-      } else {
-        // Default paginated endpoint
-        res = await api.get(`/category?page=${page}&limit=${limit}`);
-        const responseData = res.data;
-
-        if (Array.isArray(responseData.data)) {
-          setCategories(responseData.data);
-          setTotalCategories(responseData.total || responseData.data.length);
-        } else {
-          setCategories([]);
-          setTotalCategories(0);
-        }
+      } catch (err) {
+        console.error(err);
+        toast.error("Failed to fetch categories");
+        setCategories([]);
+        setTotalCategories(0);
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error("Error fetching categories:", error);
-      toast.error("Failed to fetch categories");
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
 
-  // Reset page when searchTerm changes
-  useEffect(() => {
-    setPage(1);
-  }, [searchTerm]);
-
-  // Fetch data when page or search changes
-  useEffect(() => {
     fetchCategories();
-  }, [page, searchTerm]);
+  }, [page, search]);
 
   const totalPages = Math.ceil(totalCategories / limit);
-
-  const handlePrev = () => page > 1 && setPage((prev) => prev - 1);
-  const handleNext = () => page < totalPages && setPage((prev) => prev + 1);
-
-  const toggleDropdown = (id: number) => {
-    setOpenDropdownId(openDropdownId === id ? null : id);
-  };
 
   const handleEdit = (category: Category) => {
     setEditingCategory(category);
@@ -202,18 +176,22 @@ const ServiceCategories: React.FC = () => {
                 <div className="relative">
                   <MoreHorizontal
                     className="w-5 h-5 cursor-pointer"
-                    onClick={() => toggleDropdown(category.id)}
+                    onClick={() =>
+                      setOpenDropdownId(
+                        openDropdownId === category.id ? null : category.id
+                      )
+                    }
                   />
                   {openDropdownId === category.id && (
                     <div className="absolute right-0 mt-2 w-32 bg-white border rounded-md shadow-lg z-10">
                       <button
-                        className="flex items-center w-full px-3 py-2 text-left hover:bg-gray-100"
+                        className="flex items-center w-full px-3 py-2 text-left hover:bg-gray-400"
                         onClick={() => handleEdit(category)}
                       >
                         Edit
                       </button>
                       <button
-                        className="flex items-center w-full px-3 py-2 text-left hover:bg-gray-100 text-red-600"
+                        className="flex items-center w-full px-3 py-2 text-left hover:bg-gray-400 text-red-600"
                         onClick={() => handleDelete(category)}
                       >
                         Delete
