@@ -18,7 +18,7 @@ interface Location {
   description?: string;
 }
 
-const limit = 3;
+const limit = 6;
 
 const LocationsOverviewPage: React.FC = () => {
   const navigate = useNavigate();
@@ -311,16 +311,16 @@ const LocationsOverviewPage: React.FC = () => {
                     <MoreHorizontal />
                   </button>
                   {openDropdownId === location.id && (
-                    <div className="absolute right-0 mt-2 w-24 bg-white border border-gray-200 rounded-md shadow z-10">
+                    <div className="absolute right-6 -mt-10 translate-y-0 w-fit bg-white border border-gray-200 rounded-md shadow z-10">
                       <button
                         onClick={() => handleEdit(location)}
-                        className="w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-100 rounded-t-md"
+                        className="w-full px-2 py-1 text-left text-gray-900 hover:bg-gray-400 rounded-t-md"
                       >
                         Edit
                       </button>
                       <button
                         onClick={() => handleDelete(location.id)}
-                        className="w-full px-4 py-2 text-left text-red-600 hover:bg-gray-100 rounded-b-md"
+                        className="w-full px-2 py-1 text-left text-red-600 hover:bg-gray-400 rounded-b-md"
                       >
                         Delete
                       </button>
@@ -428,9 +428,9 @@ const LocationsOverviewPage: React.FC = () => {
               </div>
 
               {/* Province + Image Row */}
-              <div className="flex flex-col md:flex-row md:items-center gap-4 md:gap-6 md:col-span-2">
+              <div className=" flex flex-col md:flex-row md:items-stretch gap-4 md:gap-6 md:col-span-2">
                 {/* Province */}
-                <div className="flex-1">
+                <div className="flex-1 flex flex-col">
                   <label className="block text-sm font-medium mb-1">
                     Province
                   </label>
@@ -459,13 +459,13 @@ const LocationsOverviewPage: React.FC = () => {
                     type="file"
                     accept="image/*"
                     onChange={handleImageChange}
-                    className="w-full border border-gray-200 rounded-lg px-3 py-2 outline-none"
+                    className="w-fit border border-gray-200 rounded-lg px-3 py-2 outline-none"
                   />
                   {imagePreview && (
                     <img
                       src={imagePreview}
                       alt="Preview"
-                      className="mt-2 w-full h-32 object-cover rounded-lg"
+                      className="mt-2 w-full h-80 object-cover rounded-lg"
                     />
                   )}
                 </div>

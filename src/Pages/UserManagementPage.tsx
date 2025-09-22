@@ -3,6 +3,7 @@ import { Search, MoreVertical } from "lucide-react";
 import { Link } from "react-router-dom";
 import api from "../lib/axios";
 import toast, { Toaster } from "react-hot-toast";
+import Pagination from "../Components/Pagination";
 
 interface User {
   id: number;
@@ -20,27 +21,26 @@ const UserManagement: React.FC = () => {
   const [page, setPage] = useState(1);
   const [totalUsers, setTotalUsers] = useState(0);
 
-  // Search states
-  const [searchInput, setSearchInput] = useState(""); // For input box
-  const [searchQuery, setSearchQuery] = useState(""); // For API request
+  // Search + filter states
+  const [searchInput, setSearchInput] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
   const [filterRole, setFilterRole] = useState("All Roles");
 
   const [openMenu, setOpenMenu] = useState<number | null>(null);
   const [editingUser, setEditingUser] = useState<User | null>(null);
 
-  const limit = 5;
+  const limit = 6;
 
-  // Debounce search input (500ms)
+  // Debounce search input
   useEffect(() => {
     const handler = setTimeout(() => {
       setPage(1);
       setSearchQuery(searchInput);
     }, 500);
-
     return () => clearTimeout(handler);
   }, [searchInput]);
 
-  // Fetch users from API
+  // Fetch users
   useEffect(() => {
     const fetchUsers = async () => {
       try {
@@ -49,14 +49,25 @@ const UserManagement: React.FC = () => {
         const roleParam =
           filterRole !== "All Roles" ? filterRole.toLowerCase() : undefined;
 
-        const res = await api.get("/user/all", {
-          params: {
-            page,
-            limit,
-            search: searchQuery,
-            ...(roleParam && { role: roleParam }),
-          },
-        });
+        let res;
+        if (searchQuery) {
+          res = await api.get("/user/search/all", {
+            params: {
+              query: searchQuery,
+              page,
+              limit,
+              ...(roleParam && { role: roleParam }),
+            },
+          });
+        } else {
+          res = await api.get("/user/all", {
+            params: {
+              page,
+              limit,
+              ...(roleParam && { role: roleParam }),
+            },
+          });
+        }
 
         const data = res.data;
 
@@ -82,13 +93,13 @@ const UserManagement: React.FC = () => {
 
   const totalPages = Math.ceil(totalUsers / limit);
 
-  const handlePrev = () => setPage((prev) => Math.max(prev - 1, 1));
-  const handleNext = () => setPage((prev) => Math.min(prev + 1, totalPages));
-
-  const handleDelete = async (id: number) => {
+  const handleDelete = async (id: number, email: string) => {
     try {
-      await api.delete(`/user/interest/${id}`);
-      setUsers((prev) => prev.filter((u) => u.id !== id));
+      // call backend API with email
+      await api.delete(`/user/${encodeURIComponent(email)}`);
+      // update frontend state (remove by email or id)
+      setUsers((prev) => prev.filter((u) => u.email !== email));
+
       setOpenMenu(null);
       toast.success("User deleted successfully");
     } catch (error) {
@@ -105,8 +116,11 @@ const UserManagement: React.FC = () => {
   ) => {
     try {
       const res = await api.patch(`/user/names/${id}`, {
-        body: JSON.stringify({ names, email, role }),
+        names,
+        email,
+        role,
       });
+
       const updatedUser = res.data;
       setUsers((prev) =>
         prev.map((u) => (u.id === id ? { ...u, ...updatedUser } : u))
@@ -259,16 +273,16 @@ const UserManagement: React.FC = () => {
                           </button>
 
                           {openMenu === u.id && (
-                            <div className="absolute right-10 w-16 -translate-y-12 bg-white border rounded-md shadow-lg z-10">
+                            <div className="absolute right-8 top-full -mt-17 w-fit bg-white border rounded-md shadow-lg z-10">
                               <button
                                 onClick={() => setEditingUser(u)}
-                                className="block w-full text-left px-3 py-1.5 text-sm hover:bg-gray-300"
+                                className="block w-full text-left px-3 py-1.5 text-sm hover:bg-gray-400"
                               >
                                 Edit
                               </button>
                               <button
-                                onClick={() => handleDelete(u.id)}
-                                className="block w-full text-left px-3 py-1.5 text-sm text-red-600 hover:bg-red-100"
+                                onClick={() => handleDelete(u.id, u.email)}
+                                className="block w-full text-left px-3 py-1.5 text-sm text-red-600 hover:bg-gray-400"
                               >
                                 Delete
                               </button>
@@ -284,25 +298,11 @@ const UserManagement: React.FC = () => {
           </div>
 
           {/* Pagination */}
-          <div className="flex justify-center mt-6 gap-4 p-4">
-            <button
-              onClick={handlePrev}
-              disabled={page === 1}
-              className="px-4 py-2 bg-blue-500 text-black rounded hover:bg-blue-700 disabled:opacity-50"
-            >
-              Prev.
-            </button>
-            <span className="px-4 py-2">
-              Page {page} of {totalPages}
-            </span>
-            <button
-              onClick={handleNext}
-              disabled={page === totalPages}
-              className="px-4 py-2 bg-blue-500 text-black rounded hover:bg-blue-700 disabled:opacity-50"
-            >
-              Next
-            </button>
-          </div>
+          <Pagination
+            page={page}
+            totalPages={totalPages}
+            onPageChange={(p) => setPage(p)}
+          />
         </>
       )}
 
@@ -318,7 +318,7 @@ const UserManagement: React.FC = () => {
   );
 };
 
-// Edit Form Component
+// Edit Form
 interface EditFormProps {
   user: User;
   onClose: () => void;
@@ -353,7 +353,7 @@ const EditUserForm: React.FC<EditFormProps> = ({ user, onClose, onSave }) => {
           <div>
             <label className="block text-sm font-medium">Email</label>
             <input
-              type="text"
+              type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="w-full p-2 border rounded-lg"
@@ -376,13 +376,13 @@ const EditUserForm: React.FC<EditFormProps> = ({ user, onClose, onSave }) => {
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 bg-gray-300 rounded-lg hover:bg-gray-300"
+              className="px-4 py-2 bg-gray-300 rounded-lg hover:bg-gray-400"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-700"
+              className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
             >
               Save
             </button>
