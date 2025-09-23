@@ -301,7 +301,13 @@ const SubCategoryPage: React.FC = () => {
                 />
               </div>
 
-              <Description />
+              <Description
+                value={formData.description}
+                onChange={(val) =>
+                  setFormData({ ...formData, description: val })
+                }
+                placeholder="Enter location description..."
+              />
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <input

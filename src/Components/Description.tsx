@@ -1,51 +1,45 @@
-import React, { useRef, useEffect, useState } from "react";
+// src/Components/Description.tsx
+import React, { useRef, useEffect } from "react";
 
 interface DescriptionProps {
-  initialValue?: string;
-  onChange?: (content: string) => void;
+  value: string; // controlled
+  onChange: (content: string) => void; // required for controlled
   placeholder?: string;
 }
 
 const Description: React.FC<DescriptionProps> = ({
-  initialValue = "",
+  value,
   onChange,
   placeholder = "Type your description here...",
 }) => {
   const editorRef = useRef<HTMLDivElement>(null);
-  const [content, setContent] = useState(initialValue || "");
 
-  // Initialize editor with initialValue
+  // Sync editor content when value changes externally
   useEffect(() => {
-    if (editorRef.current) {
-      editorRef.current.innerHTML = initialValue || "";
-      setContent(initialValue || "");
+    if (editorRef.current && editorRef.current.innerHTML !== value) {
+      editorRef.current.innerHTML = value || "";
     }
-  }, [initialValue]);
+  }, [value]);
 
   const handleInput = () => {
     if (editorRef.current) {
       const html = editorRef.current.innerHTML;
-      setContent(html);
-      onChange && onChange(html);
+      onChange(html);
     }
   };
 
-  const applyFormat = (command: string, value?: string) => {
-    if (editorRef.current) {
-      document.execCommand(command, false, value);
-      editorRef.current.focus();
-      handleInput();
-    }
+  const applyFormat = (command: string, val?: string) => {
+    document.execCommand(command, false, val);
+    if (editorRef.current) editorRef.current.focus();
+    handleInput();
   };
 
   const addLink = () => {
     const url = prompt("Enter URL:", "https://");
-    if (url) {
-      applyFormat("createLink", url);
-    }
+    if (url) applyFormat("createLink", url);
   };
 
-  const isEmpty = content.replace(/<[^>]+>/g, "").trim() === "";
+  const isEmpty = !value || value.replace(/<[^>]+>/g, "").trim() === "";
 
   return (
     <div className="md:col-span-2 w-full mb-4 relative">
@@ -97,7 +91,6 @@ const Description: React.FC<DescriptionProps> = ({
 
       {/* Editor */}
       <div className="relative">
-        {/* Placeholder */}
         {isEmpty && (
           <div className="absolute top-0 left-0 p-4 text-gray-400 pointer-events-none select-none">
             {placeholder}

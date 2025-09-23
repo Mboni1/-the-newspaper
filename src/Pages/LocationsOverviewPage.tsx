@@ -1,11 +1,24 @@
 // src/Pages/LocationsOverviewPage.tsx
 import React, { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { Search, Filter, MoreHorizontal, X } from "lucide-react";
-import api from "../lib/axios";
+import {
+  Search,
+  Filter,
+  MoreHorizontal,
+  X,
+  MapPin,
+  Loader2,
+} from "lucide-react";
 import toast, { Toaster } from "react-hot-toast";
 import Description from "../Components/Description";
 import Pagination from "../Components/Pagination";
+import {
+  getLocations,
+  searchLocations,
+  deleteLocation,
+  updateLocation,
+  addLocation,
+} from "../Services/locationService";
 
 interface Location {
   id: number;
@@ -23,22 +36,20 @@ const limit = 6;
 const LocationsOverviewPage: React.FC = () => {
   const navigate = useNavigate();
   const [locations, setLocations] = useState<Location[]>([]);
-  const [filteredLocations, setFilteredLocations] = useState<Location[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
   const [searchTerm, setSearchTerm] = useState("");
   const [provinceFilter, setProvinceFilter] = useState("All");
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useState<number>(1);
+  const [total, setTotal] = useState(0);
 
-  // Dropdown & editing
   const [openDropdownId, setOpenDropdownId] = useState<number | null>(null);
   const [editingLocation, setEditingLocation] = useState<Location | null>(null);
 
-  // Modal state
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
-  // Form state
   const [formData, setFormData] = useState({
     title: "",
     latitude: "",
@@ -49,65 +60,56 @@ const LocationsOverviewPage: React.FC = () => {
     description: "",
   });
 
-  // Image preview
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState("");
 
-  // Fetch locations
+  useEffect(() => setPage(1), [searchTerm]);
+
   useEffect(() => {
-    const fetchLocations = async () => {
+    const fetchData = async () => {
       try {
-        const res = await api.get("/location/admin/all");
-        const data = res.data.data || [];
-        setLocations(data);
-        setFilteredLocations(data);
+        setLoading(true);
+        let data;
+        if (searchTerm.trim()) {
+          data = await searchLocations(searchTerm, page, limit);
+        } else {
+          data = await getLocations(page, limit);
+        }
+        setLocations(data?.data || []);
+        setTotal(data?.total || 0);
       } catch (err: any) {
         setError(err.message || "Failed to fetch locations");
       } finally {
         setLoading(false);
       }
     };
-    fetchLocations();
-  }, []);
-  // Filter + search
-  useEffect(() => {
-    let filtered = [...locations];
+    fetchData();
+  }, [page, searchTerm]);
 
-    const query = (searchTerm ?? "").toLowerCase();
+  const totalPages = Math.ceil(total / limit);
 
-    if (query) {
-      filtered = filtered.filter(
-        (loc) =>
-          (loc?.title ?? "").toLowerCase().includes(query) ||
-          (loc?.address ?? "").toLowerCase().includes(query)
-      );
-    }
+  const resetForm = () => {
+    setFormData({
+      title: "",
+      latitude: "",
+      longitude: "",
+      address: "",
+      image: "",
+      provinceName: "",
+      description: "",
+    });
+    setImageFile(null);
+    setImagePreview("");
+    setEditingLocation(null);
+    setIsAddModalOpen(false);
+    setIsEditModalOpen(false);
+  };
 
-    if (provinceFilter !== "All") {
-      filtered = filtered.filter(
-        (loc) =>
-          (loc?.provinceName ?? "").toLowerCase() ===
-          provinceFilter.toLowerCase()
-      );
-    }
-
-    setFilteredLocations(filtered);
-    setPage(1);
-  }, [searchTerm, provinceFilter, locations]);
-
-  const totalPages = Math.ceil(filteredLocations.length / limit);
-  const paginatedLocations = filteredLocations.slice(
-    (page - 1) * limit,
-    page * limit
-  );
-
-  // Delete
   const handleDelete = async (id: number) => {
     if (!confirm("Are you sure you want to delete this location?")) return;
     try {
-      await api.delete(`/location/${id}`);
+      await deleteLocation(id);
       setLocations((prev) => prev.filter((loc) => loc.id !== id));
-      setFilteredLocations((prev) => prev.filter((loc) => loc.id !== id));
       toast.success("Location deleted successfully!");
     } catch (err) {
       console.error(err);
@@ -115,7 +117,6 @@ const LocationsOverviewPage: React.FC = () => {
     }
   };
 
-  // Open edit modal
   const handleEdit = (loc: Location) => {
     setEditingLocation(loc);
     setFormData({
@@ -131,7 +132,6 @@ const LocationsOverviewPage: React.FC = () => {
     setIsEditModalOpen(true);
   };
 
-  // Image change
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
@@ -140,10 +140,7 @@ const LocationsOverviewPage: React.FC = () => {
     }
   };
 
-  // Save edit
   const handleSave = async () => {
-    if (!editingLocation) return;
-
     try {
       const data = new FormData();
       data.append("title", formData.title);
@@ -154,61 +151,24 @@ const LocationsOverviewPage: React.FC = () => {
       data.append("description", formData.description);
       if (imageFile) data.append("image", imageFile);
 
-      const res = await api.patch(`/location/${editingLocation.id}`, data, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
+      if (isEditModalOpen && editingLocation) {
+        const res = await updateLocation(editingLocation.id, data);
+        setLocations((prev) =>
+          prev.map((loc) =>
+            loc.id === editingLocation.id ? res.data.data : loc
+          )
+        );
+        toast.success("Location updated successfully!");
+      } else if (isAddModalOpen) {
+        const res = await addLocation(data);
+        setLocations((prev) => [res.data.data, ...prev]);
+        toast.success("Location added successfully!");
+      }
 
-      setLocations((prev) =>
-        prev.map((loc) => (loc.id === editingLocation.id ? res.data.data : loc))
-      );
-      setFilteredLocations((prev) =>
-        prev.map((loc) => (loc.id === editingLocation.id ? res.data.data : loc))
-      );
-      setEditingLocation(null);
-      setIsEditModalOpen(false);
-      setImageFile(null);
-      setImagePreview("");
-      toast.success("Location updated successfully!");
+      resetForm();
     } catch (err) {
       console.error(err);
-      toast.error("Failed to update location");
-    }
-  };
-
-  // Save new location
-  const handleAdd = async () => {
-    try {
-      const data = new FormData();
-      data.append("title", formData.title);
-      data.append("address", formData.address);
-      data.append("latitude", formData.latitude);
-      data.append("longitude", formData.longitude);
-      data.append("province", formData.provinceName);
-      data.append("description", formData.description);
-      if (imageFile) data.append("image", imageFile);
-
-      const res = await api.post("/location", data, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-
-      setLocations((prev) => [res.data.data, ...prev]);
-      setFilteredLocations((prev) => [res.data.data, ...prev]);
-      setIsAddModalOpen(false);
-      setFormData({
-        title: "",
-        latitude: "",
-        longitude: "",
-        address: "",
-        image: "",
-        provinceName: "",
-        description: "",
-      });
-      setImageFile(null);
-      setImagePreview("");
-      toast.success("Location added successfully!");
-    } catch (err) {
-      console.error(err);
-      toast.error("Failed to add location");
+      toast.error("Failed to save location");
     }
   };
 
@@ -271,8 +231,8 @@ const LocationsOverviewPage: React.FC = () => {
 
       {/* Locations Grid */}
       <div className="p-6 px-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {paginatedLocations.length > 0 ? (
-          paginatedLocations.map((location) => (
+        {locations.length > 0 ? (
+          locations.map((location) => (
             <div
               key={location.id}
               className="bg-white rounded-2xl shadow-sm p-3 hover:shadow-md transition w-full relative"
@@ -335,37 +295,25 @@ const LocationsOverviewPage: React.FC = () => {
         )}
       </div>
 
-      {/* Pagination */}
-      <Pagination
-        page={page}
-        totalPages={totalPages}
-        onPageChange={(p) => setPage(p)}
-      />
+      <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+
       {/* Add/Edit Modal */}
       {(isAddModalOpen || isEditModalOpen) && (
-        <div className="fixed inset-0 bg-white bg-opacity-40 flex items-center justify-center z-50 p-4">
-          <div className="bg-white w-screen h-screen p-30 overflow-y-auto relative flex flex-col">
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 p-4">
+          <div className="bg-white w-full max-w-4xl p-6 rounded-xl relative overflow-y-auto max-h-screen">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-bold">
                 {isEditModalOpen ? "Edit Location" : "Add New Location"}
               </h2>
               <button
-                onClick={() => {
-                  setIsAddModalOpen(false);
-                  setIsEditModalOpen(false);
-                  setEditingLocation(null);
-                  setImagePreview("");
-                  setImageFile(null);
-                }}
+                onClick={resetForm}
                 className="text-gray-500 hover:text-gray-700"
               >
                 <X />
               </button>
             </div>
 
-            {/* Form */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Title, Address, Latitude, Longitude, Description */}
               <div>
                 <label className="block text-sm font-medium mb-1">Title</label>
                 <input
@@ -395,7 +343,13 @@ const LocationsOverviewPage: React.FC = () => {
               </div>
 
               {/* Description */}
-              <Description />
+              <Description
+                value={formData.description}
+                onChange={(val) =>
+                  setFormData({ ...formData, description: val })
+                }
+                placeholder="Enter location description..."
+              />
 
               <div>
                 <label className="block text-sm font-medium mb-1">
@@ -427,9 +381,7 @@ const LocationsOverviewPage: React.FC = () => {
                 />
               </div>
 
-              {/* Province + Image Row */}
-              <div className=" flex flex-col md:flex-row md:items-stretch gap-4 md:gap-6 md:col-span-2">
-                {/* Province */}
+              <div className="flex flex-col md:flex-row md:items-stretch gap-4 md:gap-6 md:col-span-2">
                 <div className="flex-1 flex flex-col">
                   <label className="block text-sm font-medium mb-1">
                     Province
@@ -450,7 +402,6 @@ const LocationsOverviewPage: React.FC = () => {
                   </select>
                 </div>
 
-                {/* Image */}
                 <div className="flex-1">
                   <label className="block text-sm font-medium mb-1">
                     Featured Image
@@ -474,19 +425,13 @@ const LocationsOverviewPage: React.FC = () => {
 
             <div className="mt-6 flex justify-end gap-4">
               <button
-                onClick={() => {
-                  setIsAddModalOpen(false);
-                  setIsEditModalOpen(false);
-                  setEditingLocation(null);
-                  setImagePreview("");
-                  setImageFile(null);
-                }}
+                onClick={resetForm}
                 className="px-6 py-2 border border-gray-200 rounded-lg"
               >
                 Cancel
               </button>
               <button
-                onClick={isEditModalOpen ? handleSave : handleAdd}
+                onClick={handleSave}
                 className="px-6 py-2 bg-blue-500 text-white rounded-lg"
               >
                 Save

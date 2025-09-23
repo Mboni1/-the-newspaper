@@ -16,6 +16,7 @@ interface Article {
   categoryName: string;
   featuredImg: string;
   summary: string;
+  description: string;
 }
 
 const limit = 3;
@@ -37,6 +38,7 @@ const ArticlesPage: React.FC = () => {
     categoryName: "",
     location: "",
     featuredImg: "",
+    description: "",
   });
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>("");
@@ -91,6 +93,7 @@ const ArticlesPage: React.FC = () => {
       categoryName: "",
       location: "",
       featuredImg: "",
+      description: "",
     });
     setImageFile(null);
     setImagePreview("");
@@ -105,6 +108,7 @@ const ArticlesPage: React.FC = () => {
       categoryName: article.categoryName,
       location: article.location,
       featuredImg: article.featuredImg,
+      description: article.description,
     });
     setImageFile(null);
     setImagePreview(article.featuredImg);
@@ -168,6 +172,7 @@ const ArticlesPage: React.FC = () => {
         categoryName: "",
         location: "",
         featuredImg: "",
+        description: "",
       });
       setImageFile(null);
       setImagePreview("");
@@ -297,7 +302,13 @@ const ArticlesPage: React.FC = () => {
               </div>
 
               {/* Description */}
-              <Description />
+              <Description
+                value={formData.description}
+                onChange={(val) =>
+                  setFormData({ ...formData, description: val })
+                }
+                placeholder="Enter Article description..."
+              />
 
               {/* Summary */}
               <div className="flex flex-col">

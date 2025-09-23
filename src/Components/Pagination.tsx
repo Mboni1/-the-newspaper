@@ -12,53 +12,42 @@ const Pagination: React.FC<PaginationProps> = ({
   totalPages,
   onPageChange,
 }) => {
-  if (totalPages <= 1) return null;
+  if (totalPages <= 1) return null; // hide pagination if only 1 page
 
-  const pages: (number | string)[] = [];
-  const delta = 2; // pages around current
-
-  for (let i = 1; i <= totalPages; i++) {
-    if (
-      i === 1 ||
-      i === totalPages ||
-      (i >= page - delta && i <= page + delta)
-    ) {
-      pages.push(i);
-    } else if (pages[pages.length - 1] !== "...") {
-      pages.push("...");
-    }
-  }
+  const pages = Array.from({ length: totalPages }, (_, i) => i + 1);
 
   return (
-    <div className="flex justify-center gap-2 mt-6">
+    <div className="flex justify-center mt-6 gap-2">
       <button
-        disabled={page === 1}
         onClick={() => onPageChange(page - 1)}
-        className="px-3 py-1 bg-blue-500 text-white rounded disabled:opacity-50"
+        disabled={page === 1}
+        className={`px-3 py-1 rounded ${
+          page === 1 ? "bg-gray-200 text-gray-400" : "bg-blue-500 text-white"
+        }`}
       >
         Prev
       </button>
-      {pages.map((p, idx) =>
-        typeof p === "number" ? (
-          <button
-            key={idx}
-            onClick={() => onPageChange(p)}
-            className={`px-3 py-1 rounded ${
-              p === page ? "bg-blue-700 text-white" : "bg-blue-500 text-white"
-            }`}
-          >
-            {p}
-          </button>
-        ) : (
-          <span key={idx} className="px-2 py-1">
-            {p}
-          </span>
-        )
-      )}
+
+      {pages.map((p) => (
+        <button
+          key={p}
+          onClick={() => onPageChange(p)}
+          className={`px-3 py-1 rounded ${
+            p === page ? "bg-blue-500 text-white" : "bg-gray-200"
+          }`}
+        >
+          {p}
+        </button>
+      ))}
+
       <button
-        disabled={page === totalPages}
         onClick={() => onPageChange(page + 1)}
-        className="px-3 py-1 bg-blue-500 text-white rounded disabled:opacity-50"
+        disabled={page === totalPages}
+        className={`px-3 py-1 rounded ${
+          page === totalPages
+            ? "bg-gray-200 text-gray-400"
+            : "bg-blue-500 text-white"
+        }`}
       >
         Next
       </button>
