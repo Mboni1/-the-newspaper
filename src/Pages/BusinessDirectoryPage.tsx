@@ -82,6 +82,7 @@ const BusinessDirectoryPage: React.FC = () => {
   const [editingBusiness, setEditingBusiness] = useState<Business | null>(null);
   const [formData, setFormData] = useState({
     title: "",
+    description: "",
     workingHours: "",
     businessEmail: "",
     phoneNumber: "",
@@ -195,6 +196,7 @@ const BusinessDirectoryPage: React.FC = () => {
       latitude: "",
       longitude: "",
       placeImg: "",
+      description: "",
     });
     setImagePreview("");
     setIsModalOpen(true);
@@ -211,7 +213,8 @@ const BusinessDirectoryPage: React.FC = () => {
       location: biz.location || "",
       latitude: biz.latitude || "",
       longitude: biz.longitude || "",
-      placeImg: "",
+      placeImg: biz.placeImg,
+      description: biz.description,
     });
     setImagePreview(biz.placeImg[0] || "");
     setIsModalOpen(true);
@@ -426,7 +429,13 @@ const BusinessDirectoryPage: React.FC = () => {
               </div>
 
               {/* Description */}
-              <Description />
+              <Description
+                value={formData.description}
+                onChange={(val) =>
+                  setFormData({ ...formData, description: val })
+                }
+                placeholder="Enter business description..."
+              />
 
               <div>
                 <label className="block mb-1 font-medium">Business Email</label>
