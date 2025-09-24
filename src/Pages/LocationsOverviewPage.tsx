@@ -1,14 +1,7 @@
 // src/Pages/LocationsOverviewPage.tsx
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import {
-  Search,
-  Filter,
-  MoreHorizontal,
-  X,
-  MapPin,
-  Loader2,
-} from "lucide-react";
+import { Search, Filter, MoreHorizontal, X } from "lucide-react";
 import toast, { Toaster } from "react-hot-toast";
 import Description from "../Components/Description";
 import Pagination from "../Components/Pagination";
@@ -27,22 +20,34 @@ interface Location {
   longitude: string;
   address: string;
   image: string[];
+  provinceId: number;
   provinceName: string;
   description?: string;
 }
+
+const provinces = [
+  { id: 1, name: "Northern" },
+  { id: 2, name: "Southern" },
+  { id: 3, name: "Eastern" },
+  { id: 4, name: "Western" },
+  { id: 5, name: "Kigali City" },
+];
 
 const limit = 6;
 
 const LocationsOverviewPage: React.FC = () => {
   const navigate = useNavigate();
+
+  // Search + filter states
+  const [searchInput, setSearchInput] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [provinceFilter, setProvinceFilter] = useState<string | undefined>();
+  const [page, setPage] = useState(1);
+
   const [locations, setLocations] = useState<Location[]>([]);
+  const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  const [searchTerm, setSearchTerm] = useState("");
-  const [provinceFilter, setProvinceFilter] = useState("All");
-  const [page, setPage] = useState<number>(1);
-  const [total, setTotal] = useState(0);
 
   const [openDropdownId, setOpenDropdownId] = useState<number | null>(null);
   const [editingLocation, setEditingLocation] = useState<Location | null>(null);
@@ -56,26 +61,47 @@ const LocationsOverviewPage: React.FC = () => {
     longitude: "",
     address: "",
     image: "",
-    provinceName: "",
+    provinceId: "",
     description: "",
   });
 
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState("");
 
-  useEffect(() => setPage(1), [searchTerm]);
-
+  // Debounce search input
   useEffect(() => {
-    const fetchData = async () => {
+    if (searchInput.trim().length < 2) {
+      setSearchQuery("");
+      return;
+    }
+    const handler = setTimeout(() => {
+      setPage(1);
+      setSearchQuery(searchInput);
+    }, 500);
+    return () => clearTimeout(handler);
+  }, [searchInput]);
+
+  // Fetch locations
+  useEffect(() => {
+    const fetchLocations = async () => {
       try {
         setLoading(true);
         let data;
-        if (searchTerm.trim()) {
-          data = await searchLocations(searchTerm, page, limit);
+        if (searchQuery.trim()) {
+          data = await searchLocations(
+            searchQuery,
+            page,
+            limit,
+            provinceFilter
+          );
         } else {
-          data = await getLocations(page, limit);
+          data = await getLocations(page, limit, provinceFilter);
         }
-        setLocations(data?.data || []);
+
+        const sorted = data?.data?.sort(
+          (a, b) => (b.visits || 0) - (a.visits || 0)
+        );
+        setLocations(sorted || []);
         setTotal(data?.total || 0);
       } catch (err: any) {
         setError(err.message || "Failed to fetch locations");
@@ -83,8 +109,9 @@ const LocationsOverviewPage: React.FC = () => {
         setLoading(false);
       }
     };
-    fetchData();
-  }, [page, searchTerm]);
+
+    fetchLocations();
+  }, [searchQuery, provinceFilter, page]);
 
   const totalPages = Math.ceil(total / limit);
 
@@ -95,7 +122,7 @@ const LocationsOverviewPage: React.FC = () => {
       longitude: "",
       address: "",
       image: "",
-      provinceName: "",
+      provinceId: "",
       description: "",
     });
     setImageFile(null);
@@ -125,7 +152,7 @@ const LocationsOverviewPage: React.FC = () => {
       latitude: loc.latitude,
       longitude: loc.longitude,
       description: loc.description || "",
-      provinceName: loc.provinceName || "",
+      provinceId: loc.provinceId.toString(),
       image: loc.image[0] || "",
     });
     setImagePreview(loc.image[0] || "");
@@ -147,7 +174,7 @@ const LocationsOverviewPage: React.FC = () => {
       data.append("address", formData.address);
       data.append("latitude", formData.latitude);
       data.append("longitude", formData.longitude);
-      data.append("province", formData.provinceName);
+      data.append("provinceId", formData.provinceId);
       data.append("description", formData.description);
       if (imageFile) data.append("image", imageFile);
 
@@ -207,24 +234,24 @@ const LocationsOverviewPage: React.FC = () => {
           <input
             type="text"
             placeholder="Search location"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
             className="flex-1 outline-none"
           />
         </div>
         <div className="flex items-center relative rounded-lg px-3 py-2">
           <Filter className="text-gray-300 w-5 h-5 mr-2" />
           <select
-            value={provinceFilter}
-            onChange={(e) => setProvinceFilter(e.target.value)}
+            value={provinceFilter || ""}
+            onChange={(e) => setProvinceFilter(e.target.value || undefined)}
             className="rounded-xl px-3 py-2 bg-white shadow-sm"
           >
-            <option value="All">All Provinces</option>
-            <option value="Northern">Northern</option>
-            <option value="Southern">Southern</option>
-            <option value="Eastern">Eastern</option>
-            <option value="Western">Western</option>
-            <option value="Kigali City">Kigali City</option>
+            <option value="">All Provinces</option>
+            {provinces.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.name}
+              </option>
+            ))}
           </select>
         </div>
       </div>
@@ -342,14 +369,15 @@ const LocationsOverviewPage: React.FC = () => {
                 />
               </div>
 
-              {/* Description */}
-              <Description
-                value={formData.description}
-                onChange={(val) =>
-                  setFormData({ ...formData, description: val })
-                }
-                placeholder="Enter location description..."
-              />
+              <div className="md:col-span-2">
+                <Description
+                  value={formData.description}
+                  onChange={(val) =>
+                    setFormData({ ...formData, description: val })
+                  }
+                  placeholder="Enter location description..."
+                />
+              </div>
 
               <div>
                 <label className="block text-sm font-medium mb-1">
@@ -387,18 +415,18 @@ const LocationsOverviewPage: React.FC = () => {
                     Province
                   </label>
                   <select
-                    value={formData.provinceName}
+                    value={formData.provinceId}
                     onChange={(e) =>
-                      setFormData({ ...formData, provinceName: e.target.value })
+                      setFormData({ ...formData, provinceId: e.target.value })
                     }
                     className="w-full border border-gray-200 rounded-lg px-3 py-2 outline-none"
                   >
                     <option value="">Select province</option>
-                    <option value="Northern">Northern</option>
-                    <option value="Southern">Southern</option>
-                    <option value="Eastern">Eastern</option>
-                    <option value="Western">Western</option>
-                    <option value="Kigali City">Kigali City</option>
+                    {provinces.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.name}
+                      </option>
+                    ))}
                   </select>
                 </div>
 

@@ -4,28 +4,20 @@ import { Search, X } from "lucide-react";
 
 interface SearchInputProps {
   value?: string;
-  onSearch: (val: string) => void;
+  onChange: (val: string) => void;
   placeholder?: string;
-  delay?: number;
+  debounceTime?: number; // new prop
 }
 
 const SearchInput: React.FC<SearchInputProps> = ({
   value = "",
-  onSearch,
+  onChange,
   placeholder = "Search...",
-  delay = 300,
+  debounceTime = 500, // default 500ms
 }) => {
   const [input, setInput] = useState(value);
   const prevValueRef = useRef(value);
-
-  // Debounced search
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      onSearch(input.trim());
-    }, delay);
-
-    return () => clearTimeout(handler);
-  }, [input, delay, onSearch]);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Update local state ONLY if parent value changed externally
   useEffect(() => {
@@ -35,11 +27,20 @@ const SearchInput: React.FC<SearchInputProps> = ({
     }
   }, [value]);
 
-  // Handle Enter key → trigger instantly
+  // Handle input change with debounce
+  const handleChange = (val: string) => {
+    setInput(val);
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    timeoutRef.current = setTimeout(() => {
+      onChange(val.trim());
+    }, debounceTime);
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
       e.preventDefault();
-      onSearch(input.trim());
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      onChange(input.trim());
     }
   };
 
@@ -50,7 +51,7 @@ const SearchInput: React.FC<SearchInputProps> = ({
       <input
         type="text"
         value={input}
-        onChange={(e) => setInput(e.target.value)}
+        onChange={(e) => handleChange(e.target.value)}
         onKeyDown={handleKeyDown}
         placeholder={placeholder}
         className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg 
@@ -61,7 +62,8 @@ const SearchInput: React.FC<SearchInputProps> = ({
         <button
           onClick={() => {
             setInput("");
-            onSearch("");
+            if (timeoutRef.current) clearTimeout(timeoutRef.current);
+            onChange("");
           }}
           className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
         >
