@@ -4,22 +4,24 @@ import { Search, X } from "lucide-react";
 
 interface SearchInputProps {
   value?: string;
-  onChange: (val: string) => void;
+  onSearch: (val: string) => void; // triggers after debounce
   placeholder?: string;
-  debounceTime?: number; // new prop
+  debounceTime?: number;
+  minLength?: number; // default 2
 }
 
 const SearchInput: React.FC<SearchInputProps> = ({
   value = "",
-  onChange,
+  onSearch,
   placeholder = "Search...",
-  debounceTime = 500, // default 500ms
+  debounceTime = 500,
+  minLength = 2,
 }) => {
   const [input, setInput] = useState(value);
   const prevValueRef = useRef(value);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Update local state ONLY if parent value changed externally
+  // Sync with parent value
   useEffect(() => {
     if (value !== prevValueRef.current) {
       setInput(value);
@@ -27,20 +29,27 @@ const SearchInput: React.FC<SearchInputProps> = ({
     }
   }, [value]);
 
-  // Handle input change with debounce
+  // Handle input change
   const handleChange = (val: string) => {
     setInput(val);
+
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
+
     timeoutRef.current = setTimeout(() => {
-      onChange(val.trim());
+      if (val.trim().length >= minLength || val.trim().length === 0) {
+        onSearch(val.trim());
+      }
     }, debounceTime);
   };
 
+  // Handle Enter key (search instantly)
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
       e.preventDefault();
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
-      onChange(input.trim());
+      if (input.trim().length >= minLength || input.trim().length === 0) {
+        onSearch(input.trim());
+      }
     }
   };
 
@@ -63,7 +72,7 @@ const SearchInput: React.FC<SearchInputProps> = ({
           onClick={() => {
             setInput("");
             if (timeoutRef.current) clearTimeout(timeoutRef.current);
-            onChange("");
+            onSearch("");
           }}
           className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
         >

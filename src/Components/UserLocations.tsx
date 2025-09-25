@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import api from "../lib/axios";
-import toast, { Toaster } from "react-hot-toast";
+import toast from "react-hot-toast";
 
 // Data types
 interface ChartData {
@@ -10,24 +10,6 @@ interface ChartData {
 }
 
 const COLORS = ["#2563eb", "#3b82f6", "#60a5fa", "#93c5fd", "#dbeafe"];
-
-// Hardcoded datasets
-const hardcodedDatasets: Record<string, ChartData[]> = {
-  Categories: [
-    { name: "Accommodation", value: 25 },
-    { name: "Food & Dining", value: 15 },
-    { name: "Transportation", value: 38 },
-    { name: "Tours & Events", value: 12 },
-    { name: "Others", value: 8 },
-  ],
-  Businesses: [
-    { name: "Hotels & Lodges", value: 28 },
-    { name: "Restaurant", value: 22 },
-    { name: "Tour Operators", value: 20 },
-    { name: "Transport Service", value: 15 },
-    { name: "Others", value: 15 },
-  ],
-};
 
 const options = ["Countries", "Categories", "Businesses"] as const;
 type OptionType = (typeof options)[number];
@@ -42,27 +24,56 @@ const UserLocation: React.FC = () => {
       setLoading(true);
       try {
         const res = await api.get("/analytics/countries");
-        console.log("API response (Countries):", res.data);
-
         const payload = (res.data.data || []).map((item: any) => ({
           name: item.country,
           value: item.percentage ?? item.count,
         }));
-
         setData(payload);
       } catch (err) {
         console.error("Failed to fetch countries analytics:", err);
+        toast.error("Failed to fetch countries analytics");
       } finally {
         setLoading(false);
       }
     };
 
-    if (selected === "Countries") {
-      fetchCountries();
-    } else {
-      // Use hardcoded datasets for Categories & Businesses
-      setData(hardcodedDatasets[selected]);
-    }
+    const fetchCategories = async () => {
+      setLoading(true);
+      try {
+        const res = await api.get("/analytics/categories");
+        const payload = (res.data.data || []).map((item: any) => ({
+          name: item.name,
+          value: item.value,
+        }));
+        setData(payload);
+      } catch (err) {
+        console.error("Failed to fetch categories analytics:", err);
+        toast.error("Failed to fetch categories analytics");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    const fetchPlaceItems = async () => {
+      setLoading(true);
+      try {
+        const res = await api.get("/analytics/placeitem");
+        const payload = (res.data.data || []).map((item: any) => ({
+          name: item.name,
+          value: item.value,
+        }));
+        setData(payload);
+      } catch (err) {
+        console.error("Failed to fetch business analytics:", err);
+        toast.error("Failed to fetch business analytics");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (selected === "Countries") fetchCountries();
+    else if (selected === "Categories") fetchCategories();
+    else if (selected === "Businesses") fetchPlaceItems();
   }, [selected]);
 
   return (

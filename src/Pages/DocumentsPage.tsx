@@ -303,11 +303,11 @@ const ArticlesPage: React.FC = () => {
 
               {/* Description */}
               <Description
-                value={formData.description}
-                onChange={(val) =>
-                  setFormData({ ...formData, description: val })
+                value={formData.description} // controlled
+                onChange={(content) =>
+                  setFormData({ ...formData, description: content })
                 }
-                placeholder="Enter Article description..."
+                placeholder="Description..."
               />
 
               {/* Summary */}

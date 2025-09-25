@@ -262,8 +262,8 @@ const SubCategoryPage: React.FC = () => {
 
       {/* Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-gray-300 bg-opacity-40 flex items-center justify-center z-50 p-4">
-          <div className="bg-white w-full max-w-3xl p-6 md:p-12 overflow-y-auto rounded-2xl relative flex flex-col">
+        <div className="fixed inset-0 bg-white bg-opacity-40 flex items-center justify-center z-50 p-4">
+          <div className="bg-white w-full max-w-full max-h-[90vh] p-6 md:p-12 overflow-y-auto rounded-2xl relative flex flex-col">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-semibold">
                 {editingBusiness ? "Edit Business" : "New Business"}
@@ -302,11 +302,11 @@ const SubCategoryPage: React.FC = () => {
               </div>
 
               <Description
-                value={formData.description}
-                onChange={(val) =>
-                  setFormData({ ...formData, description: val })
+                value={formData.description} // controlled
+                onChange={(content) =>
+                  setFormData({ ...formData, description: content })
                 }
-                placeholder="Enter location description..."
+                placeholder="Description..."
               />
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
