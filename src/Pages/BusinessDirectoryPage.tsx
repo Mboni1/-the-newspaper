@@ -7,7 +7,7 @@ import toast, { Toaster } from "react-hot-toast";
 import Description from "../Components/Description";
 import Pagination from "../Components/Pagination";
 
-//  Interfaces
+// Interfaces
 interface Business {
   id: number;
   title: string;
@@ -28,14 +28,16 @@ interface SearchFilterBarProps {
   setSearchTerm: (value: string) => void;
   category: string;
   setCategory: (value: string) => void;
+  categories: string[];
 }
 
-//  Components
+// Search + Filter Component
 const SearchFilterBar: React.FC<SearchFilterBarProps> = ({
   searchTerm,
   setSearchTerm,
   category,
   setCategory,
+  categories,
 }) => (
   <div className="flex flex-col sm:flex-row gap-3 w-full mb-6">
     <div className="flex items-center w-full px-4 py-2 rounded-xl border border-gray-300 focus-within:ring-2 focus-within:ring-blue-500">
@@ -55,10 +57,11 @@ const SearchFilterBar: React.FC<SearchFilterBarProps> = ({
         className="px-4 py-2 rounded-xl border border-gray-300 outline-none cursor-pointer focus:ring-2 focus:ring-blue-500"
       >
         <option value="All">All categories</option>
-        <option value="Hotels">Hotels</option>
-        <option value="Restaurants">Restaurants</option>
-        <option value="Shops">Shops</option>
-        <option value="Museums">Museums</option>
+        {categories.map((cat) => (
+          <option key={cat} value={cat}>
+            {cat}
+          </option>
+        ))}
       </select>
     </div>
   </div>
@@ -68,6 +71,7 @@ const SearchFilterBar: React.FC<SearchFilterBarProps> = ({
 const limit = 3;
 
 const BusinessDirectoryPage: React.FC = () => {
+  // States
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -76,6 +80,9 @@ const BusinessDirectoryPage: React.FC = () => {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [openDropdownId, setOpenDropdownId] = useState<number | null>(null);
+
+  const [categories, setCategories] = useState<string[]>([]);
+  const [subCategories, setSubCategories] = useState<string[]>([]);
 
   // Modal states
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -86,7 +93,7 @@ const BusinessDirectoryPage: React.FC = () => {
     workingHours: "",
     businessEmail: "",
     phoneNumber: "",
-    subCategoryName: "Hotels",
+    subCategoryName: "",
     location: "",
     latitude: "",
     longitude: "",
@@ -95,6 +102,25 @@ const BusinessDirectoryPage: React.FC = () => {
   const [imagePreview, setImagePreview] = useState<string>("");
 
   const searchTimeout = useRef<NodeJS.Timeout | null>(null);
+
+  // Fetch categories and subcategories from database
+  const fetchCategories = async () => {
+    try {
+      const res = await api.get(`/category`);
+      setCategories(res.data.data.map((cat: any) => cat.name));
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const fetchSubCategories = async () => {
+    try {
+      const res = await api.get(`/category/${name}`);
+      setSubCategories(res.data.data.map((sub: any) => sub.name));
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   // Fetch all businesses
   const fetchAllBusinesses = async () => {
@@ -131,7 +157,7 @@ const BusinessDirectoryPage: React.FC = () => {
     }
   };
 
-  // Fetch search results
+  // Search results
   const fetchSearchResults = async () => {
     if (!searchTerm) return fetchAllBusinesses();
 
@@ -180,8 +206,15 @@ const BusinessDirectoryPage: React.FC = () => {
       } else {
         fetchAllBusinesses();
       }
-    }, 500); // 500ms debounce
+    }, 500);
   }, [searchTerm, category, page]);
+
+  // Fetch categories/subcategories on mount
+  useEffect(() => {
+    fetchCategories();
+    fetchSubCategories();
+    fetchAllBusinesses();
+  }, []);
 
   // Modal handlers
   const handleAdd = () => {
@@ -191,7 +224,7 @@ const BusinessDirectoryPage: React.FC = () => {
       workingHours: "",
       businessEmail: "",
       phoneNumber: "",
-      subCategoryName: "Hotels",
+      subCategoryName: subCategories[0] || "",
       location: "",
       latitude: "",
       longitude: "",
@@ -209,12 +242,12 @@ const BusinessDirectoryPage: React.FC = () => {
       workingHours: biz.workingHours || "",
       businessEmail: biz.businessEmail || "",
       phoneNumber: biz.phoneNumber || "",
-      subCategoryName: biz.subCategoryName || "Hotels",
+      subCategoryName: biz.subCategoryName || subCategories[0] || "",
       location: biz.location || "",
       latitude: biz.latitude || "",
       longitude: biz.longitude || "",
       placeImg: biz.placeImg,
-      description: biz.description,
+      description: biz.description || "",
     });
     setImagePreview(biz.placeImg[0] || "");
     setIsModalOpen(true);
@@ -288,7 +321,6 @@ const BusinessDirectoryPage: React.FC = () => {
         ← Back to Dashboard
       </Link>
 
-      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 gap-4">
         <div>
           <h1 className="text-2xl font-bold">Business Directory</h1>
@@ -308,6 +340,7 @@ const BusinessDirectoryPage: React.FC = () => {
         setSearchTerm={setSearchTerm}
         category={category}
         setCategory={setCategory}
+        categories={categories}
       />
 
       {/* Business Grid */}
@@ -402,17 +435,18 @@ const BusinessDirectoryPage: React.FC = () => {
                 <label className="block mb-1 font-medium">Title</label>
                 <input
                   type="text"
-                  className="w-full px-3 py-2 border  border-gray-300 rounded"
+                  className="w-full px-3 py-2 border border-gray-300 rounded"
                   value={formData.title}
                   onChange={(e) =>
                     setFormData({ ...formData, title: e.target.value })
                   }
                 />
               </div>
+
               <div>
                 <label className="block mb-1 font-medium">Sub Category</label>
                 <select
-                  className="w-full px-3 py-2 border   border-gray-300 rounded"
+                  className="w-full px-3 py-2 border border-gray-300 rounded"
                   value={formData.subCategoryName}
                   onChange={(e) =>
                     setFormData({
@@ -421,27 +455,27 @@ const BusinessDirectoryPage: React.FC = () => {
                     })
                   }
                 >
-                  <option value="Hotels">Hotels</option>
-                  <option value="Restaurants">Restaurants</option>
-                  <option value="Shops">Shops</option>
-                  <option value="Museums">Museums</option>
+                  {subCategories.map((sub) => (
+                    <option key={sub} value={sub}>
+                      {sub}
+                    </option>
+                  ))}
                 </select>
               </div>
 
-              {/* Description */}
               <Description
                 value={formData.description}
-                onChange={(val) =>
-                  setFormData({ ...formData, description: val })
+                onChange={(content) =>
+                  setFormData({ ...formData, description: content })
                 }
-                placeholder="Enter business description..."
+                placeholder="Description..."
               />
 
               <div>
                 <label className="block mb-1 font-medium">Business Email</label>
                 <input
                   type="email"
-                  className="w-full px-3 py-2 border  border-gray-300 rounded"
+                  className="w-full px-3 py-2 border border-gray-300 rounded"
                   value={formData.businessEmail}
                   onChange={(e) =>
                     setFormData({ ...formData, businessEmail: e.target.value })
@@ -472,6 +506,7 @@ const BusinessDirectoryPage: React.FC = () => {
                   }
                 />
               </div>
+
               <div>
                 <label className="block mb-1 font-medium">Working Hours</label>
                 <input
@@ -488,7 +523,7 @@ const BusinessDirectoryPage: React.FC = () => {
                 <label className="block mb-1 font-medium">Latitude</label>
                 <input
                   type="text"
-                  className="w-full px-3 py-2 border  border-gray-300 rounded"
+                  className="w-full px-3 py-2 border border-gray-300 rounded"
                   value={formData.latitude}
                   onChange={(e) =>
                     setFormData({ ...formData, latitude: e.target.value })
@@ -500,7 +535,7 @@ const BusinessDirectoryPage: React.FC = () => {
                 <label className="block mb-1 font-medium">Longitude</label>
                 <input
                   type="text"
-                  className="w-full px-3 py-2 border  border-gray-300 rounded"
+                  className="w-full px-3 py-2 border border-gray-300 rounded"
                   value={formData.longitude}
                   onChange={(e) =>
                     setFormData({ ...formData, longitude: e.target.value })
@@ -517,33 +552,24 @@ const BusinessDirectoryPage: React.FC = () => {
                   type="file"
                   accept="image/*"
                   onChange={handleImageChange}
-                  className=" border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500"
+                  className="border-gray-300 border rounded p-2"
                 />
                 {imagePreview && (
                   <img
                     src={imagePreview}
                     alt="Preview"
-                    className="min-w-auto h-100 object-cover rounded-lg mt-3 shadow"
+                    className="w-full h-48 object-cover rounded mt-2"
                   />
                 )}
               </div>
             </div>
 
-            {/* Buttons */}
-            <div className="flex justify-end gap-4 mt-6">
-              <button
-                onClick={() => setIsModalOpen(false)}
-                className="px-6 py-3 border  border-gray-300 rounded-lg hover:bg-gray-200"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleSave}
-                className="px-6 py-3 border  border-gray-300 bg-blue-500 text-white rounded-lg hover:bg-blue-700"
-              >
-                Save
-              </button>
-            </div>
+            <button
+              onClick={handleSave}
+              className="mt-6 bg-blue-500 hover:bg-blue-700 text-white px-6 py-2 rounded-xl shadow-md"
+            >
+              Save
+            </button>
           </div>
         </div>
       )}

@@ -1,10 +1,11 @@
-// src/Pages/LocationsOverviewPage.tsx
-import React, { useState, useEffect } from "react";
+// src/pages/LocationsOverviewPage.tsx
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Search, Filter, MoreHorizontal, X } from "lucide-react";
 import toast, { Toaster } from "react-hot-toast";
 import Description from "../Components/Description";
 import Pagination from "../Components/Pagination";
+import SearchInput from "../Components/SearchInput";
 import {
   getLocations,
   searchLocations,
@@ -23,6 +24,7 @@ interface Location {
   provinceId: number;
   provinceName: string;
   description?: string;
+  visits?: number;
 }
 
 const provinces = [
@@ -33,52 +35,45 @@ const provinces = [
   { id: 5, name: "Kigali City" },
 ];
 
-const limit = 6;
+const limit = 10;
 
 const LocationsOverviewPage: React.FC = () => {
   const navigate = useNavigate();
 
-  // Search + filter states
+  // State
+  const [locations, setLocations] = useState<Location[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchInput, setSearchInput] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [provinceFilter, setProvinceFilter] = useState<string | undefined>();
   const [page, setPage] = useState(1);
-
-  const [locations, setLocations] = useState<Location[]>([]);
   const [total, setTotal] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
   const [openDropdownId, setOpenDropdownId] = useState<number | null>(null);
+
+  // Modal states
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingLocation, setEditingLocation] = useState<Location | null>(null);
-
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-
   const [formData, setFormData] = useState({
     title: "",
     latitude: "",
     longitude: "",
     address: "",
-    image: "",
     provinceId: "",
     description: "",
+    image: "" as any,
   });
+  const [imagePreview, setImagePreview] = useState<string>("");
 
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState("");
+  const searchTimeout = useRef<NodeJS.Timeout | null>(null);
 
   // Debounce search input
   useEffect(() => {
-    if (searchInput.trim().length < 2) {
-      setSearchQuery("");
-      return;
-    }
-    const handler = setTimeout(() => {
+    if (searchTimeout.current) clearTimeout(searchTimeout.current);
+    searchTimeout.current = setTimeout(() => {
       setPage(1);
-      setSearchQuery(searchInput);
+      setSearchQuery(searchInput.trim());
     }, 500);
-    return () => clearTimeout(handler);
   }, [searchInput]);
 
   // Fetch locations
@@ -86,20 +81,18 @@ const LocationsOverviewPage: React.FC = () => {
     const fetchLocations = async () => {
       try {
         setLoading(true);
-        let data;
-        if (searchQuery.trim()) {
-          data = await searchLocations(
-            searchQuery,
-            page,
-            limit,
-            provinceFilter
-          );
-        } else {
-          data = await getLocations(page, limit, provinceFilter);
-        }
+        setError(null);
+
+        const params: any = { page, limit };
+        if (searchQuery) params.query = searchQuery;
+        if (provinceFilter) params.provinceId = provinceFilter;
+
+        const data = searchQuery
+          ? await searchLocations(searchQuery, page, limit, provinceFilter)
+          : await getLocations(page, limit, provinceFilter);
 
         const sorted = data?.data?.sort(
-          (a, b) => (b.visits || 0) - (a.visits || 0)
+          (a: Location, b: Location) => (b.visits || 0) - (a.visits || 0)
         );
         setLocations(sorted || []);
         setTotal(data?.total || 0);
@@ -115,21 +108,26 @@ const LocationsOverviewPage: React.FC = () => {
 
   const totalPages = Math.ceil(total / limit);
 
-  const resetForm = () => {
-    setFormData({
-      title: "",
-      latitude: "",
-      longitude: "",
-      address: "",
-      image: "",
-      provinceId: "",
-      description: "",
-    });
-    setImageFile(null);
-    setImagePreview("");
+  // Modal handlers
+  const handleAdd = () => {
+    resetForm();
     setEditingLocation(null);
-    setIsAddModalOpen(false);
-    setIsEditModalOpen(false);
+    setIsModalOpen(true);
+  };
+
+  const handleEdit = (loc: Location) => {
+    setEditingLocation(loc);
+    setFormData({
+      title: loc.title,
+      latitude: loc.latitude,
+      longitude: loc.longitude,
+      address: loc.address,
+      provinceId: loc.provinceId.toString(),
+      description: loc.description || "",
+      image: loc.image[0] || "",
+    });
+    setImagePreview(loc.image[0] || "");
+    setIsModalOpen(true);
   };
 
   const handleDelete = async (id: number) => {
@@ -144,41 +142,42 @@ const LocationsOverviewPage: React.FC = () => {
     }
   };
 
-  const handleEdit = (loc: Location) => {
-    setEditingLocation(loc);
-    setFormData({
-      title: loc.title,
-      address: loc.address,
-      latitude: loc.latitude,
-      longitude: loc.longitude,
-      description: loc.description || "",
-      provinceId: loc.provinceId.toString(),
-      image: loc.image[0] || "",
-    });
-    setImagePreview(loc.image[0] || "");
-    setIsEditModalOpen(true);
-  };
-
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      setImageFile(file);
+      setFormData({ ...formData, image: file });
       setImagePreview(URL.createObjectURL(file));
     }
   };
 
+  const resetForm = () => {
+    setFormData({
+      title: "",
+      latitude: "",
+      longitude: "",
+      address: "",
+      provinceId: "",
+      description: "",
+      image: "",
+    });
+    setImagePreview("");
+    setEditingLocation(null);
+    setIsModalOpen(false);
+  };
+
   const handleSave = async () => {
     try {
-      const data = new FormData();
-      data.append("title", formData.title);
-      data.append("address", formData.address);
-      data.append("latitude", formData.latitude);
-      data.append("longitude", formData.longitude);
-      data.append("provinceId", formData.provinceId);
-      data.append("description", formData.description);
-      if (imageFile) data.append("image", imageFile);
+      if (!formData.title.trim()) {
+        toast.error("Title is required");
+        return;
+      }
 
-      if (isEditModalOpen && editingLocation) {
+      const data = new FormData();
+      Object.entries(formData).forEach(([key, value]) => {
+        if (value) data.append(key, value as any);
+      });
+
+      if (editingLocation) {
         const res = await updateLocation(editingLocation.id, data);
         setLocations((prev) =>
           prev.map((loc) =>
@@ -186,7 +185,7 @@ const LocationsOverviewPage: React.FC = () => {
           )
         );
         toast.success("Location updated successfully!");
-      } else if (isAddModalOpen) {
+      } else {
         const res = await addLocation(data);
         setLocations((prev) => [res.data.data, ...prev]);
         toast.success("Location added successfully!");
@@ -212,15 +211,16 @@ const LocationsOverviewPage: React.FC = () => {
         ← Back to Dashboard
       </Link>
 
+      {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-3xl font-bold">Locations Overview</h1>
           <p className="text-gray-600">
-            Manage and organize all listed locations in one place.
+            Manage and organize all listed locations.
           </p>
         </div>
         <button
-          onClick={() => setIsAddModalOpen(true)}
+          onClick={handleAdd}
           className="bg-blue-500 hover:bg-blue-700 text-white px-4 py-2 rounded-xl shadow-md"
         >
           + New
@@ -230,13 +230,10 @@ const LocationsOverviewPage: React.FC = () => {
       {/* Search + Filter */}
       <div className="flex flex-col sm:flex-row gap-3 w-full mb-4">
         <div className="flex items-center w-full px-3 py-2 rounded-xl bg-white shadow-sm">
-          <Search className="text-gray-300 w-5 h-5 mr-2" />
-          <input
-            type="text"
-            placeholder="Search location"
+          <SearchInput
             value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            className="flex-1 outline-none"
+            onSearch={(val) => setSearchInput(val)}
+            placeholder="Search locations..."
           />
         </div>
         <div className="flex items-center relative rounded-lg px-3 py-2">
@@ -262,7 +259,7 @@ const LocationsOverviewPage: React.FC = () => {
           locations.map((location) => (
             <div
               key={location.id}
-              className="bg-white rounded-2xl shadow-sm p-3 hover:shadow-md transition w-full relative"
+              className="bg-white rounded-2xl shadow-sm p-3 hover:shadow-md transition relative"
             >
               {location.image?.length > 0 && (
                 <img
@@ -322,21 +319,22 @@ const LocationsOverviewPage: React.FC = () => {
         )}
       </div>
 
+      {/* Pagination */}
       <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
 
       {/* Add/Edit Modal */}
-      {(isAddModalOpen || isEditModalOpen) && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 p-4">
-          <div className="bg-white w-full max-w-4xl p-6 rounded-xl relative overflow-y-auto max-h-screen">
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-white bg-opacity-40 flex items-center justify-center z-50 p-4">
+          <div className="bg-white w-full max-w-full max-h-[90vh] p-6 md:p-12 overflow-y-auto rounded-2xl relative flex flex-col">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-bold">
-                {isEditModalOpen ? "Edit Location" : "Add New Location"}
+                {editingLocation ? "Edit Location" : "Add New Location"}
               </h2>
               <button
                 onClick={resetForm}
                 className="text-gray-500 hover:text-gray-700"
               >
-                <X />
+                <X size={24} />
               </button>
             </div>
 
@@ -371,11 +369,11 @@ const LocationsOverviewPage: React.FC = () => {
 
               <div className="md:col-span-2">
                 <Description
-                  value={formData.description}
-                  onChange={(val) =>
-                    setFormData({ ...formData, description: val })
+                  value={formData.description} // controlled
+                  onChange={(content) =>
+                    setFormData({ ...formData, description: content })
                   }
-                  placeholder="Enter location description..."
+                  placeholder="Description..."
                 />
               </div>
 
@@ -460,9 +458,9 @@ const LocationsOverviewPage: React.FC = () => {
               </button>
               <button
                 onClick={handleSave}
-                className="px-6 py-2 bg-blue-500 text-white rounded-lg"
+                className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-700"
               >
-                Save
+                {editingLocation ? "Save Changes" : "Add Location"}
               </button>
             </div>
           </div>
