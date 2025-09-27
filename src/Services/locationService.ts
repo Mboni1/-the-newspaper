@@ -1,43 +1,41 @@
+// src/services/locationService.ts
 import api from "../lib/axios";
-import toast from "react-hot-toast";
 
 // Get all locations with pagination + optional provinceId
 export const getLocations = async (
   page: number = 1,
   limit: number = 10,
-  provinceId?: string | number
+  provinceId?: number
 ) => {
-  const res = await api.get(`/location/admin/all`, {
+  const response = await api.get("/location/admin/all", {
     params: {
       page,
       limit,
-      ...(provinceId && provinceId !== "All" ? { provinceId } : {}),
+      ...(provinceId ? { provinceId } : {}), // hit only if not undefined
     },
   });
-  return res.data; // { data: Location[], total: number }
+  return response.data; // { data: Location[], total: number }
 };
 
+// Search locations with pagination + optional provinceId
 export const searchLocations = async (
   query: string,
   page: number = 1,
   limit: number = 10,
-  provinceId?: string
+  provinceId?: number
 ) => {
   if (!query || query.trim().length < 2) return { data: [], total: 0 };
 
-  const res = await api.get(`/location/search/all`, {
+  const response = await api.get("/location/search/all", {
     params: {
       query: query.trim(),
       page,
       limit,
-      ...(provinceId && provinceId !== "All" ? { provinceId } : {}),
+      ...(provinceId ? { provinceId } : {}), // hit only if not undefined
     },
   });
-
-  return res.data;
+  return response.data;
 };
-
-
 
 // Delete location
 export const deleteLocation = async (id: number) => {
@@ -51,8 +49,9 @@ export const updateLocation = async (id: number, data: any) => {
 
 // Add location
 export const addLocation = async (data: any) => {
-  return await api.post(`/location`, data);
+  return await api.post("/location", data);
 };
+
 
 
 

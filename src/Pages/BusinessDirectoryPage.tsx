@@ -107,7 +107,12 @@ const BusinessDirectoryPage: React.FC = () => {
   const fetchCategories = async () => {
     try {
       const res = await api.get(`/category`);
-      setCategories(res.data.data.map((cat: any) => cat.name));
+      // Filtro: zitarimo documents
+      const filtered = res.data.data
+        .filter((cat: any) => cat.isDoc === false)
+        .map((cat: any) => cat.name);
+
+      setCategories(filtered);
     } catch (err) {
       console.error(err);
     }
