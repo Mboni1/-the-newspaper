@@ -6,6 +6,7 @@ import toast, { Toaster } from "react-hot-toast";
 import Description from "../Components/Description";
 import Pagination from "../Components/Pagination";
 import SearchInput from "../Components/SearchInput";
+
 import {
   getLocations,
   searchLocations,
@@ -46,7 +47,7 @@ const LocationsOverviewPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [searchInput, setSearchInput] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
-  const [provinceFilter, setProvinceFilter] = useState<string | undefined>();
+  const [provinceFilter, setProvinceFilter] = useState<number | undefined>();
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [openDropdownId, setOpenDropdownId] = useState<number | null>(null);
@@ -92,7 +93,7 @@ const LocationsOverviewPage: React.FC = () => {
           : await getLocations(page, limit, provinceFilter);
 
         const sorted = data?.data?.sort(
-          (a: Location, b: Location) => (b.visits || 0) - (a.visits || 0)
+          (a, b) => (b.visits || 0) - (a.visits || 0)
         );
         setLocations(sorted || []);
         setTotal(data?.total || 0);
@@ -239,8 +240,12 @@ const LocationsOverviewPage: React.FC = () => {
         <div className="flex items-center relative rounded-lg px-3 py-2">
           <Filter className="text-gray-300 w-5 h-5 mr-2" />
           <select
-            value={provinceFilter || ""}
-            onChange={(e) => setProvinceFilter(e.target.value || undefined)}
+            value={provinceFilter ?? ""}
+            onChange={(e) =>
+              setProvinceFilter(
+                e.target.value ? Number(e.target.value) : undefined
+              )
+            }
             className="rounded-xl px-3 py-2 bg-white shadow-sm"
           >
             <option value="">All Provinces</option>
@@ -369,7 +374,7 @@ const LocationsOverviewPage: React.FC = () => {
 
               <div className="md:col-span-2">
                 <Description
-                  value={formData.description} // controlled
+                  value={formData.description}
                   onChange={(content) =>
                     setFormData({ ...formData, description: content })
                   }
