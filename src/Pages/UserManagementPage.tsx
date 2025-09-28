@@ -273,7 +273,7 @@ const UserManagement: React.FC = () => {
                           </button>
 
                           {openMenu === u.id && (
-                            <div className="absolute right-8 top-full -mt-17 w-fit bg-white border rounded-md shadow-lg z-10">
+                            <div className="absolute right-8 top-full -mt-17 w-fit bg-white border  border-gray-300 rounded-md shadow-lg z-10">
                               <button
                                 onClick={() => setEditingUser(u)}
                                 className="block w-full text-left px-3 py-1.5 text-sm hover:bg-gray-400"
@@ -346,7 +346,7 @@ const EditUserForm: React.FC<EditFormProps> = ({ user, onClose, onSave }) => {
               type="text"
               value={names}
               onChange={(e) => setNames(e.target.value)}
-              className="w-full p-2 border rounded-lg"
+              className="w-full p-2 border   border-gray-300 rounded-lg"
               required
             />
           </div>
@@ -356,16 +356,16 @@ const EditUserForm: React.FC<EditFormProps> = ({ user, onClose, onSave }) => {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full p-2 border rounded-lg"
+              className="w-full p-2 border  border-gray-300 rounded-lg"
               required
             />
           </div>
           <div>
-            <label className="block text-sm font-medium">Role</label>
+            <label className="block text-sm   font-medium">Role</label>
             <select
               value={role}
               onChange={(e) => setRole(e.target.value as User["role"])}
-              className="w-full p-2 border rounded-lg"
+              className="w-full p-2 border  border-gray-300 rounded-lg"
             >
               <option value="admin">Admin</option>
               <option value="user">User</option>

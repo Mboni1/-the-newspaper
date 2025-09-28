@@ -303,7 +303,7 @@ const ArticlesPage: React.FC = () => {
 
               {/* Description */}
               <Description
-                value={formData.description} // controlled
+                value={formData.description}
                 onChange={(content) =>
                   setFormData({ ...formData, description: content })
                 }
@@ -383,7 +383,7 @@ const ArticlesPage: React.FC = () => {
             <div className="flex justify-end gap-4 mt-6">
               <button
                 onClick={() => setIsModalOpen(false)}
-                className="px-6 py-3 border rounded-lg hover:bg-gray-200"
+                className="px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-200"
               >
                 Cancel
               </button>

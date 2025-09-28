@@ -183,7 +183,7 @@ const ServiceCategories: React.FC = () => {
                     }
                   />
                   {openDropdownId === category.id && (
-                    <div className="absolute right-0 mt-2 w-32 bg-white border rounded-md shadow-lg z-10">
+                    <div className="absolute right-0 mt-2 w-32 bg-white border  border-gray-300 rounded-md shadow-lg z-10">
                       <button
                         className="flex items-center w-full px-3 py-2 text-left hover:bg-gray-400"
                         onClick={() => handleEdit(category)}

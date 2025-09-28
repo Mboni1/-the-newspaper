@@ -106,8 +106,8 @@ const BusinessDirectoryPage: React.FC = () => {
   // Fetch categories and subcategories from database
   const fetchCategories = async () => {
     try {
-      const res = await api.get(`/category`);
-      // Filtro: zitarimo documents
+      const res = await api.get(`/category`, { params: { page } });
+
       const filtered = res.data.data
         .filter((cat: any) => cat.isDoc === false)
         .map((cat: any) => cat.name);
@@ -120,7 +120,7 @@ const BusinessDirectoryPage: React.FC = () => {
 
   const fetchSubCategories = async () => {
     try {
-      const res = await api.get(`/category/${name}`);
+      const res = await api.get(`/category/subcategory/all`);
       setSubCategories(res.data.data.map((sub: any) => sub.name));
     } catch (err) {
       console.error(err);
@@ -160,20 +160,31 @@ const BusinessDirectoryPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
-
-  // Search results
+  }; // Search results + category filtering
+  // Search results & category filter
   const fetchSearchResults = async () => {
-    if (!searchTerm) return fetchAllBusinesses();
-
     try {
       setLoading(true);
       setError("");
 
-      const params: any = { query: searchTerm, page, limit };
-      if (category !== "All") params.category = category;
+      let res;
 
-      const res = await api.get("/place-item/search/all", { params });
+      // Case 1:  searchTerm
+      if (searchTerm) {
+        const params: any = { query: searchTerm, page, limit };
+        if (category !== "All") params.category = category; // check backend param
+        res = await api.get("/place-item/search/all", { params });
+      }
+      // Case 2:  searchTerm  category
+      else if (category !== "All") {
+        res = await api.get("/place-item/subCategory", {
+          params: { category, page, limit }, // check  backend  categoryId name
+        });
+      }
+      // Case 3:default
+      else {
+        res = await api.get("/place-item/all", { params: { page, limit } });
+      }
 
       const mappedData: Business[] = (res.data.data || []).map((item: any) => ({
         id: item.id,
@@ -194,7 +205,7 @@ const BusinessDirectoryPage: React.FC = () => {
       setTotalPages(Math.ceil(res.data.total / limit) || 1);
     } catch (err) {
       console.error(err);
-      setError("Failed to fetch search results.");
+      setError("Failed to fetch businesses.");
       setBusinesses([]);
       setTotalPages(1);
     } finally {
@@ -202,16 +213,21 @@ const BusinessDirectoryPage: React.FC = () => {
     }
   };
 
-  // Debounce search
+  // Debounce search & category filtering
   useEffect(() => {
     if (searchTimeout.current) clearTimeout(searchTimeout.current);
+
     searchTimeout.current = setTimeout(() => {
-      if (searchTerm) {
+      if (searchTerm || category !== "All") {
         fetchSearchResults();
       } else {
         fetchAllBusinesses();
       }
     }, 500);
+
+    return () => {
+      if (searchTimeout.current) clearTimeout(searchTimeout.current);
+    };
   }, [searchTerm, category, page]);
 
   // Fetch categories/subcategories on mount
@@ -568,13 +584,21 @@ const BusinessDirectoryPage: React.FC = () => {
                 )}
               </div>
             </div>
-
-            <button
-              onClick={handleSave}
-              className="mt-6 bg-blue-500 hover:bg-blue-700 text-white px-6 py-2 rounded-xl shadow-md"
-            >
-              Save
-            </button>
+            {/* Buttons */}
+            <div className="flex justify-end gap-4 mt-6">
+              <button
+                onClick={() => setIsModalOpen(false)}
+                className="px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-200"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSave}
+                className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-700"
+              >
+                Save
+              </button>
+            </div>
           </div>
         </div>
       )}
