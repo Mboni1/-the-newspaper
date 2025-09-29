@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { Search, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import api from "../lib/axios";
@@ -26,10 +26,11 @@ const ArticlesPage: React.FC = () => {
   const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [currentPage, setCurrentPage] = useState(1);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
+  const debounceRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Modal + form
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingArticle, setEditingArticle] = useState<Article | null>(null);
   const [formData, setFormData] = useState({
@@ -43,12 +44,15 @@ const ArticlesPage: React.FC = () => {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>("");
 
-  // Fetch articles
-  const fetchArticles = async () => {
+  // Fetch articles function
+  const fetchArticles = async (query = "") => {
     setLoading(true);
     try {
-      const res = await api.get("/doc-item/admin/all");
-      const fetchedArticles = Array.isArray(res.data.data)
+      const res = query
+        ? await api.get("/doc-item/search/all", { params: { query } })
+        : await api.get("/doc-item/admin/all");
+
+      const fetchedArticles: Article[] = Array.isArray(res.data.data)
         ? res.data.data.map((item: any) => ({
             id: item.id,
             title: item.title,
@@ -58,6 +62,7 @@ const ArticlesPage: React.FC = () => {
             summary: item.summary || "",
             categoryName: item.categoryName || "",
             location: item.location || "",
+            description: item.description || "",
           }))
         : [];
       setArticles(fetchedArticles);
@@ -68,19 +73,21 @@ const ArticlesPage: React.FC = () => {
     }
   };
 
+  // Live search with debounce
   useEffect(() => {
-    fetchArticles();
-  }, []);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      fetchArticles(search.trim());
+    }, 300);
 
-  // Search + Pagination
-  const filteredArticles = articles.filter((a) =>
-    a.title.toLowerCase().includes(search.toLowerCase())
-  );
-  const totalPages = Math.ceil(filteredArticles.length / limit);
-  const paginatedArticles = filteredArticles.slice(
-    (page - 1) * limit,
-    page * limit
-  );
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, [search]);
+
+  // Pagination
+  const totalPages = Math.ceil(articles.length / limit);
+  const paginatedArticles = articles.slice((page - 1) * limit, page * limit);
   const handlePrev = () => setPage((prev) => Math.max(prev - 1, 1));
   const handleNext = () => setPage((prev) => Math.min(prev + 1, totalPages));
 
@@ -140,7 +147,6 @@ const ArticlesPage: React.FC = () => {
       toast.error("Title is required");
       return;
     }
-
     try {
       const data = new FormData();
       data.append("title", formData.title);
@@ -164,8 +170,8 @@ const ArticlesPage: React.FC = () => {
         setArticles((prev) => [res.data.data, ...prev]);
         toast.success("Article added successfully");
       }
-
       setIsModalOpen(false);
+      setEditingArticle(null);
       setFormData({
         title: "",
         summary: "",
@@ -176,7 +182,6 @@ const ArticlesPage: React.FC = () => {
       });
       setImageFile(null);
       setImagePreview("");
-      setEditingArticle(null);
     } catch (err: any) {
       console.error(err);
       toast.error(
@@ -185,9 +190,6 @@ const ArticlesPage: React.FC = () => {
       );
     }
   };
-
-  if (loading) return <p className="p-8">Loading articles...</p>;
-  if (error) return <p className="p-8 text-red-500">{error}</p>;
 
   return (
     <div className="p-6 pt-20 bg-gray-50 min-h-screen">
@@ -214,15 +216,21 @@ const ArticlesPage: React.FC = () => {
         </button>
       </div>
 
-      {/* Search */}
-      <SearchInput
-        value={search}
-        onSearch={(val) => setSearch(val)}
-        placeholder="Search Articles..."
-      />
+      {/* Live Search */}
+      <div className="mb-4 w-full">
+        <SearchInput
+          value={search}
+          onSearch={(val) => setSearch(val)}
+          placeholder="Search Articles..."
+          debounceTime={300}
+        />
+      </div>
 
+      {/* Articles List */}
       <div className="space-y-4">
-        {paginatedArticles.length > 0 ? (
+        {loading ? (
+          <p className="p-8 text-gray-500">Loading articles...</p>
+        ) : paginatedArticles.length > 0 ? (
           paginatedArticles.map((article) => (
             <div
               key={article.id}
@@ -267,9 +275,10 @@ const ArticlesPage: React.FC = () => {
         onPageChange={(p) => setPage(p)}
       />
 
+      {/* Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-white bg-opacity-40 flex items-center justify-center z-50 p-4">
-          <div className="bg-white w-full max-w-full max-h-[90vh] p-6 md:p-12 overflow-y-auto rounded-2xl relative flex flex-col">
+          <div className="bg-white w-full max-w-3xl max-h-[90vh] p-6 md:p-12 overflow-y-auto rounded-2xl relative flex flex-col">
             {/* Close button */}
             <button
               onClick={() => setIsModalOpen(false)}
@@ -278,12 +287,12 @@ const ArticlesPage: React.FC = () => {
               <X className="w-6 h-6" />
             </button>
 
-            {/* Title */}
+            {/* Modal title */}
             <h2 className="text-2xl md:text-3xl font-semibold mb-6 text-center md:text-left">
               {editingArticle ? "Edit Article" : "New Article"}
             </h2>
 
-            {/* Form */}
+            {/* Form fields */}
             <div className="flex flex-col gap-6 w-full">
               {/* Title */}
               <div className="flex flex-col">
@@ -325,7 +334,7 @@ const ArticlesPage: React.FC = () => {
                 />
               </div>
 
-              {/* Category + Location in one row */}
+              {/* Category + Location */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="flex flex-col">
                   <label className="text-sm font-medium text-gray-600 mb-1">
@@ -367,19 +376,19 @@ const ArticlesPage: React.FC = () => {
                   type="file"
                   accept="image/*"
                   onChange={handleImageChange}
-                  className=" border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500"
+                  className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500"
                 />
                 {imagePreview && (
                   <img
                     src={imagePreview}
                     alt="Preview"
-                    className="w-2xl h-100 object-cover rounded-lg mt-3 shadow"
+                    className="w-full h-60 object-cover rounded-lg mt-3 shadow"
                   />
                 )}
               </div>
             </div>
 
-            {/* Buttons */}
+            {/* Action buttons */}
             <div className="flex justify-end gap-4 mt-6">
               <button
                 onClick={() => setIsModalOpen(false)}

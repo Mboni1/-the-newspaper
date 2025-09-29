@@ -6,6 +6,7 @@ import api from "../lib/axios";
 import toast, { Toaster } from "react-hot-toast";
 import Description from "../Components/Description";
 import Pagination from "../Components/Pagination";
+import CategoryMenu from "../Components/CategoryMenu";
 
 // Interfaces
 interface Business {
@@ -118,15 +119,6 @@ const BusinessDirectoryPage: React.FC = () => {
     }
   };
 
-  const fetchSubCategories = async () => {
-    try {
-      const res = await api.get(`/category/subcategory/all`);
-      setSubCategories(res.data.data.map((sub: any) => sub.name));
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
   // Fetch all businesses
   const fetchAllBusinesses = async () => {
     try {
@@ -160,7 +152,7 @@ const BusinessDirectoryPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }; // Search results + category filtering
+  };
   // Search results & category filter
   const fetchSearchResults = async () => {
     try {
@@ -233,7 +225,6 @@ const BusinessDirectoryPage: React.FC = () => {
   // Fetch categories/subcategories on mount
   useEffect(() => {
     fetchCategories();
-    fetchSubCategories();
     fetchAllBusinesses();
   }, []);
 
@@ -464,25 +455,13 @@ const BusinessDirectoryPage: React.FC = () => {
                 />
               </div>
 
-              <div>
-                <label className="block mb-1 font-medium">Sub Category</label>
-                <select
-                  className="w-full px-3 py-2 border border-gray-300 rounded"
-                  value={formData.subCategoryName}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      subCategoryName: e.target.value,
-                    })
-                  }
-                >
-                  {subCategories.map((sub) => (
-                    <option key={sub} value={sub}>
-                      {sub}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              {/* Category Dropdown */}
+              <CategoryMenu
+                categories={categories}
+                onSelectCategory={(value) => {
+                  console.log("Selected:", value);
+                }}
+              />
 
               <Description
                 value={formData.description}

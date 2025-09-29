@@ -1,5 +1,5 @@
 // src/pages/CategoryPage.tsx
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { Plus, X } from "lucide-react";
 import api from "../lib/axios";
@@ -32,11 +32,10 @@ const CategoryPage: React.FC = () => {
   const [subCategories, setSubCategories] = useState<SubCategory[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingSubCategory, setEditingSubCategory] =
     useState<SubCategory | null>(null);
-  const [page, setPage] = useState(1);
-
   const [formData, setFormData] = useState<{
     subCategoryId?: number;
     subCategoryName: string;
@@ -49,19 +48,19 @@ const CategoryPage: React.FC = () => {
     featuredImage: null,
   });
 
-  // Fetch category
+  const debounceRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Fetch category info
   useEffect(() => {
+    if (!name) return;
     const fetchCategory = async () => {
       try {
         setLoading(true);
-        if (!name) return;
-
         const res = await api.get(`/category/${name}`);
         setCategory(res.data.data || null);
       } catch (err) {
         console.error(err);
         toast.error("Failed to fetch category!");
-        setCategory(null);
       } finally {
         setLoading(false);
       }
@@ -69,40 +68,49 @@ const CategoryPage: React.FC = () => {
     fetchCategory();
   }, [name]);
 
-  // Fetch subcategories with search + debounce
-  useEffect(() => {
+  // Fetch subcategories with live search + debounce
+  const fetchSubCategories = async (query = "") => {
     if (!name) return;
-    const fetchSubCategories = async () => {
-      try {
-        setLoading(true);
-        let res;
-        if (search.trim()) {
-          res = await api.get(`/category/search/subcategory/all`, {
-            params: { query: search, categoryName: name },
-          });
-        } else {
-          res = await api.get(`/category/${name}`);
-        }
-        setSubCategories(Array.isArray(res.data.data) ? res.data.data : []);
-      } catch (err) {
-        console.error(err);
-        toast.error("Failed to fetch subcategories!");
-        setSubCategories([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    const timeout = setTimeout(fetchSubCategories, 300);
-    return () => clearTimeout(timeout);
-  }, [search, name]);
-
-  // Navigate to subcategory page
-  const goToSubcategory = (subName: string) => {
-    navigate(`/category/subCategory/${subName}`);
+    try {
+      setLoading(true);
+      const res = query
+        ? await api.get("/category/search/subcategory/all", {
+            params: { query, categoryName: name },
+          })
+        : await api.get(`/category/${name}`);
+      const data = Array.isArray(res.data.data) ? res.data.data : [];
+      setSubCategories(data);
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to fetch subcategories!");
+      setSubCategories([]);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // Add or Edit Modal
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      setPage(1);
+      fetchSubCategories(search.trim());
+    }, 300);
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, [search, name]);
+
+  // Pagination
+  const totalPages = Math.ceil(subCategories.length / limit);
+  const paginatedSubCategories = subCategories.slice(
+    (page - 1) * limit,
+    page * limit
+  );
+
+  // Navigation & modal handlers
+  const goToSubcategory = (subName: string) =>
+    navigate(`/category/subCategory/${subName}`);
+
   const handleAdd = () => {
     setEditingSubCategory(null);
     setFormData({
@@ -186,20 +194,12 @@ const CategoryPage: React.FC = () => {
     }
   };
 
-  // Pagination
-  const totalPages = Math.ceil(subCategories.length / limit);
-  const paginatedSubCategories = subCategories.slice(
-    (page - 1) * limit,
-    page * limit
-  );
-
   if (loading) return <p className="p-8">Loading...</p>;
   if (!category) return <p className="p-8 text-red-500">Category not found.</p>;
 
   return (
     <div className="p-6 pt-20 max-w-3xl mx-auto">
       <Toaster position="top-right" reverseOrder={false} />
-
       <Link to="/service-categories" className="text-blue-600 hover:underline">
         ← Back to Categories
       </Link>
@@ -228,6 +228,7 @@ const CategoryPage: React.FC = () => {
           </button>
         </div>
 
+        {/* Live Search */}
         <SearchInput
           value={search}
           onSearch={(val) => setSearch(val)}
@@ -276,6 +277,7 @@ const CategoryPage: React.FC = () => {
         onPageChange={(p) => setPage(p)}
       />
 
+      {/* Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center">
           <div className="bg-white p-6 rounded-2xl shadow-lg w-full max-w-md">
