@@ -1,5 +1,5 @@
 // src/pages/ServiceCategories.tsx
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { MoreHorizontal } from "lucide-react";
 import api from "../lib/axios";
@@ -16,55 +16,62 @@ interface Category {
   link: string;
 }
 
+const limit = 9; // items per page
+
 const ServiceCategories: React.FC = () => {
   const navigate = useNavigate();
+  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
-  const [totalCategories, setTotalCategories] = useState(0);
-  const [categories, setCategories] = useState<Category[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [formData, setFormData] = useState({ name: "", isDoc: false });
   const [openDropdownId, setOpenDropdownId] = useState<number | null>(null);
 
-  const limit = 9;
+  const debounceRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Fetch categories
+  // Fetch categories (all for live search)
+  const fetchCategories = async (query = "") => {
+    setLoading(true);
+    try {
+      const res = query
+        ? await api.get("/category/search/category/all", { params: { query } })
+        : await api.get("/category", { params: { limit: 1000 } });
+      const data = res.data.data || res.data;
+      setCategories(data || []);
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to fetch categories");
+      setCategories([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Live search with debounce
   useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        setLoading(true);
-        let res;
-
-        if (search.trim()) {
-          res = await api.get(`/category/search/category/all`, {
-            params: { query: search },
-          });
-          const responseData = res.data.data || [];
-          setCategories(responseData);
-          setTotalCategories(responseData.length);
-        } else {
-          res = await api.get(`/category`, { params: { page, limit } });
-          const responseData = res.data;
-          setCategories(responseData.data || []);
-          setTotalCategories(responseData.total || 0);
-        }
-      } catch (err) {
-        console.error(err);
-        toast.error("Failed to fetch categories");
-        setCategories([]);
-        setTotalCategories(0);
-      } finally {
-        setLoading(false);
-      }
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      setPage(1); // reset to page 1 on search
+      fetchCategories(search.trim());
+    }, 300);
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
     };
+  }, [search]);
 
-    fetchCategories();
-  }, [page, search]);
+  // Frontend pagination
+  const totalPages = Math.ceil(categories.length / limit);
+  const paginatedCategories = categories.slice(
+    (page - 1) * limit,
+    page * limit
+  );
 
-  const totalPages = Math.ceil(totalCategories / limit);
+  const handlePrev = () => setPage((prev) => Math.max(prev - 1, 1));
+  const handleNext = () => setPage((prev) => Math.min(prev + 1, totalPages));
 
+  // Modal handlers
   const handleEdit = (category: Category) => {
     setEditingCategory(category);
     setFormData({ name: category.name, isDoc: false });
@@ -89,89 +96,72 @@ const ServiceCategories: React.FC = () => {
       toast.error("Name is required");
       return;
     }
-
     try {
       if (editingCategory) {
         const res = await api.patch(`/category/${editingCategory.id}`, {
           name: formData.name,
           isDoc: formData.isDoc,
         });
-
-        const updatedCategory = res.data;
+        const updated = res.data;
         setCategories(
-          categories.map((c) =>
-            c.id === updatedCategory.id ? updatedCategory : c
-          )
+          categories.map((c) => (c.id === updated.id ? updated : c))
         );
         toast.success("Category updated successfully");
       } else {
-        const res = await api.post("/category", {
-          name: formData.name,
-          isDoc: formData.isDoc,
-        });
-
-        const newCategory = res.data;
-        setCategories([newCategory, ...categories]);
+        const res = await api.post("/category", formData);
+        setCategories([res.data, ...categories]);
         toast.success("Category added successfully");
       }
-
       setIsModalOpen(false);
       setEditingCategory(null);
       setFormData({ name: "", isDoc: false });
     } catch (err: any) {
-      console.error("Save failed:", err.response || err);
+      console.error(err);
       toast.error(err.response?.data?.message || "Failed to save category");
     }
   };
 
-  if (loading) return <p className="p-8">Loading categories...</p>;
-
   return (
-    <div className="p-6 pt-20 px-10 py-10 bg-gray-50 min-h-screen">
-      <Toaster position="top-right" reverseOrder={false} />
+    <div className="p-6 pt-20 bg-gray-50 min-h-screen">
+      <Toaster position="top-right" />
       <Link
         to="/dashboard"
-        className="text-blue-600 hover:underline inline-block mb-4"
+        className="text-blue-500 hover:underline mb-4 inline-block"
       >
         ← Back to Dashboard
       </Link>
 
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold">Service Categories</h1>
-          <p className="text-gray-600 text-sm sm:text-base">
-            Explore our comprehensive range of services organized by category to
-            help you find exactly what you need.
-          </p>
-        </div>
-
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">Service Categories</h1>
         <button
           onClick={() => setIsModalOpen(true)}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl shadow-md"
+          className="bg-blue-500 hover:bg-blue-700 text-white px-4 py-2 rounded-xl shadow-md"
         >
           + New
         </button>
       </div>
 
-      {/* Search */}
-      <SearchInput
-        value={search}
-        onSearch={(val) => setSearch(val)}
-        placeholder="Search categories..."
-      />
+      {/* Live Search */}
+      <div className="mb-4 w-full">
+        <SearchInput
+          value={search}
+          onSearch={(val) => setSearch(val)}
+          placeholder="Search Categories..."
+        />
+      </div>
 
-      {/* Categories Grid */}
-      {categories.length === 0 ? (
-        <p className="p-8 text-red-500">No categories found.</p>
+      {loading ? (
+        <p className="p-8">Loading categories...</p>
+      ) : paginatedCategories.length === 0 ? (
+        <p className="p-8 text-gray-500">No categories found.</p>
       ) : (
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
-          {categories.map((category) => (
+          {paginatedCategories.map((category) => (
             <div
               key={category.id}
               className="relative bg-white p-6 rounded-2xl shadow hover:shadow-lg transition"
             >
-              <div className="flex items-center gap-3 mb-3 justify-between">
+              <div className="flex items-center justify-between mb-3">
                 <h2 className="text-xl font-semibold">{category.name}</h2>
                 <div className="relative">
                   <MoreHorizontal
@@ -183,15 +173,15 @@ const ServiceCategories: React.FC = () => {
                     }
                   />
                   {openDropdownId === category.id && (
-                    <div className="absolute right-0 mt-2 w-32 bg-white border  border-gray-300 rounded-md shadow-lg z-10">
+                    <div className="absolute right-0 mt-2 w-32 bg-white border border-gray-300 rounded-lg shadow-lg z-10">
                       <button
-                        className="flex items-center w-full px-3 py-2 text-left hover:bg-gray-400"
+                        className="w-full px-3 py-2 text-left hover:bg-gray-200"
                         onClick={() => handleEdit(category)}
                       >
                         Edit
                       </button>
                       <button
-                        className="flex items-center w-full px-3 py-2 text-left hover:bg-gray-400 text-red-600"
+                        className="w-full px-3 py-2 text-left hover:bg-gray-200 text-red-600"
                         onClick={() => handleDelete(category)}
                       >
                         Delete
@@ -200,7 +190,6 @@ const ServiceCategories: React.FC = () => {
                   )}
                 </div>
               </div>
-
               <p className="text-sm text-blue-600 font-medium mb-2">
                 {category.services} services
               </p>
@@ -218,16 +207,18 @@ const ServiceCategories: React.FC = () => {
         </div>
       )}
 
-      {/* Pagination */}
-      <Pagination
-        page={page}
-        totalPages={totalPages}
-        onPageChange={(p) => setPage(p)}
-      />
+      {/* Pagination - always visible if there are categories */}
+      {categories.length > 0 && (
+        <Pagination
+          page={page}
+          totalPages={totalPages}
+          onPageChange={setPage}
+        />
+      )}
 
       {/* Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center">
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 p-4">
           <div className="bg-white p-6 rounded-2xl shadow-lg w-full max-w-md">
             <h2 className="text-xl font-semibold mb-4">
               {editingCategory ? "Edit Category" : "Add New Category"}
