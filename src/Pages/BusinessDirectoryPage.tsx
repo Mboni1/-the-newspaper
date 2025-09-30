@@ -426,43 +426,54 @@ const BusinessDirectoryPage: React.FC = () => {
         totalPages={totalPages}
         onPageChange={(p) => setPage(p)}
       />
-
       {/* Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-gray-300 bg-opacity-40 flex items-center justify-center z-50 p-4">
-          <div className="bg-white w-full max-w-full max-h-[90vh] p-6 md:p-12 overflow-y-auto rounded-2xl relative flex flex-col">
+          <div className="bg-white w-full max-w-5xl max-h-[90vh] p-6 md:p-12 overflow-y-auto rounded-2xl relative flex flex-col">
+            {/* Close button */}
             <button
               onClick={() => setIsModalOpen(false)}
               className="absolute top-3 right-3 text-gray-500 hover:text-gray-700"
             >
               <X />
             </button>
-            <h2 className="text-xl font-bold mb-4">
+
+            <h2 className="text-xl font-bold mb-6">
               {editingBusiness ? "Edit Business" : "Add Business"}
             </h2>
 
             {/* Form Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block mb-1 font-medium">Title</label>
-                <input
-                  type="text"
-                  className="w-full px-3 py-2 border border-gray-300 rounded"
-                  value={formData.title}
-                  onChange={(e) =>
-                    setFormData({ ...formData, title: e.target.value })
-                  }
-                />
+            <div className="flex flex-col gap-4">
+              {/* Row: Title + Category */}
+              <div className="flex w-full gap-4">
+                {/* Title - 3/4 */}
+                <div className="flex flex-col w-3/4">
+                  <label className="block mb-1 font-medium">Title</label>
+                  <input
+                    type="text"
+                    className="w-full px-3 py-2 border border-gray-300 rounded"
+                    value={formData.title}
+                    onChange={(e) =>
+                      setFormData({ ...formData, title: e.target.value })
+                    }
+                  />
+                </div>
+
+                {/* Category - 1/4 */}
+                <div className="flex flex-col w-1/4">
+                  <label className="block mb-1 font-medium">Category</label>
+                  <div className="relative w-full">
+                    <CategoryMenu
+                      categories={categories}
+                      onSelectCategory={(value) =>
+                        setFormData({ ...formData, subCategoryName: value })
+                      }
+                    />
+                  </div>
+                </div>
               </div>
 
-              {/* Category Dropdown */}
-              <CategoryMenu
-                categories={categories}
-                onSelectCategory={(value) => {
-                  console.log("Selected:", value);
-                }}
-              />
-
+              {/* Description */}
               <Description
                 value={formData.description}
                 onChange={(content) =>
@@ -471,6 +482,7 @@ const BusinessDirectoryPage: React.FC = () => {
                 placeholder="Description..."
               />
 
+              {/* Business Email */}
               <div>
                 <label className="block mb-1 font-medium">Business Email</label>
                 <input
@@ -483,6 +495,7 @@ const BusinessDirectoryPage: React.FC = () => {
                 />
               </div>
 
+              {/* Phone Number */}
               <div>
                 <label className="block mb-1 font-medium">Phone Number</label>
                 <input
@@ -495,6 +508,7 @@ const BusinessDirectoryPage: React.FC = () => {
                 />
               </div>
 
+              {/* Location */}
               <div>
                 <label className="block mb-1 font-medium">Location</label>
                 <input
@@ -507,6 +521,7 @@ const BusinessDirectoryPage: React.FC = () => {
                 />
               </div>
 
+              {/* Working Hours */}
               <div>
                 <label className="block mb-1 font-medium">Working Hours</label>
                 <input
@@ -519,6 +534,7 @@ const BusinessDirectoryPage: React.FC = () => {
                 />
               </div>
 
+              {/* Latitude */}
               <div>
                 <label className="block mb-1 font-medium">Latitude</label>
                 <input
@@ -531,6 +547,7 @@ const BusinessDirectoryPage: React.FC = () => {
                 />
               </div>
 
+              {/* Longitude */}
               <div>
                 <label className="block mb-1 font-medium">Longitude</label>
                 <input
@@ -543,7 +560,7 @@ const BusinessDirectoryPage: React.FC = () => {
                 />
               </div>
 
-              {/* Image upload */}
+              {/* Image Upload */}
               <div className="flex flex-col">
                 <label className="text-sm font-medium text-gray-600 mb-2">
                   Featured Image
@@ -563,6 +580,7 @@ const BusinessDirectoryPage: React.FC = () => {
                 )}
               </div>
             </div>
+
             {/* Buttons */}
             <div className="flex justify-end gap-4 mt-6">
               <button
