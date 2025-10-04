@@ -22,7 +22,7 @@ interface SubCategory {
   featuredImage?: string;
 }
 
-const limit = 3;
+const limit = 2;
 
 const CategoryPage: React.FC = () => {
   const { name } = useParams<{ name: string }>();
@@ -30,6 +30,9 @@ const CategoryPage: React.FC = () => {
 
   const [category, setCategory] = useState<Category | null>(null);
   const [subCategories, setSubCategories] = useState<SubCategory[]>([]);
+  const [filteredSubCategories, setFilteredSubCategories] = useState<
+    SubCategory[]
+  >([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
@@ -49,68 +52,90 @@ const CategoryPage: React.FC = () => {
   });
 
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
-
-  // Fetch category info
+  const mapSubCategoryData = (data: any[]): SubCategory[] =>
+    data.map((item) => ({
+      id: item.id,
+      name: item.name,
+      featuredImage: item.featuredImage || "",
+    }));
+  // Fetch category info + subcategories
   useEffect(() => {
     if (!name) return;
-    const fetchCategory = async () => {
+
+    const fetchCategoryAndSubs = async () => {
       try {
         setLoading(true);
-        const res = await api.get(`/category/${name}`);
-        setCategory(res.data.data || null);
+        const categoryRes = await api
+          .get(`/category/${name}`)
+          .catch(() => null);
+
+        // Fetch subcategories
+
+        const subsRes = await api.get(`/category/${name}`);
+        const subsData = Array.isArray(subsRes.data.data)
+          ? mapSubCategoryData(subsRes.data.data)
+          : [];
+
+        // Set data in state
+        setCategory(categoryRes?.data?.data || null);
+        setSubCategories(subsData);
+        setFilteredSubCategories(subsData);
       } catch (err) {
         console.error(err);
-        toast.error("Failed to fetch category!");
+        toast.error("Failed to load category or subcategories!");
       } finally {
         setLoading(false);
       }
     };
-    fetchCategory();
+    fetchCategoryAndSubs();
   }, [name]);
 
-  // Fetch subcategories with live search + debounce
-  const fetchSubCategories = async (query = "") => {
-    if (!name) return;
-    try {
-      setLoading(true);
-      const res = query
-        ? await api.get("/category/search/subcategory/all", {
-            params: { query, categoryName: name },
-          })
-        : await api.get(`/category/${name}`);
-      const data = Array.isArray(res.data.data) ? res.data.data : [];
-      setSubCategories(data);
-    } catch (err) {
-      console.error(err);
-      toast.error("Failed to fetch subcategories!");
-      setSubCategories([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  // Debounced live search querying backend
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => {
-      setPage(1);
-      fetchSubCategories(search.trim());
+
+    debounceRef.current = setTimeout(async () => {
+      const query = search.trim();
+
+      try {
+        let subsData: SubCategory[] = [];
+        const categoryName = name || "";
+
+        const res = await api.get(
+          `/category/search/subcategory/all?query=${encodeURIComponent(
+            query
+          )}&categoryName=${encodeURIComponent(categoryName)}`
+        );
+
+        subsData = Array.isArray(res.data.data)
+          ? mapSubCategoryData(res.data.data)
+          : [];
+
+        setFilteredSubCategories(subsData);
+        setPage(1);
+      } catch (err) {
+        console.error(err);
+        toast.error("Failed to search subcategories!");
+      }
     }, 300);
+
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
   }, [search, name]);
 
   // Pagination
-  const totalPages = Math.ceil(subCategories.length / limit);
-  const paginatedSubCategories = subCategories.slice(
+  const totalPages = Math.ceil(filteredSubCategories.length / limit);
+  const paginated = filteredSubCategories.slice(
     (page - 1) * limit,
     page * limit
   );
 
-  // Navigation & modal handlers
+  // Navigation
   const goToSubcategory = (subName: string) =>
     navigate(`/category/subCategory/${subName}`);
 
+  // Modal Handlers
   const handleAdd = () => {
     setEditingSubCategory(null);
     setFormData({
@@ -138,17 +163,18 @@ const CategoryPage: React.FC = () => {
     e.stopPropagation();
     try {
       await api.delete(`/category/subcategory/${id}`);
-      setSubCategories(subCategories.filter((s) => s.id !== id));
+      const updated = subCategories.filter((s) => s.id !== id);
+      setSubCategories(updated);
+      setFilteredSubCategories(updated);
       toast.success("Subcategory deleted!");
-    } catch (err) {
-      console.error(err);
-      toast.error("Failed to delete subcategory!");
+    } catch {
+      toast.error("Failed to delete!");
     }
   };
 
   const handleSave = async () => {
     if (!formData.subCategoryName.trim() || !formData.categoryName.trim()) {
-      toast.error("Please fill in all required fields!");
+      toast.error("All fields are required!");
       return;
     }
 
@@ -159,24 +185,26 @@ const CategoryPage: React.FC = () => {
       if (formData.featuredImage)
         data.append("featuredImage", formData.featuredImage);
 
+      let res;
       if (editingSubCategory) {
-        const res = await api.patch(
+        res = await api.patch(
           `/category/subcategory/${editingSubCategory.id}`,
           data,
-          {
-            headers: { "Content-Type": "multipart/form-data" },
-          }
+          { headers: { "Content-Type": "multipart/form-data" } }
         );
-        const updated = res.data.data;
-        setSubCategories((prev) =>
-          prev.map((s) => (s.id === editingSubCategory.id ? updated : s))
+        const updated = subCategories.map((s) =>
+          s.id === editingSubCategory.id ? res.data.data : s
         );
+        setSubCategories(updated);
+        setFilteredSubCategories(updated);
         toast.success("Subcategory updated!");
       } else {
-        const res = await api.post(`/category/subcategory`, data, {
+        res = await api.post(`/category/subcategory`, data, {
           headers: { "Content-Type": "multipart/form-data" },
         });
-        setSubCategories((prev) => [...prev, res.data.data]);
+        const newSub = [...subCategories, res.data.data];
+        setSubCategories(newSub);
+        setFilteredSubCategories(newSub);
         toast.success("Subcategory added!");
       }
 
@@ -188,18 +216,17 @@ const CategoryPage: React.FC = () => {
         categoryName: name || "",
         featuredImage: null,
       });
-    } catch (err) {
-      console.error(err);
-      toast.error("Failed to save subcategory!");
+    } catch {
+      toast.error("Failed to save!");
     }
   };
 
-  if (loading) return <p className="p-8">Loading...</p>;
+  if (loading) return <p className="p-8 text-gray-500">Loading...</p>;
   if (!category) return <p className="p-8 text-red-500">Category not found.</p>;
 
   return (
     <div className="p-6 pt-20 max-w-3xl mx-auto">
-      <Toaster position="top-right" reverseOrder={false} />
+      <Toaster position="top-right" />
       <Link to="/service-categories" className="text-blue-600 hover:underline">
         ← Back to Categories
       </Link>
@@ -219,7 +246,7 @@ const CategoryPage: React.FC = () => {
         )}
 
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold">Manage Subcategories</h2>
+          <h2 className="text-xl font-semibold">Manage SubCategories</h2>
           <button
             onClick={handleAdd}
             className="bg-blue-500 text-white px-3 py-1 rounded-xl flex items-center hover:bg-blue-700"
@@ -229,57 +256,70 @@ const CategoryPage: React.FC = () => {
         </div>
 
         {/* Live Search */}
-        <SearchInput
-          value={search}
-          onSearch={(val) => setSearch(val)}
-          placeholder="Search subcategories..."
-        />
+        <div className="mb-4 w-full">
+          <SearchInput
+            value={search}
+            onSearch={(val) => setSearch(val)}
+            placeholder="Search SubCategory..."
+            debounceTime={200}
+          />
+        </div>
       </div>
 
-      <div className="space-y-4 mt-4">
-        {paginatedSubCategories.map((sub) => (
-          <div
-            key={sub.id}
-            onClick={() => goToSubcategory(sub.name)}
-            className="flex justify-between items-center bg-gray-50 rounded-2xl shadow p-4 cursor-pointer hover:bg-gray-100 transition"
-          >
-            <div className="flex-1 pr-4">
-              <h3 className="font-semibold text-lg">{sub.name}</h3>
-              <div className="flex space-x-4 mt-2">
-                <button
-                  onClick={(e) => handleEdit(sub, e)}
-                  className="text-blue-500 text-sm"
-                >
-                  Edit
-                </button>
-                <button
-                  onClick={(e) => handleDelete(sub.id, e)}
-                  className="text-red-600 text-sm"
-                >
-                  Delete
-                </button>
+      {/* Subcategories List */}
+      <div className="space-y-4 mt-4 transition-all">
+        {paginated.length > 0 ? (
+          paginated.map((sub) => (
+            <div
+              key={sub.id}
+              onClick={() => goToSubcategory(sub.name)}
+              className="flex justify-between items-center bg-gray-50 rounded-2xl shadow p-4 cursor-pointer hover:bg-gray-100 transition"
+            >
+              <div className="flex-1 pr-4">
+                <h3 className="font-semibold text-lg">{sub.name}</h3>
+                <div className="flex space-x-4 mt-2">
+                  <button
+                    onClick={(e) => handleEdit(sub, e)}
+                    className="text-blue-500 text-sm"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={(e) => handleDelete(sub.id, e)}
+                    className="text-red-600 text-sm"
+                  >
+                    Delete
+                  </button>
+                </div>
               </div>
+              {sub.featuredImage && (
+                <img
+                  src={sub.featuredImage}
+                  alt={sub.name}
+                  className="w-24 h-20 object-cover rounded-xl"
+                />
+              )}
             </div>
-            {sub.featuredImage && (
-              <img
-                src={sub.featuredImage}
-                alt={sub.name}
-                className="w-24 h-20 object-cover rounded-xl"
-              />
-            )}
-          </div>
-        ))}
+          ))
+        ) : (
+          <p className="text-gray-500 text-center py-10">
+            No subcategories found.
+          </p>
+        )}
       </div>
 
-      <Pagination
-        page={page}
-        totalPages={totalPages}
-        onPageChange={(p) => setPage(p)}
-      />
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <Pagination
+          page={page}
+          totalPages={totalPages}
+          onPageChange={setPage}
+        />
+      )}
 
       {/* Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center">
+        <div className="fixed inset-0 bg-gray-200 bg-opacity-40 flex items-center justify-center z-50 p-4">
           <div className="bg-white p-6 rounded-2xl shadow-lg w-full max-w-md">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-semibold">
@@ -304,15 +344,6 @@ const CategoryPage: React.FC = () => {
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 outline-none"
               />
               <input
-                type="text"
-                placeholder="Category name"
-                value={formData.categoryName}
-                onChange={(e) =>
-                  setFormData({ ...formData, categoryName: e.target.value })
-                }
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 outline-none"
-              />
-              <input
                 type="file"
                 accept="image/*"
                 onChange={(e) =>
@@ -325,23 +356,17 @@ const CategoryPage: React.FC = () => {
               />
 
               {formData.featuredImage ? (
-                <div className="mt-3">
-                  <p className="text-sm text-gray-600 mb-1">Preview:</p>
-                  <img
-                    src={URL.createObjectURL(formData.featuredImage)}
-                    alt="Preview"
-                    className="w-full h-40 object-cover rounded-lg border border-gray-300"
-                  />
-                </div>
+                <img
+                  src={URL.createObjectURL(formData.featuredImage)}
+                  alt="Preview"
+                  className="w-full h-40 object-cover rounded-lg border mt-2"
+                />
               ) : editingSubCategory?.featuredImage ? (
-                <div className="mt-3">
-                  <p className="text-sm text-gray-600 mb-1">Current Image:</p>
-                  <img
-                    src={editingSubCategory.featuredImage}
-                    alt="Current"
-                    className="w-full h-40 object-cover rounded-lg border"
-                  />
-                </div>
+                <img
+                  src={editingSubCategory.featuredImage}
+                  alt="Current"
+                  className="w-full h-40 object-cover rounded-lg border mt-2"
+                />
               ) : null}
             </div>
 

@@ -16,6 +16,7 @@ interface Business {
   workingHours: string;
   businessEmail: string;
   phoneNumber: string;
+  categoryName?: string;
   subCategoryName: string;
   location: string;
   placeImg: string[];
