@@ -218,7 +218,7 @@ const ServiceCategories: React.FC = () => {
 
       {/* Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-gray-200 bg-opacity-40 flex items-center justify-center z-50 p-4">
           <div className="bg-white p-6 rounded-2xl shadow-lg w-full max-w-md">
             <h2 className="text-xl font-semibold mb-4">
               {editingCategory ? "Edit Category" : "Add New Category"}

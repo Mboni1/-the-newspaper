@@ -67,14 +67,18 @@ const LocationsOverviewPage: React.FC = () => {
   const [imagePreview, setImagePreview] = useState<string>("");
 
   const searchTimeout = useRef<NodeJS.Timeout | null>(null);
-
   // Debounce search input
   useEffect(() => {
     if (searchTimeout.current) clearTimeout(searchTimeout.current);
+
     searchTimeout.current = setTimeout(() => {
-      setPage(1);
+      setPage(1); // reset page to 1 on new search
       setSearchQuery(searchInput.trim());
     }, 500);
+
+    return () => {
+      if (searchTimeout.current) clearTimeout(searchTimeout.current);
+    };
   }, [searchInput]);
 
   // Fetch locations
@@ -83,10 +87,6 @@ const LocationsOverviewPage: React.FC = () => {
       try {
         setLoading(true);
         setError(null);
-
-        const params: any = { page, limit };
-        if (searchQuery) params.query = searchQuery;
-        if (provinceFilter) params.provinceId = provinceFilter;
 
         const data = searchQuery
           ? await searchLocations(searchQuery, page, limit, provinceFilter)

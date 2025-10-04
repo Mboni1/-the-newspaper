@@ -336,7 +336,7 @@ const EditUserForm: React.FC<EditFormProps> = ({ user, onClose, onSave }) => {
   };
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
+    <div className="fixed inset-0 flex items-center justify-center bg-gray-200 bg-opacity-40 z-50">
       <div className="bg-white rounded-xl p-6 w-96 shadow-lg">
         <h2 className="text-lg font-semibold mb-4">Edit User</h2>
         <form onSubmit={handleSubmit} className="space-y-4">

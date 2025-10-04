@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
-import { Search, X } from "lucide-react";
+import { X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import api from "../lib/axios";
 import toast, { Toaster } from "react-hot-toast";
@@ -19,7 +19,7 @@ interface Article {
   description: string;
 }
 
-const limit = 3;
+const limit = 2;
 
 const ArticlesPage: React.FC = () => {
   const navigate = useNavigate();
@@ -77,6 +77,7 @@ const ArticlesPage: React.FC = () => {
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
+      setPage(1);
       fetchArticles(search.trim());
     }, 300);
 
@@ -277,8 +278,8 @@ const ArticlesPage: React.FC = () => {
 
       {/* Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-white bg-opacity-40 flex items-center justify-center z-50 p-4">
-          <div className="bg-white w-full max-w-3xl max-h-[90vh] p-6 md:p-12 overflow-y-auto rounded-2xl relative flex flex-col">
+        <div className="fixed inset-0 bg-gray-50 bg-opacity-40 flex items-center justify-center z-50 p-4">
+          <div className="bg-white w-full max-w-full max-h-[90vh] p-6 md:p-12 overflow-y-auto rounded-2xl relative flex flex-col">
             {/* Close button */}
             <button
               onClick={() => setIsModalOpen(false)}
