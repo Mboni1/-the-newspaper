@@ -53,29 +53,46 @@ const SubCategoryPage: React.FC = () => {
   useEffect(() => {
     if (!name) return;
 
+    let active = true;
+    let debounceTimer: ReturnType<typeof setTimeout>;
+
     const fetchBusinesses = async () => {
       try {
-        setLoading(true);
-        let res;
-        if (search.trim()) {
-          res = await api.get("/place-item/search/all", {
-            params: { query: search, subCategoryName: name },
-          });
-        } else {
-          res = await api.get(`/place-item/subcategory/${name}`);
-        }
-        setBusinesses(Array.isArray(res.data.data) ? res.data.data : []);
+        // Ntitwongere gukoresha setLoading(true) buri gihe
+        // ahubwo tuyikoreshe rimwe gusa ku initial load
+        if (!search.trim()) setLoading(true);
+
+        debounceTimer = setTimeout(async () => {
+          const endpoint = search.trim()
+            ? "/place-item/search/all"
+            : `/place-item/subcategory/${name}`;
+
+          const params = search.trim()
+            ? { query: search, subCategoryName: name }
+            : {};
+
+          const res = await api.get(endpoint, { params });
+
+          if (active) {
+            setBusinesses(Array.isArray(res.data.data) ? res.data.data : []);
+            setLoading(false);
+          }
+        }, 400);
       } catch (err) {
         console.error("Error fetching businesses:", err);
-        setBusinesses([]);
-        toast.error("Failed to fetch businesses!");
-      } finally {
-        setLoading(false);
+        if (active) {
+          toast.error("Failed to fetch businesses!");
+          setLoading(false);
+        }
       }
     };
 
-    const timeout = setTimeout(fetchBusinesses, 200); // debounce
-    return () => clearTimeout(timeout);
+    fetchBusinesses();
+
+    return () => {
+      active = false;
+      clearTimeout(debounceTimer);
+    };
   }, [name, search]);
 
   // Modal handlers

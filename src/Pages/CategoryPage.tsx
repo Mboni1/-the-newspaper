@@ -22,7 +22,7 @@ interface SubCategory {
   featuredImage?: string;
 }
 
-const limit = 2;
+const limit = 4;
 
 const CategoryPage: React.FC = () => {
   const { name } = useParams<{ name: string }>();
