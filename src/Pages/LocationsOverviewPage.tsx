@@ -29,8 +29,8 @@ interface Location {
 }
 
 const provinces = [
-  { id: 1, name: "Northern" },
-  { id: 2, name: "Southern" },
+  { id: 2, name: "Northern" },
+  { id: 1, name: "Southern" },
   { id: 3, name: "Eastern" },
   { id: 4, name: "Western" },
   { id: 5, name: "Kigali City" },
@@ -241,11 +241,11 @@ const LocationsOverviewPage: React.FC = () => {
           <Filter className="text-gray-300 w-5 h-5 mr-2" />
           <select
             value={provinceFilter ?? ""}
-            onChange={(e) =>
-              setProvinceFilter(
-                e.target.value ? Number(e.target.value) : undefined
-              )
-            }
+            onChange={(e) => {
+              const value = e.target.value ? Number(e.target.value) : undefined;
+              setProvinceFilter(value);
+              setPage(1); // reset pagination
+            }}
             className="rounded-xl px-3 py-2 bg-white shadow-sm"
           >
             <option value="">All Provinces</option>
