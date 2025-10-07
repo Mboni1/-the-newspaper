@@ -68,7 +68,7 @@ const CategoryMenu: React.FC<CategoryMenuProps> = ({
       <div className="relative w-2/3">
         <button
           onClick={() => setIsOpen((prev) => !prev)}
-          className="flex items-center justify-between w-full px-3 py-2.5 border border-gray-300 rounded text-sm font-medium hover:bg-gray-100 transition"
+          className="flex items-center justify-between w-full px-3 py-2.5 border border-gray-300 rounded-xl text-sm font-medium hover:bg-gray-100 transition"
         >
           {selectedCategory || "Select Category"}
           <ChevronDown
@@ -92,7 +92,7 @@ const CategoryMenu: React.FC<CategoryMenuProps> = ({
                   onMouseLeave={() => setHoveredCategory(null)}
                   onClick={() => {
                     onSelectCategory(cat.name);
-                    onSelectSubCategory(""); // reset subCategory
+                    onSelectSubCategory("");
                   }}
                 >
                   {cat.name}
@@ -130,7 +130,7 @@ const CategoryMenu: React.FC<CategoryMenuProps> = ({
         value={selectedSubCategory}
         readOnly
         placeholder="Select SubCategory"
-        className="w-1/3 px-3 py-2.5 border border-gray-300 rounded focus:outline-none text-sm"
+        className="w-1/3 px-3 py-2.5 border border-gray-300 rounded-xl focus:outline-none text-sm"
       />
     </div>
   );

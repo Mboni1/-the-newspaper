@@ -46,7 +46,7 @@ const Description: React.FC<DescriptionProps> = ({
       <h2 className="block mb-1 font-medium">Description</h2>
 
       {/* Toolbar */}
-      <div className="flex gap-2 mb-1 p-0 bg-gray-100 rounded border border-gray-300 flex-wrap">
+      <div className="flex gap-2 mb-1 p-0 bg-gray-100 rounded-xl border border-gray-300 flex-wrap">
         <button
           type="button"
           onClick={() => applyFormat("bold")}
@@ -101,7 +101,7 @@ const Description: React.FC<DescriptionProps> = ({
           contentEditable
           suppressContentEditableWarning
           onInput={handleInput}
-          className="p-4 min-h-[150px] border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 overflow-y-auto"
+          className="p-4 min-h-[150px] border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 overflow-y-auto"
         />
       </div>
     </div>

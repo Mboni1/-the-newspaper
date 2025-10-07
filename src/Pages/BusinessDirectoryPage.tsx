@@ -26,68 +26,19 @@ interface Business {
   icon?: React.ElementType;
 }
 
-interface SearchFilterBarProps {
-  searchTerm: string;
-  setSearchTerm: (value: string) => void;
-  category: string;
-  setCategory: (value: string) => void;
-  categories: string[];
-}
-
-// Search + Filter Component
-const SearchFilterBar: React.FC<SearchFilterBarProps> = ({
-  searchTerm,
-  setSearchTerm,
-  category,
-  setCategory,
-  categories,
-}) => (
-  <div className="flex flex-col sm:flex-row gap-3 w-full mb-6">
-    <div className="flex items-center w-full px-4 py-2 rounded-xl border border-gray-300 focus-within:ring-2 focus-within:ring-blue-500">
-      <Search className="text-gray-400 w-5 h-5 mr-2" />
-      <input
-        type="text"
-        placeholder="Search"
-        value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
-        className="flex-1 outline-none bg-transparent"
-      />
-    </div>
-    <div className="relative">
-      <select
-        value={category}
-        onChange={(e) => setCategory(e.target.value)}
-        className="px-4 py-2 rounded-xl border border-gray-300 outline-none cursor-pointer focus:ring-2 focus:ring-blue-500"
-      >
-        <option value="All">All categories</option>
-        {categories.map((cat) => (
-          <option key={cat} value={cat}>
-            {cat}
-          </option>
-        ))}
-      </select>
-    </div>
-  </div>
-);
-
-// Main Page
 const limit = 3;
 
 const BusinessDirectoryPage: React.FC = () => {
-  // States
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
-  const [category, setCategory] = useState("All");
+  const [selectedCategory, setSelectedCategory] = useState("");
+  const [selectedSubCategory, setSelectedSubCategory] = useState("");
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [openDropdownId, setOpenDropdownId] = useState<number | null>(null);
 
-  const [categories, setCategories] = useState<string[]>([]);
-  const [subCategories, setSubCategories] = useState<string[]>([]);
-
-  // Modal states
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingBusiness, setEditingBusiness] = useState<Business | null>(null);
   const [formData, setFormData] = useState({
@@ -108,79 +59,23 @@ const BusinessDirectoryPage: React.FC = () => {
 
   const searchTimeout = useRef<NodeJS.Timeout | null>(null);
 
-  // Fetch categories and subcategories from database
-  const fetchCategories = async () => {
-    try {
-      const res = await api.get(`/category`, { params: { page } });
-
-      const filtered = res.data.data
-        .filter((cat: any) => cat.isDoc === false)
-        .map((cat: any) => cat.name);
-
-      setCategories(filtered);
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  // Fetch all businesses
-  const fetchAllBusinesses = async () => {
+  const fetchBusinesses = async () => {
     try {
       setLoading(true);
       setError("");
-
-      const res = await api.get("/place-item/all", {
-        params: { page, limit },
-      });
-
-      const mappedData: Business[] = (res.data.data || []).map((item: any) => ({
-        id: item.id,
-        title: item.title,
-        description: item.description,
-        workingHours: item.workingHours,
-        businessEmail: item.businessEmail,
-        phoneNumber: item.phoneNumber,
-        subCategoryName: item.subCategory?.name || "Uncategorized",
-        subCategory: item.subCategory,
-        categoryName: item.categoryName,
-        location: item.location,
-        placeImg: item.placeImg || [],
-        latitude: item.latitude,
-        longitude: item.longitude,
-        icon: Building,
-      }));
-
-      setBusinesses(mappedData);
-      setTotalPages(Math.ceil(res.data.total / limit) || 1);
-    } catch (err) {
-      console.error(err);
-      setError("Failed to fetch businesses.");
-    } finally {
-      setLoading(false);
-    }
-  };
-  // Search results & category filter
-  const fetchSearchResults = async () => {
-    try {
-      setLoading(true);
-      setError("");
-
       let res;
 
-      // Case 1:  searchTerm
-      if (searchTerm) {
-        const params: any = { query: searchTerm, page, limit };
-        if (category !== "All") params.category = category; // check backend param
+      if (selectedSubCategory) {
+        // Fetch by specific subcategory name
+        res = await api.get(`/place-item/subcategory/${selectedSubCategory}`);
+      } else if (searchTerm || selectedCategory) {
+        // Search mode
+        const params: any = { page, limit };
+        if (searchTerm) params.query = searchTerm;
+        if (selectedCategory) params.category = selectedCategory;
         res = await api.get("/place-item/search/all", { params });
-      }
-      // Case 2:  searchTerm  category
-      else if (category !== "All") {
-        res = await api.get("/place-item/subCategory", {
-          params: { category, page, limit }, // check  backend  categoryId name
-        });
-      }
-      // Case 3:default
-      else {
+      } else {
+        // Default: all businesses
         res = await api.get("/place-item/all", { params: { page, limit } });
       }
 
@@ -205,93 +100,85 @@ const BusinessDirectoryPage: React.FC = () => {
       setTotalPages(Math.ceil(res.data.total / limit) || 1);
     } catch (err) {
       console.error(err);
+      toast.error("Failed to fetch businesses. Please try again.");
       setError("Failed to fetch businesses.");
       setBusinesses([]);
-      setTotalPages(1);
     } finally {
       setLoading(false);
     }
   };
 
-  // Debounce search & category filtering
+  // Debounced search/filter
   useEffect(() => {
     if (searchTimeout.current) clearTimeout(searchTimeout.current);
-
     searchTimeout.current = setTimeout(() => {
-      if (searchTerm || category !== "All") {
-        fetchSearchResults();
-      } else {
-        fetchAllBusinesses();
-      }
-    }, 500);
-
+      fetchBusinesses();
+    }, 400);
     return () => {
       if (searchTimeout.current) clearTimeout(searchTimeout.current);
     };
-  }, [searchTerm, category, page]);
+  }, [searchTerm, selectedCategory, selectedSubCategory, page]);
 
-  // Fetch categories/subcategories on mount
   useEffect(() => {
-    fetchCategories();
-    fetchAllBusinesses();
+    fetchBusinesses();
   }, []);
 
-  // Modal handlers
+  // Modal Handlers
   const handleAdd = () => {
     setEditingBusiness(null);
     setFormData({
       title: "",
+      description: "",
       workingHours: "",
       businessEmail: "",
       phoneNumber: "",
-      subCategoryName: subCategories[0] || "",
-      subCategory: "",
       categoryName: "",
+      subCategoryName: "",
+      subCategory: "",
       location: "",
       latitude: "",
       longitude: "",
       placeImg: "",
-      description: "",
     });
     setImagePreview("");
     setIsModalOpen(true);
   };
 
-  const handleEdit = (biz: Business) => {
-    setEditingBusiness(biz);
+  const handleEdit = (business: Business) => {
+    setEditingBusiness(business);
     setFormData({
-      title: biz.title || "",
-      workingHours: biz.workingHours || "",
-      businessEmail: biz.businessEmail || "",
-      phoneNumber: biz.phoneNumber || "",
-      subCategoryName: biz.subCategoryName || subCategories[0] || "",
-      subCategory: biz.subCategory || "",
-      categoryName: biz.categoryName || "",
-      location: biz.location || "",
-      latitude: biz.latitude || "",
-      longitude: biz.longitude || "",
-      placeImg: biz.placeImg,
-      description: biz.description || "",
+      title: business.title,
+      description: business.description,
+      workingHours: business.workingHours,
+      businessEmail: business.businessEmail,
+      phoneNumber: business.phoneNumber,
+      categoryName: business.categoryName || "",
+      subCategoryName: business.subCategoryName,
+      subCategory: business.subCategory,
+      location: business.location,
+      latitude: business.latitude,
+      longitude: business.longitude,
+      placeImg: business.placeImg[0] || "",
     });
-    setImagePreview(biz.placeImg[0] || "");
+    setImagePreview(business.placeImg[0] || "");
     setIsModalOpen(true);
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm("Are you sure you want to delete this business?")) return;
+    if (!window.confirm("Are you sure you want to delete this business?"))
+      return;
     try {
       await api.delete(`/place-item/${id}`);
-      setBusinesses(businesses.filter((b) => b.id !== id));
-      toast.success("Business deleted successfully");
-    } catch (err) {
-      console.error("Error deleting business:", err);
-      toast.error("Failed to delete business");
+      toast.success("Business deleted successfully!");
+      fetchBusinesses();
+    } catch {
+      toast.error("Failed to delete business.");
     }
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
+    const file = e.target.files?.[0];
+    if (file) {
       setFormData({ ...formData, placeImg: file });
       setImagePreview(URL.createObjectURL(file));
     }
@@ -299,42 +186,28 @@ const BusinessDirectoryPage: React.FC = () => {
 
   const handleSave = async () => {
     try {
-      if (!formData.title.trim()) {
-        toast.error("Title is required");
-        return;
-      }
-
-      const submitData = new FormData();
-      Object.entries(formData).forEach(([key, value]) => {
-        if (value) submitData.append(key, value as any);
-      });
+      const data = new FormData();
+      Object.entries(formData).forEach(([key, value]) =>
+        data.append(key, value)
+      );
 
       if (editingBusiness) {
-        const res = await api.patch(
-          `/place-item/${editingBusiness.id}`,
-          submitData,
-          { headers: { "Content-Type": "multipart/form-data" } }
-        );
-        setBusinesses(
-          businesses.map((b) =>
-            b.id === editingBusiness.id ? res.data.data : b
-          )
-        );
-        toast.success("Business updated successfully");
+        await api.patch(`/place-item/${editingBusiness.id}`, data);
+        toast.success("Business updated successfully!");
       } else {
-        const res = await api.post(`/place-item`, submitData, {
-          headers: { "Content-Type": "multipart/form-data" },
-        });
-        setBusinesses([...businesses, res.data.data]);
-        toast.success("Business added successfully");
+        await api.post("/place-item", data);
+        toast.success("Business added successfully!");
       }
+
       setIsModalOpen(false);
+      fetchBusinesses();
     } catch (err) {
-      console.error("Error saving business:", err);
-      toast.error("Failed to save business");
+      console.error(err);
+      toast.error("Failed to save business.");
     }
   };
 
+  // UI
   return (
     <div className="p-6 pt-20 bg-gray-50 min-h-screen">
       <Toaster position="top-right" />
@@ -344,7 +217,6 @@ const BusinessDirectoryPage: React.FC = () => {
       >
         ← Back to Dashboard
       </Link>
-
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 gap-4">
         <div>
           <h1 className="text-2xl font-bold">Business Directory</h1>
@@ -357,23 +229,42 @@ const BusinessDirectoryPage: React.FC = () => {
           + New
         </button>
       </div>
+      {/*  Search + CategoryMenu */}
+      <div className="flex flex-col sm:flex-row gap-3 w-full mb-6 items-start sm:items-center">
+        {/* Search Input */}
+        <div className="w-full sm:w-1/2">
+          <div className="flex items-center w-full px-4 py-2 rounded-xl border border-gray-300 focus-within:ring-2 focus-within:ring-blue-500">
+            <Search className="text-gray-400 w-5 h-5 mr-2" />
+            <input
+              type="text"
+              placeholder="Search businesses..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="flex-1 outline-none bg-transparent"
+            />
+          </div>
+        </div>
 
-      {/* Search + Filter */}
-      <SearchFilterBar
-        searchTerm={searchTerm}
-        setSearchTerm={setSearchTerm}
-        category={category}
-        setCategory={setCategory}
-        categories={categories}
-      />
+        {/* Category Menu */}
+        <div className="w-full sm:w-1/2">
+          <CategoryMenu
+            selectedCategory={selectedCategory}
+            selectedSubCategory={selectedSubCategory}
+            onSelectCategory={(cat) => {
+              setSelectedCategory(cat);
+              setSelectedSubCategory("");
+            }}
+            onSelectSubCategory={setSelectedSubCategory}
+          />
+        </div>
+      </div>
 
-      {/* Business Grid */}
+      {/*Business Cards */}
       {loading && <p>Loading...</p>}
       {error && <p className="text-red-500">{error}</p>}
       {!loading && businesses.length === 0 && (
         <p className="text-gray-500">No businesses found.</p>
       )}
-
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {businesses.map((business) => {
           const Icon = business.icon || Building;
@@ -431,14 +322,11 @@ const BusinessDirectoryPage: React.FC = () => {
           );
         })}
       </div>
-
-      {/* Pagination */}
       <Pagination
         page={page}
         totalPages={totalPages}
         onPageChange={(p) => setPage(p)}
       />
-
       {/* Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-gray-50 bg-opacity-40 flex items-center justify-center z-50 p-4">
@@ -452,29 +340,28 @@ const BusinessDirectoryPage: React.FC = () => {
             <h2 className="text-xl font-bold mb-4">
               {editingBusiness ? "Edit Business" : "Add Business"}
             </h2>
-
             {/* Form Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block mb-1 font-medium">Title</label>
                 <input
                   type="text"
-                  className="w-full px-3 py-2 border border-gray-300 rounded"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-xl"
                   value={formData.title}
                   onChange={(e) =>
                     setFormData({ ...formData, title: e.target.value })
                   }
                 />
               </div>
-              <div className="mb-4 text-left mt-7">
+              <div className="mb-2 text-left mt-7">
                 <CategoryMenu
-                  selectedCategory={formData.categoryName} // Category yatowe muri edit
-                  selectedSubCategory={formData.subCategoryName} // SubCategory yatowe
+                  selectedCategory={formData.categoryName}
+                  selectedSubCategory={formData.subCategoryName}
                   onSelectCategory={(cat) =>
                     setFormData({
                       ...formData,
                       categoryName: cat,
-                      subCategoryName: "", // reset subCategory igihe category ihindutse
+                      subCategoryName: "",
                     })
                   }
                   onSelectSubCategory={(sub) =>
@@ -482,7 +369,6 @@ const BusinessDirectoryPage: React.FC = () => {
                   }
                 />
               </div>
-
               <Description
                 value={formData.description}
                 onChange={(content) =>
@@ -490,79 +376,72 @@ const BusinessDirectoryPage: React.FC = () => {
                 }
                 placeholder="Description..."
               />
-
               <div>
                 <label className="block mb-1 font-medium">Business Email</label>
                 <input
                   type="email"
-                  className="w-full px-3 py-2 border border-gray-300 rounded"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-xl"
                   value={formData.businessEmail}
                   onChange={(e) =>
                     setFormData({ ...formData, businessEmail: e.target.value })
                   }
                 />
               </div>
-
               <div>
                 <label className="block mb-1 font-medium">Phone Number</label>
                 <input
                   type="text"
-                  className="w-full px-3 py-2 border border-gray-300 rounded"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-xl"
                   value={formData.phoneNumber}
                   onChange={(e) =>
                     setFormData({ ...formData, phoneNumber: e.target.value })
                   }
                 />
               </div>
-
               <div>
                 <label className="block mb-1 font-medium">Location</label>
                 <input
                   type="text"
-                  className="w-full px-3 py-2 border border-gray-300 rounded"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-xl"
                   value={formData.location}
                   onChange={(e) =>
                     setFormData({ ...formData, location: e.target.value })
                   }
                 />
               </div>
-
               <div>
                 <label className="block mb-1 font-medium">Working Hours</label>
                 <input
                   type="text"
-                  className="w-full px-3 py-2 border border-gray-300 rounded"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-xl"
                   value={formData.workingHours}
                   onChange={(e) =>
                     setFormData({ ...formData, workingHours: e.target.value })
                   }
                 />
               </div>
-
               <div>
                 <label className="block mb-1 font-medium">Latitude</label>
                 <input
                   type="text"
-                  className="w-full px-3 py-2 border border-gray-300 rounded"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-xl"
                   value={formData.latitude}
                   onChange={(e) =>
                     setFormData({ ...formData, latitude: e.target.value })
                   }
                 />
               </div>
-
               <div>
                 <label className="block mb-1 font-medium">Longitude</label>
                 <input
                   type="text"
-                  className="w-full px-3 py-2 border border-gray-300 rounded"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-xl"
                   value={formData.longitude}
                   onChange={(e) =>
                     setFormData({ ...formData, longitude: e.target.value })
                   }
                 />
               </div>
-
               {/* Image upload */}
               <div className="flex flex-col">
                 <label className="text-sm font-medium text-gray-600 mb-2">
@@ -572,7 +451,7 @@ const BusinessDirectoryPage: React.FC = () => {
                   type="file"
                   accept="image/*"
                   onChange={handleImageChange}
-                  className="border-gray-300 border rounded p-2"
+                  className="border-gray-300 border rounded-xl p-2"
                 />
                 {imagePreview && (
                   <img
