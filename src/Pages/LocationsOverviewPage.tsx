@@ -1,12 +1,11 @@
 // src/pages/LocationsOverviewPage.tsx
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Search, Filter, MoreHorizontal, X } from "lucide-react";
 import toast, { Toaster } from "react-hot-toast";
 import Description from "../Components/Description";
 import Pagination from "../Components/Pagination";
-import SearchInput from "../Components/SearchInput";
-
+import api from "../lib/axios";
 import {
   getLocations,
   searchLocations,
@@ -29,10 +28,10 @@ interface Location {
 }
 
 const provinces = [
-  { id: 1, name: "Northern" },
-  { id: 2, name: "Southern" },
-  { id: 3, name: "Eastern" },
-  { id: 4, name: "Western" },
+  { id: 1, name: "North Province" },
+  { id: 2, name: "South Province" },
+  { id: 3, name: "East Province" },
+  { id: 4, name: "West Province" },
   { id: 5, name: "Kigali City" },
 ];
 
@@ -41,15 +40,18 @@ const limit = 9;
 const LocationsOverviewPage: React.FC = () => {
   const navigate = useNavigate();
 
-  // State
   const [locations, setLocations] = useState<Location[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
   const [searchInput, setSearchInput] = useState("");
-  const [provinceFilter, setProvinceFilter] = useState<number | undefined>();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [provinceFilter, setProvinceFilter] = useState<string | undefined>();
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [openDropdownId, setOpenDropdownId] = useState<number | null>(null);
+
+  const debounceRef = useRef<NodeJS.Timeout | null>(null);
 
   // Modal states
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -65,34 +67,41 @@ const LocationsOverviewPage: React.FC = () => {
   });
   const [imagePreview, setImagePreview] = useState<string>("");
 
-  // Fetch locations function
+  // Debounce search input
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setPage(1);
+      setSearchQuery(searchInput.trim());
+    }, 500);
+    return () => clearTimeout(handler);
+  }, [searchInput]);
+
   const fetchLocations = async () => {
     try {
       setLoading(true);
       setError(null);
 
       let data;
-      if (searchInput.trim().length >= 2 || provinceFilter) {
-        // Search/filter
-        data = await searchLocations(
-          searchInput.trim(),
-          page,
-          limit,
-          provinceFilter
-        );
+
+      if (provinceFilter) {
+        const encodedProvince = encodeURIComponent(provinceFilter);
+        const res = await api.get(`/location/${encodedProvince}`);
+        data = res.data;
+      } else if (searchQuery) {
+        data = await searchLocations(searchQuery, page, limit);
       } else {
-        // Fetch all
-        data = await getLocations(page, limit, provinceFilter);
+        data = await getLocations(page, limit);
       }
 
       const sorted = data?.data?.sort(
         (a: Location, b: Location) => (b.visits || 0) - (a.visits || 0)
       );
+
       setLocations(sorted || []);
-      setTotal(data?.total || 0);
+      setTotal(data?.total || sorted?.length || 0);
     } catch (err: any) {
       console.error(err);
-      setError(err.message || "Failed to fetch locations");
+      setError("Failed to fetch locations");
       setLocations([]);
     } finally {
       setLoading(false);
@@ -101,7 +110,7 @@ const LocationsOverviewPage: React.FC = () => {
 
   useEffect(() => {
     fetchLocations();
-  }, [searchInput, provinceFilter, page]);
+  }, [page, searchQuery, provinceFilter]);
 
   // Modal handlers
   const handleAdd = () => {
@@ -190,9 +199,6 @@ const LocationsOverviewPage: React.FC = () => {
 
   const totalPages = Math.ceil(total / limit);
 
-  if (loading) return <p className="p-6 pt-20">Loading locations...</p>;
-  if (error) return <p className="p-6 pt-20 text-red-500">{error}</p>;
-
   return (
     <div className="p-6 pt-20 min-h-screen bg-gray-50">
       <Toaster position="top-right" />
@@ -202,7 +208,6 @@ const LocationsOverviewPage: React.FC = () => {
       >
         ← Back to Dashboard
       </Link>
-
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
@@ -218,14 +223,16 @@ const LocationsOverviewPage: React.FC = () => {
           + New
         </button>
       </div>
-
       {/* Search + Filter */}
       <div className="flex flex-col sm:flex-row gap-3 w-full mb-4">
-        <div className="w-full sm:w-2/3">
-          <SearchInput
+        <div className="relative w-full sm:w-2/3">
+          <Search className="absolute left-3 top-3 text-gray-400" size={18} />
+          <input
+            type="text"
             value={searchInput}
-            onSearch={setSearchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
             placeholder="Search locations..."
+            className="pl-10 pr-4 py-2 w-full rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none"
           />
         </div>
         <div className="flex items-center relative rounded-xl px-3 py-2 bg-white shadow-sm sm:w-1/3">
@@ -233,7 +240,7 @@ const LocationsOverviewPage: React.FC = () => {
           <select
             value={provinceFilter ?? ""}
             onChange={(e) => {
-              const value = e.target.value ? Number(e.target.value) : undefined;
+              const value = e.target.value || undefined;
               setProvinceFilter(value);
               setPage(1);
             }}
@@ -241,18 +248,19 @@ const LocationsOverviewPage: React.FC = () => {
           >
             <option value="">All Provinces</option>
             {provinces.map((p) => (
-              <option key={p.id} value={p.id}>
+              <option key={p.id} value={p.name}>
                 {p.name}
               </option>
             ))}
           </select>
         </div>
       </div>
-
-      {/* Locations Grid */}
-      <div className="p-6 px-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {locations.length > 0 ? (
-          locations.map((location) => (
+      {/* Grid */}
+      {loading ? (
+        <p className="text-center p-8">Loading locations...</p>
+      ) : locations.length > 0 ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {locations.map((location) => (
             <div
               key={location.id}
               className="bg-white rounded-2xl shadow-sm p-3 hover:shadow-md transition relative"
@@ -307,22 +315,19 @@ const LocationsOverviewPage: React.FC = () => {
                 </div>
               </div>
             </div>
-          ))
-        ) : (
-          <p className="text-center text-gray-500">No locations found.</p>
-        )}
-      </div>
-
-      {/* Pagination */}
+          ))}
+        </div>
+      ) : (
+        <p className="text-center text-gray-500 mt-8">No locations found.</p>
+      )}
       <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
-
       {/* Add/Edit Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-white bg-opacity-40 flex items-center justify-center z-50 p-4">
           <div className="bg-white w-full max-w-full max-h-[90vh] p-6 md:p-12 overflow-y-auto rounded-2xl relative flex flex-col">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-bold">
-                {editingLocation ? "Edit Location" : "Add New Location"}{" "}
+                {editingLocation ? "Edit Location" : "Add New Location"}
               </h2>
               <button
                 onClick={resetForm}

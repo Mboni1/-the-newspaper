@@ -10,7 +10,7 @@ import ServiceCategoriesPage from "./Pages/ServiceCategoriesPage";
 import BusinessDirectoryPage from "./Pages/BusinessDirectoryPage";
 import DocumentsPage from "./Pages/DocumentsPage";
 import ReviewsPage from "./Pages/ReviewsPage";
-import VisitorAnalyticsPage from "./Pages/VisitorAnalyticsPage";
+import NotificationsPage from "./Pages/NotificationsPage";
 import LocationsOverviewPage from "./Pages/LocationsOverviewPage";
 import AddArticle from "./Components/AddArticle";
 import AddBusiness from "./Components/AddBusiness";
@@ -20,7 +20,6 @@ import SubCategoryPage from "./Pages/SubCategoryPage";
 import NavbarPage from "./Pages/NavbarPage";
 
 // Components (for Dashboard layout)
-
 import Dashboard from "./Components/Dashboard";
 import Analytics from "./Components/Analytics";
 
@@ -105,11 +104,11 @@ const App: React.FC = () => {
         />
 
         <Route
-          path="/visitor-analytics"
+          path="/notifications"
           element={
             <div className="min-h-screen bg-gray-100">
               <NavbarPage />
-              <VisitorAnalyticsPage />
+              <NotificationsPage />
             </div>
           }
         />
