@@ -22,7 +22,7 @@ interface SubCategory {
   featuredImage?: string;
 }
 
-const limit = 4;
+const limit = 2;
 
 const CategoryPage: React.FC = () => {
   const { name } = useParams<{ name: string }>();
@@ -182,8 +182,7 @@ const CategoryPage: React.FC = () => {
       const data = new FormData();
       data.append("subCategoryName", formData.subCategoryName);
       data.append("categoryName", formData.categoryName);
-      if (formData.featuredImage)
-        data.append("featuredImage", formData.featuredImage);
+      if (formData.featuredImage) data.append("image", formData.featuredImage);
 
       let res;
       if (editingSubCategory) {

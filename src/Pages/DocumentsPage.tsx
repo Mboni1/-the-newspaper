@@ -19,13 +19,19 @@ interface Article {
   description: string;
 }
 
+interface Category {
+  id: number;
+  name: string;
+  isDoc: boolean;
+}
+
 const limit = 2;
 
 const ArticlesPage: React.FC = () => {
   const navigate = useNavigate();
   const [articles, setArticles] = useState<Article[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
@@ -44,7 +50,7 @@ const ArticlesPage: React.FC = () => {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>("");
 
-  // Fetch articles function
+  // Fetch articles
   const fetchArticles = async (query = "") => {
     setLoading(true);
     try {
@@ -67,11 +73,27 @@ const ArticlesPage: React.FC = () => {
         : [];
       setArticles(fetchedArticles);
     } catch (err: any) {
-      setError(err.message || "Failed to fetch articles");
+      toast.error("Failed to fetch articles");
     } finally {
       setLoading(false);
     }
   };
+
+  // Fetch categories (only isDoc)
+  const fetchCategories = async () => {
+    try {
+      const res = await api.get("/category");
+      const docCategories = res.data.data.filter((c: Category) => c.isDoc);
+      setCategories(docCategories);
+    } catch (err) {
+      console.error("Failed to fetch categories", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchArticles();
+    fetchCategories();
+  }, []);
 
   // Live search with debounce
   useEffect(() => {
@@ -89,6 +111,7 @@ const ArticlesPage: React.FC = () => {
   // Pagination
   const totalPages = Math.ceil(articles.length / limit);
   const paginatedArticles = articles.slice((page - 1) * limit, page * limit);
+
   const handlePrev = () => setPage((prev) => Math.max(prev - 1, 1));
   const handleNext = () => setPage((prev) => Math.min(prev + 1, totalPages));
 
@@ -148,29 +171,33 @@ const ArticlesPage: React.FC = () => {
       toast.error("Title is required");
       return;
     }
+
     try {
       const data = new FormData();
       data.append("title", formData.title);
       data.append("summary", formData.summary);
       data.append("categoryName", formData.categoryName);
       data.append("location", formData.location);
-      if (imageFile) data.append("featuredImg", imageFile);
+      data.append("description", formData.description);
+      if (imageFile) data.append("image", imageFile);
 
+      let res;
       if (editingArticle) {
-        const res = await api.patch(`/doc-item/${editingArticle.id}`, data, {
+        res = await api.patch(`/doc-item/${editingArticle.id}`, data, {
           headers: { "Content-Type": "multipart/form-data" },
         });
+        toast.success("Article updated successfully");
         setArticles((prev) =>
           prev.map((a) => (a.id === editingArticle.id ? res.data.data : a))
         );
-        toast.success("Article updated successfully");
       } else {
-        const res = await api.post("/doc-item", data, {
+        res = await api.post("/doc-item", data, {
           headers: { "Content-Type": "multipart/form-data" },
         });
-        setArticles((prev) => [res.data.data, ...prev]);
         toast.success("Article added successfully");
+        setArticles((prev) => [res.data.data, ...prev]);
       }
+
       setIsModalOpen(false);
       setEditingArticle(null);
       setFormData({
@@ -185,10 +212,7 @@ const ArticlesPage: React.FC = () => {
       setImagePreview("");
     } catch (err: any) {
       console.error(err);
-      toast.error(
-        "Failed to save article: " +
-          (err.response?.data?.message || err.message)
-      );
+      toast.error("Failed to save article");
     }
   };
 
@@ -223,7 +247,7 @@ const ArticlesPage: React.FC = () => {
           value={search}
           onSearch={(val) => setSearch(val)}
           placeholder="Search Articles..."
-          debounceTime={300}
+          debounceTime={200}
         />
       </div>
 
@@ -280,7 +304,6 @@ const ArticlesPage: React.FC = () => {
       {isModalOpen && (
         <div className="fixed inset-0 bg-gray-50 bg-opacity-40 flex items-center justify-center z-50 p-4">
           <div className="bg-white w-full max-w-full max-h-[90vh] p-6 md:p-12 overflow-y-auto rounded-2xl relative flex flex-col">
-            {/* Close button */}
             <button
               onClick={() => setIsModalOpen(false)}
               className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
@@ -288,14 +311,12 @@ const ArticlesPage: React.FC = () => {
               <X className="w-6 h-6" />
             </button>
 
-            {/* Modal title */}
             <h2 className="text-2xl md:text-3xl font-semibold mb-6 text-center md:text-left">
               {editingArticle ? "Edit Article" : "New Article"}
             </h2>
 
             {/* Form fields */}
             <div className="flex flex-col gap-6 w-full">
-              {/* Title */}
               <div className="flex flex-col">
                 <label className="text-sm font-medium text-gray-600 mb-1">
                   Title
@@ -341,15 +362,20 @@ const ArticlesPage: React.FC = () => {
                   <label className="text-sm font-medium text-gray-600 mb-1">
                     Category
                   </label>
-                  <input
-                    type="text"
-                    placeholder="Category name"
+                  <select
                     value={formData.categoryName}
                     onChange={(e) =>
                       setFormData({ ...formData, categoryName: e.target.value })
                     }
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500"
-                  />
+                  >
+                    <option value="">Select category</option>
+                    {categories.map((cat) => (
+                      <option key={cat.id} value={cat.name}>
+                        {cat.name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
                 <div className="flex flex-col">
@@ -389,7 +415,6 @@ const ArticlesPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Action buttons */}
             <div className="flex justify-end gap-4 mt-6">
               <button
                 onClick={() => setIsModalOpen(false)}

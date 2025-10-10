@@ -1,12 +1,20 @@
 // src/pages/BusinessDirectoryPage.tsx
 import React, { useEffect, useState, useRef } from "react";
 import { Link } from "react-router-dom";
-import { Building, MoreHorizontal, Search, X } from "lucide-react";
+import {
+  Building,
+  MoreHorizontal,
+  Search,
+  X,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 import api from "../lib/axios";
 import toast, { Toaster } from "react-hot-toast";
 import Description from "../Components/Description";
 import Pagination from "../Components/Pagination";
 import CategoryMenu from "../Components/CategoryMenu";
+import MultiImageUpload from "../Components/MultiImageUpload";
 
 // Interfaces
 interface Business {
@@ -19,7 +27,7 @@ interface Business {
   categoryName?: string;
   subCategoryName: string;
   location: string;
-  placeImg: string[];
+  placeImage: string[];
   latitude: string;
   longitude: string;
   subCategory: string;
@@ -41,6 +49,7 @@ const BusinessDirectoryPage: React.FC = () => {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingBusiness, setEditingBusiness] = useState<Business | null>(null);
+
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -53,12 +62,12 @@ const BusinessDirectoryPage: React.FC = () => {
     location: "",
     latitude: "",
     longitude: "",
-    placeImg: "" as any,
+    placeImage: [] as File[],
   });
-  const [imagePreview, setImagePreview] = useState<string>("");
 
   const searchTimeout = useRef<NodeJS.Timeout | null>(null);
 
+  // Fetch businesses
   const fetchBusinesses = async () => {
     try {
       setLoading(true);
@@ -66,16 +75,18 @@ const BusinessDirectoryPage: React.FC = () => {
       let res;
 
       if (selectedSubCategory) {
-        // Fetch by specific subcategory name
-        res = await api.get(`/place-item/subcategory/${selectedSubCategory}`);
-      } else if (searchTerm || selectedCategory) {
-        // Search mode
-        const params: any = { page, limit };
-        if (searchTerm) params.query = searchTerm;
+        res = await api.get(
+          `/place-item/subcategory/${encodeURIComponent(selectedSubCategory)}`
+        );
+      } else if (selectedCategory && !searchTerm) {
+        res = await api.get("/place-item/all", {
+          params: { category: selectedCategory, page, limit },
+        });
+      } else if (searchTerm) {
+        const params: any = { query: searchTerm, page, limit };
         if (selectedCategory) params.category = selectedCategory;
         res = await api.get("/place-item/search/all", { params });
       } else {
-        // Default: all businesses
         res = await api.get("/place-item/all", { params: { page, limit } });
       }
 
@@ -90,7 +101,7 @@ const BusinessDirectoryPage: React.FC = () => {
         subCategory: item.subCategory,
         categoryName: item.categoryName,
         location: item.location,
-        placeImg: item.placeImg || [],
+        placeImage: item.PlaceImage?.map((img: any) => img.url) || [],
         latitude: item.latitude,
         longitude: item.longitude,
         icon: Building,
@@ -138,9 +149,8 @@ const BusinessDirectoryPage: React.FC = () => {
       location: "",
       latitude: "",
       longitude: "",
-      placeImg: "",
+      placeImage: [],
     });
-    setImagePreview("");
     setIsModalOpen(true);
   };
 
@@ -158,9 +168,8 @@ const BusinessDirectoryPage: React.FC = () => {
       location: business.location,
       latitude: business.latitude,
       longitude: business.longitude,
-      placeImg: business.placeImg[0] || "",
+      placeImage: [],
     });
-    setImagePreview(business.placeImg[0] || "");
     setIsModalOpen(true);
   };
 
@@ -176,38 +185,69 @@ const BusinessDirectoryPage: React.FC = () => {
     }
   };
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setFormData({ ...formData, placeImg: file });
-      setImagePreview(URL.createObjectURL(file));
-    }
-  };
-
   const handleSave = async () => {
     try {
       const data = new FormData();
-      Object.entries(formData).forEach(([key, value]) =>
-        data.append(key, value)
-      );
+      Object.entries(formData).forEach(([key, value]) => {
+        if (key === "placeImage") return;
+        data.append(key, value as any);
+      });
+      formData.placeImage.forEach((file) => data.append("images", file));
 
       if (editingBusiness) {
-        await api.patch(`/place-item/${editingBusiness.id}`, data);
+        await api.patch(`/place-item/${editingBusiness.id}`, data, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
         toast.success("Business updated successfully!");
       } else {
-        await api.post("/place-item", data);
+        await api.post("/place-item", data, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
         toast.success("Business added successfully!");
       }
 
       setIsModalOpen(false);
       fetchBusinesses();
-    } catch (err) {
-      console.error(err);
-      toast.error("Failed to save business.");
+    } catch (err: any) {
+      console.error(" ERROR DETAILS:", err.response?.data || err.message);
+      toast.error(err.response?.data?.message || "Failed to save business.");
     }
   };
 
-  // UI
+  // Carousel component
+  const Carousel: React.FC<{ images: string[] }> = ({ images }) => {
+    const [current, setCurrent] = useState(0);
+    if (images.length === 0) return null;
+
+    return (
+      <div className="relative w-full h-48 rounded-lg overflow-hidden">
+        <img
+          src={images[current]}
+          alt={`slide-${current}`}
+          className="w-full h-full object-cover"
+        />
+        {images.length > 1 && (
+          <>
+            <button
+              onClick={() =>
+                setCurrent((prev) => (prev - 1 + images.length) % images.length)
+              }
+              className="absolute top-1/2 left-2 transform -translate-y-1/2 bg-white p-1 rounded-full shadow hover:bg-gray-200"
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+            <button
+              onClick={() => setCurrent((prev) => (prev + 1) % images.length)}
+              className="absolute top-1/2 right-2 transform -translate-y-1/2 bg-white p-1 rounded-full shadow hover:bg-gray-200"
+            >
+              <ChevronRight className="w-5 h-5" />
+            </button>
+          </>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div className="p-6 pt-20 bg-gray-50 min-h-screen">
       <Toaster position="top-right" />
@@ -217,6 +257,7 @@ const BusinessDirectoryPage: React.FC = () => {
       >
         ← Back to Dashboard
       </Link>
+
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 gap-4">
         <div>
           <h1 className="text-2xl font-bold">Business Directory</h1>
@@ -229,9 +270,9 @@ const BusinessDirectoryPage: React.FC = () => {
           + New
         </button>
       </div>
-      {/*  Search + CategoryMenu */}
+
+      {/* Search + CategoryMenu */}
       <div className="flex flex-col sm:flex-row gap-3 w-full mb-6 items-start sm:items-center">
-        {/* Search Input */}
         <div className="w-full sm:w-1/2">
           <div className="flex items-center w-full px-4 py-2 rounded-xl border border-gray-300 focus-within:ring-2 focus-within:ring-blue-500">
             <Search className="text-gray-400 w-5 h-5 mr-2" />
@@ -244,8 +285,6 @@ const BusinessDirectoryPage: React.FC = () => {
             />
           </div>
         </div>
-
-        {/* Category Menu */}
         <div className="w-full sm:w-1/2">
           <CategoryMenu
             selectedCategory={selectedCategory}
@@ -259,12 +298,13 @@ const BusinessDirectoryPage: React.FC = () => {
         </div>
       </div>
 
-      {/*Business Cards */}
+      {/* Business Cards */}
       {loading && <p>Loading...</p>}
       {error && <p className="text-red-500">{error}</p>}
       {!loading && businesses.length === 0 && (
         <p className="text-gray-500">No businesses found.</p>
       )}
+
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {businesses.map((business) => {
           const Icon = business.icon || Building;
@@ -273,13 +313,7 @@ const BusinessDirectoryPage: React.FC = () => {
               key={business.id}
               className="bg-white rounded-2xl shadow-sm p-3 hover:shadow-md transition relative"
             >
-              {business.placeImg.length > 0 && (
-                <img
-                  src={business.placeImg[0]}
-                  alt={business.title}
-                  className="w-full h-48 object-cover rounded-lg"
-                />
-              )}
+              <Carousel images={business.placeImage} />
               <div className="p-4">
                 <div className="flex justify-between">
                   <div>
@@ -322,11 +356,14 @@ const BusinessDirectoryPage: React.FC = () => {
           );
         })}
       </div>
+
+      {/* Pagination */}
       <Pagination
         page={page}
         totalPages={totalPages}
         onPageChange={(p) => setPage(p)}
       />
+
       {/* Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-gray-50 bg-opacity-40 flex items-center justify-center z-50 p-4">
@@ -340,6 +377,7 @@ const BusinessDirectoryPage: React.FC = () => {
             <h2 className="text-xl font-bold mb-4">
               {editingBusiness ? "Edit Business" : "Add Business"}
             </h2>
+
             {/* Form Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
@@ -353,6 +391,7 @@ const BusinessDirectoryPage: React.FC = () => {
                   }
                 />
               </div>
+
               <div className="mb-2 text-left mt-7">
                 <CategoryMenu
                   selectedCategory={formData.categoryName}
@@ -369,6 +408,7 @@ const BusinessDirectoryPage: React.FC = () => {
                   }
                 />
               </div>
+
               <Description
                 value={formData.description}
                 onChange={(content) =>
@@ -376,6 +416,7 @@ const BusinessDirectoryPage: React.FC = () => {
                 }
                 placeholder="Description..."
               />
+
               <div>
                 <label className="block mb-1 font-medium">Business Email</label>
                 <input
@@ -420,6 +461,7 @@ const BusinessDirectoryPage: React.FC = () => {
                   }
                 />
               </div>
+
               <div>
                 <label className="block mb-1 font-medium">Latitude</label>
                 <input
@@ -442,27 +484,16 @@ const BusinessDirectoryPage: React.FC = () => {
                   }
                 />
               </div>
-              {/* Image upload */}
-              <div className="flex flex-col">
-                <label className="text-sm font-medium text-gray-600 mb-2">
-                  Featured Image
-                </label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageChange}
-                  className="border-gray-300 border rounded-xl p-2"
-                />
-                {imagePreview && (
-                  <img
-                    src={imagePreview}
-                    alt="Preview"
-                    className="w-full h-48 object-cover rounded mt-2"
-                  />
-                )}
-              </div>
+
+              <MultiImageUpload
+                existingImages={editingBusiness?.placeImage || []}
+                onChange={(files) =>
+                  setFormData({ ...formData, placeImage: files })
+                }
+              />
             </div>
-            {/* Buttons */}
+
+            {/* Modal Buttons */}
             <div className="flex justify-end gap-4 mt-6">
               <button
                 onClick={() => setIsModalOpen(false)}

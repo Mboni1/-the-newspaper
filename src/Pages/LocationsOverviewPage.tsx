@@ -1,5 +1,5 @@
-// src/pages/LocationsOverviewPage.tsx
-import React, { useState, useEffect, useRef } from "react";
+// src/Pages/LocationsOverviewPage.tsx
+import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Search, Filter, MoreHorizontal, X } from "lucide-react";
 import toast, { Toaster } from "react-hot-toast";
@@ -20,7 +20,7 @@ interface Location {
   latitude: string;
   longitude: string;
   address: string;
-  image: string[];
+  LocationImage: { id: number; url: string; locationId: number }[];
   provinceId: number;
   provinceName: string;
   description?: string;
@@ -51,9 +51,7 @@ const LocationsOverviewPage: React.FC = () => {
   const [total, setTotal] = useState(0);
   const [openDropdownId, setOpenDropdownId] = useState<number | null>(null);
 
-  const debounceRef = useRef<NodeJS.Timeout | null>(null);
-
-  // Modal states
+  // Modal & Form
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingLocation, setEditingLocation] = useState<Location | null>(null);
   const [formData, setFormData] = useState({
@@ -63,9 +61,14 @@ const LocationsOverviewPage: React.FC = () => {
     address: "",
     provinceId: "",
     description: "",
-    image: "" as any,
+    locationImage: [] as File[],
   });
-  const [imagePreview, setImagePreview] = useState<string>("");
+  const [imagePreview, setImagePreview] = useState<string[]>([]);
+
+  // Carousel indexes for each location
+  const [carouselIndexes, setCarouselIndexes] = useState<{
+    [key: number]: number;
+  }>({});
 
   // Debounce search input
   useEffect(() => {
@@ -82,7 +85,6 @@ const LocationsOverviewPage: React.FC = () => {
       setError(null);
 
       let data;
-
       if (provinceFilter) {
         const encodedProvince = encodeURIComponent(provinceFilter);
         const res = await api.get(`/location/${encodedProvince}`);
@@ -93,12 +95,25 @@ const LocationsOverviewPage: React.FC = () => {
         data = await getLocations(page, limit);
       }
 
-      const sorted = data?.data?.sort(
-        (a: Location, b: Location) => (b.visits || 0) - (a.visits || 0)
+      const locationsWithImages = (data?.data || []).map((loc: Location) => ({
+        ...loc,
+        LocationImage: loc.LocationImage || [],
+      }));
+
+      const sorted = locationsWithImages.sort(
+        (a, b) => (b.visits || 0) - (a.visits || 0)
       );
 
-      setLocations(sorted || []);
-      setTotal(data?.total || sorted?.length || 0);
+      setLocations(sorted);
+
+      // Initialize carousel indexes
+      const indexes: { [key: number]: number } = {};
+      sorted.forEach((loc) => {
+        indexes[loc.id] = 0;
+      });
+      setCarouselIndexes(indexes);
+
+      setTotal(data?.total || sorted.length);
     } catch (err: any) {
       console.error(err);
       setError("Failed to fetch locations");
@@ -128,9 +143,9 @@ const LocationsOverviewPage: React.FC = () => {
       address: loc.address,
       provinceId: loc.provinceId.toString(),
       description: loc.description || "",
-      image: loc.image[0] || "",
+      locationImage: [],
     });
-    setImagePreview(loc.image[0] || "");
+    setImagePreview(loc.LocationImage?.map((img) => img.url) || []);
     setIsModalOpen(true);
   };
 
@@ -147,10 +162,11 @@ const LocationsOverviewPage: React.FC = () => {
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      setFormData({ ...formData, image: file });
-      setImagePreview(URL.createObjectURL(file));
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      const fileArray = Array.from(files);
+      setFormData({ ...formData, locationImage: fileArray });
+      setImagePreview(fileArray.map((file) => URL.createObjectURL(file)));
     }
   };
 
@@ -162,9 +178,9 @@ const LocationsOverviewPage: React.FC = () => {
       address: "",
       provinceId: "",
       description: "",
-      image: "",
+      locationImage: [],
     });
-    setImagePreview("");
+    setImagePreview([]);
     setEditingLocation(null);
     setIsModalOpen(false);
   };
@@ -175,11 +191,26 @@ const LocationsOverviewPage: React.FC = () => {
         toast.error("Title is required");
         return;
       }
+      if (!formData.provinceId) {
+        toast.error("Province is required");
+        return;
+      }
 
       const data = new FormData();
-      Object.entries(formData).forEach(([key, value]) => {
-        if (value) data.append(key, value as any);
-      });
+      data.append("title", formData.title);
+      data.append("address", formData.address);
+      data.append("latitude", Number(formData.latitude).toString());
+      data.append("longitude", Number(formData.longitude).toString());
+      data.append("provinceId", Number(formData.provinceId).toString());
+
+      const selectedProvince = provinces.find(
+        (p) => p.id.toString() === formData.provinceId
+      );
+      data.append("provinceName", selectedProvince?.name || "");
+      data.append("description", formData.description || "");
+
+      // Append images
+      formData.locationImage.forEach((file) => data.append("images", file));
 
       if (editingLocation) {
         await updateLocation(editingLocation.id, data);
@@ -191,13 +222,27 @@ const LocationsOverviewPage: React.FC = () => {
 
       resetForm();
       fetchLocations();
-    } catch (err) {
-      console.error(err);
-      toast.error("Failed to save location");
+    } catch (err: any) {
+      console.error("Save location error:", err.response || err);
+      toast.error(err.response?.data?.message || "Failed to save location");
     }
   };
 
   const totalPages = Math.ceil(total / limit);
+
+  const nextImage = (locId: number, length: number) => {
+    setCarouselIndexes((prev) => ({
+      ...prev,
+      [locId]: (prev[locId] + 1) % length,
+    }));
+  };
+
+  const prevImage = (locId: number, length: number) => {
+    setCarouselIndexes((prev) => ({
+      ...prev,
+      [locId]: (prev[locId] - 1 + length) % length,
+    }));
+  };
 
   return (
     <div className="p-6 pt-20 min-h-screen bg-gray-50">
@@ -208,6 +253,7 @@ const LocationsOverviewPage: React.FC = () => {
       >
         ← Back to Dashboard
       </Link>
+
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
@@ -223,6 +269,7 @@ const LocationsOverviewPage: React.FC = () => {
           + New
         </button>
       </div>
+
       {/* Search + Filter */}
       <div className="flex flex-col sm:flex-row gap-3 w-full mb-4">
         <div className="relative w-full sm:w-2/3">
@@ -255,57 +302,84 @@ const LocationsOverviewPage: React.FC = () => {
           </select>
         </div>
       </div>
+
       {/* Grid */}
       {loading ? (
         <p className="text-center p-8">Loading locations...</p>
       ) : locations.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {locations.map((location) => (
+          {locations.map((loc) => (
             <div
-              key={location.id}
+              key={loc.id}
               className="bg-white rounded-2xl shadow-sm p-3 hover:shadow-md transition relative"
             >
-              {location.image?.length > 0 && (
-                <img
-                  src={location.image[0]}
-                  alt={location.title}
-                  className="w-full h-60 object-cover rounded-lg"
-                />
+              {/* Carousel */}
+              {loc.LocationImage?.length > 0 && (
+                <div className="relative w-full h-60 rounded-lg overflow-hidden">
+                  <img
+                    src={loc.LocationImage[carouselIndexes[loc.id]].url}
+                    alt={loc.title}
+                    className="w-full h-full object-cover"
+                  />
+
+                  {loc.LocationImage.length > 1 && (
+                    <>
+                      <button
+                        onClick={() =>
+                          prevImage(loc.id, loc.LocationImage.length)
+                        }
+                        className="absolute top-1/2 left-2 transform -translate-y-1/2 bg-white/70 rounded-full p-1 hover:bg-white"
+                      >
+                        &lt;
+                      </button>
+                      <button
+                        onClick={() =>
+                          nextImage(loc.id, loc.LocationImage.length)
+                        }
+                        className="absolute top-1/2 right-2 transform -translate-y-1/2 bg-white/70 rounded-full p-1 hover:bg-white"
+                      >
+                        &gt;
+                      </button>
+                    </>
+                  )}
+                </div>
               )}
+
               <div className="mt-3 flex justify-between items-start">
                 <div>
-                  <h2 className="font-semibold text-base">{location.title}</h2>
-                  <p className="text-gray-600 text-sm">{location.address}</p>
-                  {location.description && (
+                  <h2 className="font-semibold text-base">{loc.title}</h2>
+                  <p className="text-gray-600 text-sm">{loc.address}</p>
+                  {loc.description && (
                     <p className="text-gray-600 text-sm line-clamp-3 mt-1">
-                      {location.description}
+                      {loc.description}
                     </p>
                   )}
                   <p className="text-gray-500 text-sm mt-1">
-                    {location.provinceName}
+                    {loc.provinceName}
                   </p>
                 </div>
+
                 <div className="relative">
                   <button
                     onClick={() =>
                       setOpenDropdownId(
-                        openDropdownId === location.id ? null : location.id
+                        openDropdownId === loc.id ? null : loc.id
                       )
                     }
                     className="text-gray-400 hover:text-gray-700"
                   >
                     <MoreHorizontal />
                   </button>
-                  {openDropdownId === location.id && (
+                  {openDropdownId === loc.id && (
                     <div className="absolute right-6 -mt-10 translate-y-0 w-fit bg-white border border-gray-200 rounded-md shadow z-10">
                       <button
-                        onClick={() => handleEdit(location)}
+                        onClick={() => handleEdit(loc)}
                         className="w-full px-2 py-1 text-left text-gray-900 hover:bg-gray-400 rounded-t-md"
                       >
                         Edit
                       </button>
                       <button
-                        onClick={() => handleDelete(location.id)}
+                        onClick={() => handleDelete(loc.id)}
                         className="w-full px-2 py-1 text-left text-red-600 hover:bg-gray-400 rounded-b-md"
                       >
                         Delete
@@ -320,10 +394,12 @@ const LocationsOverviewPage: React.FC = () => {
       ) : (
         <p className="text-center text-gray-500 mt-8">No locations found.</p>
       )}
+
       <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+
       {/* Add/Edit Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-white bg-opacity-40 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-gray-50 bg-opacity-40 flex items-center justify-center z-50 p-4">
           <div className="bg-white w-full max-w-full max-h-[90vh] p-6 md:p-12 overflow-y-auto rounded-2xl relative flex flex-col">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-bold">
@@ -336,6 +412,7 @@ const LocationsOverviewPage: React.FC = () => {
                 <X size={24} />
               </button>
             </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium mb-1">Title</label>
@@ -349,6 +426,7 @@ const LocationsOverviewPage: React.FC = () => {
                   className="w-full border border-gray-200 rounded-lg px-3 py-2 outline-none"
                 />
               </div>
+
               <div>
                 <label className="block text-sm font-medium mb-1">
                   Address
@@ -363,6 +441,7 @@ const LocationsOverviewPage: React.FC = () => {
                   className="w-full border border-gray-200 rounded-lg px-3 py-2 outline-none"
                 />
               </div>
+
               <div className="md:col-span-2">
                 <Description
                   value={formData.description}
@@ -372,6 +451,7 @@ const LocationsOverviewPage: React.FC = () => {
                   placeholder="Description..."
                 />
               </div>
+
               <div>
                 <label className="block text-sm font-medium mb-1">
                   Latitude
@@ -386,6 +466,7 @@ const LocationsOverviewPage: React.FC = () => {
                   className="w-full border border-gray-200 rounded-lg px-3 py-2 outline-none"
                 />
               </div>
+
               <div>
                 <label className="block text-sm font-medium mb-1">
                   Longitude
@@ -400,7 +481,8 @@ const LocationsOverviewPage: React.FC = () => {
                   className="w-full border border-gray-200 rounded-lg px-3 py-2 outline-none"
                 />
               </div>
-              <div className="flex flex-col md:flex-row md:items-stretch gap-4 md:gap-6 md:col-span-2">
+
+              <div className="flex flex-col md:flex-row gap-6 md:col-span-2">
                 <div className="flex-1 flex flex-col">
                   <label className="block text-sm font-medium mb-1">
                     Province
@@ -420,26 +502,34 @@ const LocationsOverviewPage: React.FC = () => {
                     ))}
                   </select>
                 </div>
+
                 <div className="flex-1">
                   <label className="block text-sm font-medium mb-1">
-                    Featured Image
+                    Upload Images
                   </label>
                   <input
                     type="file"
                     accept="image/*"
+                    multiple
                     onChange={handleImageChange}
                     className="w-fit border border-gray-200 rounded-lg px-3 py-2 outline-none"
                   />
-                  {imagePreview && (
-                    <img
-                      src={imagePreview}
-                      alt="Preview"
-                      className="mt-2 w-full h-80 object-cover rounded-lg"
-                    />
+                  {imagePreview.length > 0 && (
+                    <div className="mt-2 flex gap-2 overflow-x-auto">
+                      {imagePreview.map((url, index) => (
+                        <img
+                          key={index}
+                          src={url}
+                          alt={`Preview ${index + 1}`}
+                          className="w-32 h-32 object-cover rounded-lg flex-shrink-0"
+                        />
+                      ))}
+                    </div>
                   )}
                 </div>
               </div>
             </div>
+
             <div className="mt-6 flex justify-end gap-4">
               <button
                 onClick={resetForm}
