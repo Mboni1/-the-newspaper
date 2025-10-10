@@ -44,6 +44,7 @@ const UserStatistics: React.FC = () => {
       "Dec",
     ],
   };
+
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
@@ -54,19 +55,23 @@ const UserStatistics: React.FC = () => {
           params: { range: timeRange },
         });
 
+        // backend igarura data: { data: AnalyticsData[] }
         const data: AnalyticsData[] = res.data?.data ?? [];
 
-        // Instead of using predefined labels, use backend data directly
-        const labels = data.map((d) => d.label);
-        const counts = data.map((d) => d.count);
+        // mapping: labels & counts, fallback 0 if label not found
+        const labels = defaultLabels[timeRange];
+        const counts = labels.map((label) => {
+          const item = data.find((d) => d.label === label);
+          return item ? item.count : 0;
+        });
 
         setChartLabels(labels);
         setChartCounts(counts);
       } catch (err: any) {
         console.error("Failed to fetch analytics:", err);
         setError("Failed to load analytics data. Please try again.");
-        setChartLabels([]);
-        setChartCounts([]);
+        setChartLabels(defaultLabels[timeRange]);
+        setChartCounts(new Array(defaultLabels[timeRange].length).fill(0));
       } finally {
         setLoading(false);
       }

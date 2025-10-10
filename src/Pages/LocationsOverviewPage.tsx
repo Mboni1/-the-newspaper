@@ -1,11 +1,18 @@
-// src/Pages/LocationsOverviewPage.tsx
 import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { Search, Filter, MoreHorizontal, X } from "lucide-react";
+import {
+  Search,
+  Filter,
+  MoreHorizontal,
+  X,
+  ChevronRight,
+  ChevronLeft,
+} from "lucide-react";
 import toast, { Toaster } from "react-hot-toast";
 import Description from "../Components/Description";
 import Pagination from "../Components/Pagination";
 import api from "../lib/axios";
+import MultiImageUpload from "../Components/MultiImageUpload";
 import {
   getLocations,
   searchLocations,
@@ -65,7 +72,7 @@ const LocationsOverviewPage: React.FC = () => {
   });
   const [imagePreview, setImagePreview] = useState<string[]>([]);
 
-  // Carousel indexes for each location
+  // Carousel indexes
   const [carouselIndexes, setCarouselIndexes] = useState<{
     [key: number]: number;
   }>({});
@@ -106,11 +113,8 @@ const LocationsOverviewPage: React.FC = () => {
 
       setLocations(sorted);
 
-      // Initialize carousel indexes
       const indexes: { [key: number]: number } = {};
-      sorted.forEach((loc) => {
-        indexes[loc.id] = 0;
-      });
+      sorted.forEach((loc) => (indexes[loc.id] = 0));
       setCarouselIndexes(indexes);
 
       setTotal(data?.total || sorted.length);
@@ -145,6 +149,8 @@ const LocationsOverviewPage: React.FC = () => {
       description: loc.description || "",
       locationImage: [],
     });
+
+    // ✅ Pass only image URLs to preview
     setImagePreview(loc.LocationImage?.map((img) => img.url) || []);
     setIsModalOpen(true);
   };
@@ -158,15 +164,6 @@ const LocationsOverviewPage: React.FC = () => {
     } catch (err) {
       console.error(err);
       toast.error("Failed to delete location");
-    }
-  };
-
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (files && files.length > 0) {
-      const fileArray = Array.from(files);
-      setFormData({ ...formData, locationImage: fileArray });
-      setImagePreview(fileArray.map((file) => URL.createObjectURL(file)));
     }
   };
 
@@ -209,7 +206,6 @@ const LocationsOverviewPage: React.FC = () => {
       data.append("provinceName", selectedProvince?.name || "");
       data.append("description", formData.description || "");
 
-      // Append images
       formData.locationImage.forEach((file) => data.append("images", file));
 
       if (editingLocation) {
@@ -254,7 +250,6 @@ const LocationsOverviewPage: React.FC = () => {
         ← Back to Dashboard
       </Link>
 
-      {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-3xl font-bold">Locations Overview</h1>
@@ -270,9 +265,9 @@ const LocationsOverviewPage: React.FC = () => {
         </button>
       </div>
 
-      {/* Search + Filter */}
-      <div className="flex flex-col sm:flex-row gap-3 w-full mb-4">
-        <div className="relative w-full sm:w-2/3">
+      {/* Search & Filter */}
+      <div className="flex flex-col sm:flex-row gap-3 mb-4">
+        <div className="relative flex-1">
           <Search className="absolute left-3 top-3 text-gray-400" size={18} />
           <input
             type="text"
@@ -282,7 +277,7 @@ const LocationsOverviewPage: React.FC = () => {
             className="pl-10 pr-4 py-2 w-full rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none"
           />
         </div>
-        <div className="flex items-center relative rounded-xl px-3 py-2 bg-white shadow-sm sm:w-1/3">
+        <div className="relative flex items-center bg-white border border-gray-200 rounded-lg px-3 py-2 sm:w-1/3">
           <Filter className="text-gray-400 w-5 h-5 mr-2" />
           <select
             value={provinceFilter ?? ""}
@@ -313,7 +308,6 @@ const LocationsOverviewPage: React.FC = () => {
               key={loc.id}
               className="bg-white rounded-2xl shadow-sm p-3 hover:shadow-md transition relative"
             >
-              {/* Carousel */}
               {loc.LocationImage?.length > 0 && (
                 <div className="relative w-full h-60 rounded-lg overflow-hidden">
                   <img
@@ -330,7 +324,7 @@ const LocationsOverviewPage: React.FC = () => {
                         }
                         className="absolute top-1/2 left-2 transform -translate-y-1/2 bg-white/70 rounded-full p-1 hover:bg-white"
                       >
-                        &lt;
+                        <ChevronLeft className="w-5 h-5" />
                       </button>
                       <button
                         onClick={() =>
@@ -338,7 +332,7 @@ const LocationsOverviewPage: React.FC = () => {
                         }
                         className="absolute top-1/2 right-2 transform -translate-y-1/2 bg-white/70 rounded-full p-1 hover:bg-white"
                       >
-                        &gt;
+                        <ChevronRight className="w-5 h-5" />
                       </button>
                     </>
                   )}
@@ -371,16 +365,16 @@ const LocationsOverviewPage: React.FC = () => {
                     <MoreHorizontal />
                   </button>
                   {openDropdownId === loc.id && (
-                    <div className="absolute right-6 -mt-10 translate-y-0 w-fit bg-white border border-gray-200 rounded-md shadow z-10">
+                    <div className="absolute right-6 -mt-10 translate-y-0 bg-white border border-gray-200 rounded-md shadow z-10">
                       <button
                         onClick={() => handleEdit(loc)}
-                        className="w-full px-2 py-1 text-left text-gray-900 hover:bg-gray-400 rounded-t-md"
+                        className="w-full px-2 py-1 text-left text-gray-900 hover:bg-gray-100 rounded-t-md"
                       >
                         Edit
                       </button>
                       <button
                         onClick={() => handleDelete(loc.id)}
-                        className="w-full px-2 py-1 text-left text-red-600 hover:bg-gray-400 rounded-b-md"
+                        className="w-full px-2 py-1 text-left text-red-600 hover:bg-gray-100 rounded-b-md"
                       >
                         Delete
                       </button>
@@ -397,7 +391,7 @@ const LocationsOverviewPage: React.FC = () => {
 
       <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
 
-      {/* Add/Edit Modal */}
+      {/* Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-gray-50 bg-opacity-40 flex items-center justify-center z-50 p-4">
           <div className="bg-white w-full max-w-full max-h-[90vh] p-6 md:p-12 overflow-y-auto rounded-2xl relative flex flex-col">
@@ -413,6 +407,7 @@ const LocationsOverviewPage: React.FC = () => {
               </button>
             </div>
 
+            {/* Form */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium mb-1">Title</label>
@@ -483,7 +478,7 @@ const LocationsOverviewPage: React.FC = () => {
               </div>
 
               <div className="flex flex-col md:flex-row gap-6 md:col-span-2">
-                <div className="flex-1 flex flex-col">
+                <div className="flex-1">
                   <label className="block text-sm font-medium mb-1">
                     Province
                   </label>
@@ -507,25 +502,14 @@ const LocationsOverviewPage: React.FC = () => {
                   <label className="block text-sm font-medium mb-1">
                     Upload Images
                   </label>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    multiple
-                    onChange={handleImageChange}
-                    className="w-fit border border-gray-200 rounded-lg px-3 py-2 outline-none"
+
+                  {/* ✅ Use the MultiImageUpload component */}
+                  <MultiImageUpload
+                    existingImages={imagePreview}
+                    onChange={(files) =>
+                      setFormData({ ...formData, locationImage: files })
+                    }
                   />
-                  {imagePreview.length > 0 && (
-                    <div className="mt-2 flex gap-2 overflow-x-auto">
-                      {imagePreview.map((url, index) => (
-                        <img
-                          key={index}
-                          src={url}
-                          alt={`Preview ${index + 1}`}
-                          className="w-32 h-32 object-cover rounded-lg flex-shrink-0"
-                        />
-                      ))}
-                    </div>
-                  )}
                 </div>
               </div>
             </div>
