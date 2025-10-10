@@ -1,7 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import UserAvatar from "../Components/UserAvatar";
-import DropDownIcon from "../Components/DropDownIcon";
 import logo1 from "../Assets/logo1.jpeg";
 
 const Navbar: React.FC = () => {
@@ -22,7 +21,6 @@ const Navbar: React.FC = () => {
       <div className="flex items-center gap-3">
         <div className="flex items-center gap-2 px-4">
           <UserAvatar />
-          <DropDownIcon />
         </div>
       </div>
     </header>

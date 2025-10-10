@@ -4,7 +4,6 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 // Pages
 import LoginPage from "./Pages/LoginPage";
 import ForgotPasswordPage from "./Pages/ForgotPasswordPage";
-import DashboardPage from "./Pages/DashboardPage";
 import UserManagementPage from "./Pages/UserManagementPage";
 import ServiceCategoriesPage from "./Pages/ServiceCategoriesPage";
 import BusinessDirectoryPage from "./Pages/BusinessDirectoryPage";
