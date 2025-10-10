@@ -1,8 +1,8 @@
+// src/Pages/LocationsOverviewPage.tsx
 import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import {
   Search,
-  Filter,
   MoreHorizontal,
   X,
   ChevronRight,
@@ -11,7 +11,6 @@ import {
 import toast, { Toaster } from "react-hot-toast";
 import Description from "../Components/Description";
 import Pagination from "../Components/Pagination";
-import api from "../lib/axios";
 import MultiImageUpload from "../Components/MultiImageUpload";
 import {
   getLocations,
@@ -19,6 +18,7 @@ import {
   deleteLocation,
   updateLocation,
   addLocation,
+  getLocationsByProvince,
 } from "../Services/locationService";
 
 interface Location {
@@ -27,19 +27,17 @@ interface Location {
   latitude: string;
   longitude: string;
   address: string;
-  LocationImage: { id: number; url: string; locationId: number }[];
-  provinceId: number;
+  LocationImage: string[];
   provinceName: string;
   description?: string;
-  visits?: number;
 }
 
 const provinces = [
-  { id: 1, name: "North Province" },
-  { id: 2, name: "South Province" },
-  { id: 3, name: "East Province" },
-  { id: 4, name: "West Province" },
-  { id: 5, name: "Kigali City" },
+  { name: "North Province" },
+  { name: "South Province" },
+  { name: "East Province" },
+  { name: "West Province" },
+  { name: "Kigali City" },
 ];
 
 const limit = 9;
@@ -50,7 +48,6 @@ const LocationsOverviewPage: React.FC = () => {
   const [locations, setLocations] = useState<Location[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
   const [searchInput, setSearchInput] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [provinceFilter, setProvinceFilter] = useState<string | undefined>();
@@ -66,18 +63,16 @@ const LocationsOverviewPage: React.FC = () => {
     latitude: "",
     longitude: "",
     address: "",
-    provinceId: "",
+    provinceName: "",
     description: "",
     locationImage: [] as File[],
   });
   const [imagePreview, setImagePreview] = useState<string[]>([]);
-
-  // Carousel indexes
   const [carouselIndexes, setCarouselIndexes] = useState<{
     [key: number]: number;
   }>({});
 
-  // Debounce search input
+  // --- Debounce Search ---
   useEffect(() => {
     const handler = setTimeout(() => {
       setPage(1);
@@ -86,6 +81,7 @@ const LocationsOverviewPage: React.FC = () => {
     return () => clearTimeout(handler);
   }, [searchInput]);
 
+  // --- Fetch Locations ---
   const fetchLocations = async () => {
     try {
       setLoading(true);
@@ -93,32 +89,33 @@ const LocationsOverviewPage: React.FC = () => {
 
       let data;
       if (provinceFilter) {
-        const encodedProvince = encodeURIComponent(provinceFilter);
-        const res = await api.get(`/location/${encodedProvince}`);
-        data = res.data;
+        data = await getLocationsByProvince(provinceFilter);
       } else if (searchQuery) {
         data = await searchLocations(searchQuery, page, limit);
       } else {
         data = await getLocations(page, limit);
       }
 
-      const locationsWithImages = (data?.data || []).map((loc: Location) => ({
-        ...loc,
-        LocationImage: loc.LocationImage || [],
-      }));
-
-      const sorted = locationsWithImages.sort(
-        (a, b) => (b.visits || 0) - (a.visits || 0)
+      const locationsWithImages: Location[] = (data?.data || []).map(
+        (loc: any) => ({
+          ...loc,
+          LocationImage:
+            loc.LocationImage?.map((img: any) =>
+              img.url?.startsWith("http")
+                ? img.url
+                : `${import.meta.env.VITE_API_URL}${img.url}`
+            ) || [],
+          provinceName: loc.provinceName || "",
+        })
       );
 
-      setLocations(sorted);
+      setLocations(locationsWithImages);
+      setTotal(data?.total || locationsWithImages.length);
 
       const indexes: { [key: number]: number } = {};
-      sorted.forEach((loc) => (indexes[loc.id] = 0));
+      locationsWithImages.forEach((loc) => (indexes[loc.id] = 0));
       setCarouselIndexes(indexes);
-
-      setTotal(data?.total || sorted.length);
-    } catch (err: any) {
+    } catch (err) {
       console.error(err);
       setError("Failed to fetch locations");
       setLocations([]);
@@ -131,27 +128,39 @@ const LocationsOverviewPage: React.FC = () => {
     fetchLocations();
   }, [page, searchQuery, provinceFilter]);
 
-  // Modal handlers
+  // --- Reset Form ---
+  const resetForm = () => {
+    setFormData({
+      title: "",
+      latitude: "",
+      longitude: "",
+      address: "",
+      provinceName: "",
+      description: "",
+      locationImage: [],
+    });
+    setImagePreview([]);
+    setEditingLocation(null);
+    setIsModalOpen(false);
+  };
+
   const handleAdd = () => {
     resetForm();
-    setEditingLocation(null);
     setIsModalOpen(true);
   };
 
   const handleEdit = (loc: Location) => {
     setEditingLocation(loc);
     setFormData({
-      title: loc.title,
-      latitude: loc.latitude,
-      longitude: loc.longitude,
-      address: loc.address,
-      provinceId: loc.provinceId.toString(),
+      title: loc.title || "",
+      latitude: loc.latitude || "",
+      longitude: loc.longitude || "",
+      address: loc.address || "",
+      provinceName: loc.provinceName || "",
       description: loc.description || "",
       locationImage: [],
     });
-
-    // ✅ Pass only image URLs to preview
-    setImagePreview(loc.LocationImage?.map((img) => img.url) || []);
+    setImagePreview(loc.LocationImage || []);
     setIsModalOpen(true);
   };
 
@@ -161,50 +170,31 @@ const LocationsOverviewPage: React.FC = () => {
       await deleteLocation(id);
       toast.success("Location deleted successfully!");
       fetchLocations();
-    } catch (err) {
-      console.error(err);
+    } catch {
       toast.error("Failed to delete location");
     }
   };
 
-  const resetForm = () => {
-    setFormData({
-      title: "",
-      latitude: "",
-      longitude: "",
-      address: "",
-      provinceId: "",
-      description: "",
-      locationImage: [],
-    });
-    setImagePreview([]);
-    setEditingLocation(null);
-    setIsModalOpen(false);
-  };
-
+  // --- Save Location ---
   const handleSave = async () => {
     try {
-      if (!formData.title.trim()) {
-        toast.error("Title is required");
-        return;
-      }
-      if (!formData.provinceId) {
-        toast.error("Province is required");
-        return;
-      }
+      if (!formData.title.trim()) return toast.error("Title is required");
+      if (!formData.address.trim()) return toast.error("Address is required");
+      if (!formData.description.trim())
+        return toast.error("Description is required");
+      if (!formData.latitude.trim()) return toast.error("Latitude is required");
+      if (!formData.longitude.trim())
+        return toast.error("Longitude is required");
+      if (!formData.provinceName.trim())
+        return toast.error("Province is required");
 
       const data = new FormData();
       data.append("title", formData.title);
       data.append("address", formData.address);
-      data.append("latitude", Number(formData.latitude).toString());
-      data.append("longitude", Number(formData.longitude).toString());
-      data.append("provinceId", Number(formData.provinceId).toString());
-
-      const selectedProvince = provinces.find(
-        (p) => p.id.toString() === formData.provinceId
-      );
-      data.append("provinceName", selectedProvince?.name || "");
-      data.append("description", formData.description || "");
+      data.append("description", formData.description);
+      data.append("latitude", formData.latitude);
+      data.append("longitude", formData.longitude);
+      data.append("provinceName", formData.provinceName);
 
       formData.locationImage.forEach((file) => data.append("images", file));
 
@@ -245,18 +235,13 @@ const LocationsOverviewPage: React.FC = () => {
       <Toaster position="top-right" />
       <Link
         to="/dashboard"
-        className="text-blue-500 hover:underline inline-block mb-4"
+        className="text-blue-500 hover:underline mb-4 inline-block"
       >
         ← Back to Dashboard
       </Link>
 
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-3xl font-bold">Locations Overview</h1>
-          <p className="text-gray-600">
-            Manage and organize all listed locations.
-          </p>
-        </div>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold">Locations Overview</h1>
         <button
           onClick={handleAdd}
           className="bg-blue-500 hover:bg-blue-700 text-white px-4 py-2 rounded-xl shadow-md"
@@ -274,55 +259,49 @@ const LocationsOverviewPage: React.FC = () => {
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             placeholder="Search locations..."
-            className="pl-10 pr-4 py-2 w-full rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none"
+            className="pl-10 pr-4 py-2 w-full rounded-lg border border-gray-300 outline-none"
           />
         </div>
-        <div className="relative flex items-center bg-white border border-gray-200 rounded-lg px-3 py-2 sm:w-1/3">
-          <Filter className="text-gray-400 w-5 h-5 mr-2" />
-          <select
-            value={provinceFilter ?? ""}
-            onChange={(e) => {
-              const value = e.target.value || undefined;
-              setProvinceFilter(value);
-              setPage(1);
-            }}
-            className="flex-1 outline-none bg-transparent"
-          >
-            <option value="">All Provinces</option>
-            {provinces.map((p) => (
-              <option key={p.id} value={p.name}>
-                {p.name}
-              </option>
-            ))}
-          </select>
-        </div>
+        <select
+          value={provinceFilter ?? ""}
+          onChange={(e) => setProvinceFilter(e.target.value || undefined)}
+          className="border px-3 py-2 rounded-lg"
+        >
+          <option value="">All Provinces</option>
+          {provinces.map((p) => (
+            <option key={p.name} value={p.name}>
+              {p.name}
+            </option>
+          ))}
+        </select>
       </div>
 
-      {/* Grid */}
+      {/* Locations Grid */}
       {loading ? (
-        <p className="text-center p-8">Loading locations...</p>
-      ) : locations.length > 0 ? (
+        <p className="text-center p-8">Loading...</p>
+      ) : locations.length === 0 ? (
+        <p className="text-center text-gray-500 mt-8">No locations found.</p>
+      ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {locations.map((loc) => (
             <div
               key={loc.id}
               className="bg-white rounded-2xl shadow-sm p-3 hover:shadow-md transition relative"
             >
-              {loc.LocationImage?.length > 0 && (
+              {loc.LocationImage.length > 0 && (
                 <div className="relative w-full h-60 rounded-lg overflow-hidden">
                   <img
-                    src={loc.LocationImage[carouselIndexes[loc.id]].url}
+                    src={loc.LocationImage[carouselIndexes[loc.id]]}
                     alt={loc.title}
                     className="w-full h-full object-cover"
                   />
-
                   {loc.LocationImage.length > 1 && (
                     <>
                       <button
                         onClick={() =>
                           prevImage(loc.id, loc.LocationImage.length)
                         }
-                        className="absolute top-1/2 left-2 transform -translate-y-1/2 bg-white/70 rounded-full p-1 hover:bg-white"
+                        className="absolute top-1/2 left-2 transform -translate-y-1/2 bg-white/70 rounded-full p-1"
                       >
                         <ChevronLeft className="w-5 h-5" />
                       </button>
@@ -330,7 +309,7 @@ const LocationsOverviewPage: React.FC = () => {
                         onClick={() =>
                           nextImage(loc.id, loc.LocationImage.length)
                         }
-                        className="absolute top-1/2 right-2 transform -translate-y-1/2 bg-white/70 rounded-full p-1 hover:bg-white"
+                        className="absolute top-1/2 right-2 transform -translate-y-1/2 bg-white/70 rounded-full p-1"
                       >
                         <ChevronRight className="w-5 h-5" />
                       </button>
@@ -338,7 +317,6 @@ const LocationsOverviewPage: React.FC = () => {
                   )}
                 </div>
               )}
-
               <div className="mt-3 flex justify-between items-start">
                 <div>
                   <h2 className="font-semibold text-base">{loc.title}</h2>
@@ -352,7 +330,6 @@ const LocationsOverviewPage: React.FC = () => {
                     {loc.provinceName}
                   </p>
                 </div>
-
                 <div className="relative">
                   <button
                     onClick={() =>
@@ -365,10 +342,10 @@ const LocationsOverviewPage: React.FC = () => {
                     <MoreHorizontal />
                   </button>
                   {openDropdownId === loc.id && (
-                    <div className="absolute right-6 -mt-10 translate-y-0 bg-white border border-gray-200 rounded-md shadow z-10">
+                    <div className="absolute right-6 -mt-10 bg-white border border-gray-200 rounded-md shadow z-10">
                       <button
                         onClick={() => handleEdit(loc)}
-                        className="w-full px-2 py-1 text-left text-gray-900 hover:bg-gray-100 rounded-t-md"
+                        className="w-full px-2 py-1 text-left hover:bg-gray-100 rounded-t-md"
                       >
                         Edit
                       </button>
@@ -385,8 +362,6 @@ const LocationsOverviewPage: React.FC = () => {
             </div>
           ))}
         </div>
-      ) : (
-        <p className="text-center text-gray-500 mt-8">No locations found.</p>
       )}
 
       <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
@@ -395,129 +370,109 @@ const LocationsOverviewPage: React.FC = () => {
       {isModalOpen && (
         <div className="fixed inset-0 bg-gray-50 bg-opacity-40 flex items-center justify-center z-50 p-4">
           <div className="bg-white w-full max-w-full max-h-[90vh] p-6 md:p-12 overflow-y-auto rounded-2xl relative flex flex-col">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold">
-                {editingLocation ? "Edit Location" : "Add New Location"}
-              </h2>
-              <button
-                onClick={resetForm}
-                className="text-gray-500 hover:text-gray-700"
-              >
-                <X size={24} />
-              </button>
-            </div>
+            <button
+              onClick={resetForm}
+              className="absolute top-3 right-3 text-gray-500 hover:text-gray-700"
+            >
+              <X />
+            </button>
 
-            {/* Form */}
+            <h2 className="text-xl font-bold mb-4">
+              {editingLocation ? "Edit Location" : "Add Location"}
+            </h2>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium mb-1">Title</label>
+                <label className="block mb-1">Title</label>
                 <input
                   type="text"
                   value={formData.title}
                   onChange={(e) =>
                     setFormData({ ...formData, title: e.target.value })
                   }
-                  placeholder="Enter title"
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 outline-none"
+                  className="w-full border border-gray-300 px-3 py-2 rounded-lg"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-1">
-                  Address
-                </label>
+                <label className="block mb-1">Address</label>
                 <input
                   type="text"
                   value={formData.address}
                   onChange={(e) =>
                     setFormData({ ...formData, address: e.target.value })
                   }
-                  placeholder="Enter address"
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 outline-none"
-                />
-              </div>
-
-              <div className="md:col-span-2">
-                <Description
-                  value={formData.description}
-                  onChange={(content) =>
-                    setFormData({ ...formData, description: content })
-                  }
-                  placeholder="Description..."
+                  className="w-full border border-gray-300 px-3 py-2 rounded-lg"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-1">
-                  Latitude
-                </label>
+                <label className="block mb-1">Latitude</label>
                 <input
                   type="text"
                   value={formData.latitude}
                   onChange={(e) =>
                     setFormData({ ...formData, latitude: e.target.value })
                   }
-                  placeholder="Enter latitude"
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 outline-none"
+                  className="w-full border border-gray-300 px-3 py-2 rounded-lg"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-1">
-                  Longitude
-                </label>
+                <label className="block mb-1">Longitude</label>
                 <input
                   type="text"
                   value={formData.longitude}
                   onChange={(e) =>
                     setFormData({ ...formData, longitude: e.target.value })
                   }
-                  placeholder="Enter longitude"
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 outline-none"
+                  className="w-full border border-gray-300 px-3 py-2 rounded-lg"
                 />
               </div>
 
-              <div className="flex flex-col md:flex-row gap-6 md:col-span-2">
-                <div className="flex-1">
-                  <label className="block text-sm font-medium mb-1">
-                    Province
-                  </label>
-                  <select
-                    value={formData.provinceId}
-                    onChange={(e) =>
-                      setFormData({ ...formData, provinceId: e.target.value })
-                    }
-                    className="w-full border border-gray-200 rounded-lg px-3 py-2 outline-none"
-                  >
-                    <option value="">Select province</option>
-                    {provinces.map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {p.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+              <div className="md:col-span-2">
+                <label className="block mb-1">Description</label>
+                <Description
+                  value={formData.description || ""}
+                  onChange={(content) =>
+                    setFormData({ ...formData, description: content })
+                  }
+                />
+              </div>
 
-                <div className="flex-1">
-                  <label className="block text-sm font-medium mb-1">
-                    Upload Images
-                  </label>
+              <div>
+                <label className="block mb-1">Province</label>
+                <select
+                  value={formData.provinceName}
+                  onChange={(e) =>
+                    setFormData({ ...formData, provinceName: e.target.value })
+                  }
+                  className="w-full border border-gray-300 px-3 py-2 rounded-lg"
+                >
+                  <option value="">Select Province</option>
+                  {provinces.map((p) => (
+                    <option key={p.name} value={p.name}>
+                      {p.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
-                  {/* ✅ Use the MultiImageUpload component */}
-                  <MultiImageUpload
-                    existingImages={imagePreview}
-                    onChange={(files) =>
-                      setFormData({ ...formData, locationImage: files })
-                    }
-                  />
-                </div>
+              <div>
+                <label className="block mb-1">Upload Images</label>
+                <MultiImageUpload
+                  existingImages={imagePreview}
+                  onChange={(files) =>
+                    setFormData({ ...formData, locationImage: files })
+                  }
+                />
               </div>
             </div>
 
-            <div className="mt-6 flex justify-end gap-4">
+            <div className="flex justify-end gap-4 mt-6">
               <button
                 onClick={resetForm}
-                className="px-6 py-2 border border-gray-200 rounded-lg"
+                className="px-6 py-2 border border-gray-300 rounded-lg"
               >
                 Cancel
               </button>

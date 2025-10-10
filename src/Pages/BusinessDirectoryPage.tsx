@@ -16,7 +16,6 @@ import Pagination from "../Components/Pagination";
 import CategoryMenu from "../Components/CategoryMenu";
 import MultiImageUpload from "../Components/MultiImageUpload";
 
-// Interfaces
 interface Business {
   id: number;
   title: string;
@@ -101,16 +100,24 @@ const BusinessDirectoryPage: React.FC = () => {
         subCategory: item.subCategory,
         categoryName: item.categoryName,
         location: item.location,
-        placeImage: item.PlaceImage?.map((img: any) => img.url) || [],
+
+        placeImage:
+          item.PlaceImage?.map((img: any) =>
+            img.url.startsWith("http")
+              ? img.url
+              : `$${(import.meta as any).env.VITE_API_URL}${img.url}
+`
+          ) || [],
         latitude: item.latitude,
         longitude: item.longitude,
         icon: Building,
       }));
 
+      console.log(" Loaded businesses:", mappedData);
       setBusinesses(mappedData);
       setTotalPages(Math.ceil(res.data.total / limit) || 1);
     } catch (err) {
-      console.error(err);
+      console.error("Error fetching businesses:", err);
       toast.error("Failed to fetch businesses. Please try again.");
       setError("Failed to fetch businesses.");
       setBusinesses([]);
@@ -122,9 +129,7 @@ const BusinessDirectoryPage: React.FC = () => {
   // Debounced search/filter
   useEffect(() => {
     if (searchTimeout.current) clearTimeout(searchTimeout.current);
-    searchTimeout.current = setTimeout(() => {
-      fetchBusinesses();
-    }, 400);
+    searchTimeout.current = setTimeout(fetchBusinesses, 400);
     return () => {
       if (searchTimeout.current) clearTimeout(searchTimeout.current);
     };
@@ -192,6 +197,7 @@ const BusinessDirectoryPage: React.FC = () => {
         if (key === "placeImage") return;
         data.append(key, value as any);
       });
+      // ✅ Make sure backend expects "images" or adjust if "placeImage"
       formData.placeImage.forEach((file) => data.append("images", file));
 
       if (editingBusiness) {
@@ -209,22 +215,27 @@ const BusinessDirectoryPage: React.FC = () => {
       setIsModalOpen(false);
       fetchBusinesses();
     } catch (err: any) {
-      console.error(" ERROR DETAILS:", err.response?.data || err.message);
+      console.error("❌ Save error:", err.response?.data || err.message);
       toast.error(err.response?.data?.message || "Failed to save business.");
     }
   };
 
-  // Carousel component
+  // ✅ Carousel with fallback + CORS fix
   const Carousel: React.FC<{ images: string[] }> = ({ images }) => {
     const [current, setCurrent] = useState(0);
-    if (images.length === 0) return null;
+    const displayImage =
+      images && images.length > 0
+        ? images[current]
+        : "https://via.placeholder.com/400x300?text=No+Image";
 
     return (
-      <div className="relative w-full h-48 rounded-lg overflow-hidden">
+      <div className="relative w-full h-48 rounded-lg overflow-hidden bg-gray-200">
         <img
-          src={images[current]}
+          src={displayImage}
           alt={`slide-${current}`}
           className="w-full h-full object-cover"
+          referrerPolicy="no-referrer"
+          loading="lazy"
         />
         {images.length > 1 && (
           <>
@@ -232,13 +243,13 @@ const BusinessDirectoryPage: React.FC = () => {
               onClick={() =>
                 setCurrent((prev) => (prev - 1 + images.length) % images.length)
               }
-              className="absolute top-1/2 left-2 transform -translate-y-1/2 bg-white p-1 rounded-full shadow hover:bg-gray-200"
+              className="absolute top-1/2 left-2 transform -translate-y-1/2 bg-white/80 p-1 rounded-full shadow hover:bg-gray-100"
             >
               <ChevronLeft className="w-5 h-5" />
             </button>
             <button
               onClick={() => setCurrent((prev) => (prev + 1) % images.length)}
-              className="absolute top-1/2 right-2 transform -translate-y-1/2 bg-white p-1 rounded-full shadow hover:bg-gray-200"
+              className="absolute top-1/2 right-2 transform -translate-y-1/2 bg-white/80 p-1 rounded-full shadow hover:bg-gray-100"
             >
               <ChevronRight className="w-5 h-5" />
             </button>
@@ -357,7 +368,6 @@ const BusinessDirectoryPage: React.FC = () => {
         })}
       </div>
 
-      {/* Pagination */}
       <Pagination
         page={page}
         totalPages={totalPages}

@@ -165,7 +165,6 @@ const ArticlesPage: React.FC = () => {
       setImagePreview(URL.createObjectURL(file));
     }
   };
-
   const handleSave = async () => {
     if (!formData.title.trim()) {
       toast.error("Title is required");
@@ -183,21 +182,24 @@ const ArticlesPage: React.FC = () => {
 
       let res;
       if (editingArticle) {
+        // Edit
         res = await api.patch(`/doc-item/${editingArticle.id}`, data, {
           headers: { "Content-Type": "multipart/form-data" },
         });
-        toast.success("Article updated successfully");
+        toast.success("Article updated successfully!");
         setArticles((prev) =>
           prev.map((a) => (a.id === editingArticle.id ? res.data.data : a))
         );
       } else {
+        // Add
         res = await api.post("/doc-item", data, {
           headers: { "Content-Type": "multipart/form-data" },
         });
-        toast.success("Article added successfully");
+        toast.success("Article added successfully!");
         setArticles((prev) => [res.data.data, ...prev]);
       }
 
+      // Reset form & modal
       setIsModalOpen(false);
       setEditingArticle(null);
       setFormData({
@@ -210,9 +212,14 @@ const ArticlesPage: React.FC = () => {
       });
       setImageFile(null);
       setImagePreview("");
+      setPage(1);
     } catch (err: any) {
-      console.error(err);
-      toast.error("Failed to save article");
+      console.error("Save article error:", err.response?.data || err);
+      toast.error(
+        err.response?.data?.message ||
+          err.response?.data?.error ||
+          "Failed to save article"
+      );
     }
   };
 

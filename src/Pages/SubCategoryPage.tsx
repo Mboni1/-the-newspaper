@@ -19,7 +19,7 @@ interface Business {
   subCategoryName: string;
   latitude: string;
   longitude: string;
-  placeImg: string;
+  placeImage: string;
 }
 
 const limit = 1;
@@ -44,7 +44,7 @@ const SubCategoryPage: React.FC = () => {
     subCategoryName: name || "",
     latitude: "",
     longitude: "",
-    placeImg: "",
+    placeImage: "" as string | File,
   });
 
   const [imagePreview, setImagePreview] = useState<string>("");
@@ -58,8 +58,6 @@ const SubCategoryPage: React.FC = () => {
 
     const fetchBusinesses = async () => {
       try {
-        // Ntitwongere gukoresha setLoading(true) buri gihe
-        // ahubwo tuyikoreshe rimwe gusa ku initial load
         if (!search.trim()) setLoading(true);
 
         debounceTimer = setTimeout(async () => {
@@ -108,7 +106,7 @@ const SubCategoryPage: React.FC = () => {
       subCategoryName: name || "",
       latitude: "",
       longitude: "",
-      placeImg: "",
+      placeImage: "",
     });
     setImagePreview("");
     setIsModalOpen(true);
@@ -127,9 +125,9 @@ const SubCategoryPage: React.FC = () => {
       subCategoryName: biz.subCategoryName || name || "",
       latitude: biz.latitude || "",
       longitude: biz.longitude || "",
-      placeImg: biz.placeImg || "",
+      placeImage: biz.placeImage || "",
     });
-    setImagePreview(biz.placeImg || "");
+    setImagePreview(biz.placeImage || "");
     setIsModalOpen(true);
   };
 
@@ -149,7 +147,7 @@ const SubCategoryPage: React.FC = () => {
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      setFormData({ ...formData, placeImg: file as any });
+      setFormData({ ...formData, placeImage: file });
       setImagePreview(URL.createObjectURL(file));
     }
   };
@@ -157,23 +155,34 @@ const SubCategoryPage: React.FC = () => {
   // Save business (add or edit)
   const handleSave = async () => {
     try {
-      if (!formData.title.trim()) {
-        toast.error("Title is required");
-        return;
-      }
+      // Validation
+      if (!formData.title.trim()) return toast.error("Title is required");
+      if (!formData.subCategoryName.trim())
+        return toast.error("SubCategory is required");
+      if (!formData.description.trim())
+        return toast.error("Description is required");
 
       const submitData = new FormData();
-      Object.entries(formData).forEach(([key, value]) => {
-        submitData.append(key, value as any);
-      });
+
+      submitData.append("title", formData.title);
+      submitData.append("subCategoryName", formData.subCategoryName);
+      submitData.append("description", formData.description);
+      submitData.append("workingHours", formData.workingHours || "");
+      submitData.append("location", formData.location || "");
+      submitData.append("businessEmail", formData.businessEmail || "");
+      submitData.append("phoneNumber", formData.phoneNumber || "");
+      submitData.append("latitude", formData.latitude || "");
+      submitData.append("longitude", formData.longitude || "");
+
+      if (formData.placeImage instanceof File) {
+        submitData.append("images", formData.placeImage);
+      }
 
       if (editingBusiness) {
         const res = await api.patch(
           `/place-item/${editingBusiness.id}`,
           submitData,
-          {
-            headers: { "Content-Type": "multipart/form-data" },
-          }
+          { headers: { "Content-Type": "multipart/form-data" } }
         );
         setBusinesses(
           businesses.map((b) =>
@@ -189,11 +198,25 @@ const SubCategoryPage: React.FC = () => {
         toast.success("Business added successfully");
       }
 
+      // Reset modal & form
       setIsModalOpen(false);
       setEditingBusiness(null);
-    } catch (err) {
-      console.error(err);
-      toast.error("Failed to save business");
+      setFormData({
+        title: "",
+        description: "",
+        workingHours: "",
+        location: "",
+        businessEmail: "",
+        phoneNumber: "",
+        subCategoryName: name || "",
+        latitude: "",
+        longitude: "",
+        placeImage: "",
+      });
+      setImagePreview("");
+    } catch (err: any) {
+      console.error("Save business error:", err.response || err);
+      toast.error(err.response?.data?.message || "Failed to save business");
     }
   };
 
@@ -259,9 +282,9 @@ const SubCategoryPage: React.FC = () => {
                   </button>
                 </div>
               </div>
-              {biz.placeImg && (
+              {biz.placeImage && (
                 <img
-                  src={biz.placeImg}
+                  src={biz.placeImage}
                   alt={biz.title}
                   className="w-24 h-20 object-cover rounded-xl"
                 />
@@ -319,7 +342,7 @@ const SubCategoryPage: React.FC = () => {
               </div>
 
               <Description
-                value={formData.description} // controlled
+                value={formData.description}
                 onChange={(content) =>
                   setFormData({ ...formData, description: content })
                 }
