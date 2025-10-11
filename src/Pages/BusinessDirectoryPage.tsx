@@ -73,20 +73,24 @@ const BusinessDirectoryPage: React.FC = () => {
       setError("");
       let res;
 
+      const params: any = { page, limit, isDoc: false };
+
       if (selectedSubCategory) {
         res = await api.get(
-          `/place-item/subcategory/${encodeURIComponent(selectedSubCategory)}`
+          `/place-item/subcategory/${encodeURIComponent(selectedSubCategory)}`,
+          { params }
         );
       } else if (selectedCategory && !searchTerm) {
-        res = await api.get("/place-item/all", {
-          params: { category: selectedCategory, page, limit },
-        });
+        // selected category without search term
+        params.category = selectedCategory;
+        res = await api.get("/place-item/all", { params });
       } else if (searchTerm) {
-        const params: any = { query: searchTerm, page, limit };
+        params.query = searchTerm;
         if (selectedCategory) params.category = selectedCategory;
         res = await api.get("/place-item/search/all", { params });
       } else {
-        res = await api.get("/place-item/all", { params: { page, limit } });
+        // default case: all items (non-document)
+        res = await api.get("/place-item/all", { params });
       }
 
       const mappedData: Business[] = (res.data.data || []).map((item: any) => ({
@@ -105,8 +109,7 @@ const BusinessDirectoryPage: React.FC = () => {
           item.PlaceImage?.map((img: any) =>
             img.url.startsWith("http")
               ? img.url
-              : `$${(import.meta as any).env.VITE_API_URL}${img.url}
-`
+              : `$${(import.meta as any).env.VITE_API_URL}${img.url}`
           ) || [],
         latitude: item.latitude,
         longitude: item.longitude,
@@ -197,7 +200,7 @@ const BusinessDirectoryPage: React.FC = () => {
         if (key === "placeImage") return;
         data.append(key, value as any);
       });
-      // ✅ Make sure backend expects "images" or adjust if "placeImage"
+      // Make sure backend expects "images" or adjust if "placeImage"
       formData.placeImage.forEach((file) => data.append("images", file));
 
       if (editingBusiness) {
@@ -215,12 +218,12 @@ const BusinessDirectoryPage: React.FC = () => {
       setIsModalOpen(false);
       fetchBusinesses();
     } catch (err: any) {
-      console.error("❌ Save error:", err.response?.data || err.message);
+      console.error("Save error:", err.response?.data || err.message);
       toast.error(err.response?.data?.message || "Failed to save business.");
     }
   };
 
-  // ✅ Carousel with fallback + CORS fix
+  // Carousel with fallback + CORS fix
   const Carousel: React.FC<{ images: string[] }> = ({ images }) => {
     const [current, setCurrent] = useState(0);
     const displayImage =

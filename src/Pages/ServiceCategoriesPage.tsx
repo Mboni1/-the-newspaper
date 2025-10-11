@@ -96,27 +96,40 @@ const ServiceCategories: React.FC = () => {
       toast.error("Name is required");
       return;
     }
+
     try {
       if (editingCategory) {
+        console.log("Editing category:", editingCategory);
         const res = await api.patch(`/category/${editingCategory.id}`, {
           name: formData.name,
           isDoc: formData.isDoc,
         });
-        const updated = res.data;
-        setCategories(
-          categories.map((c) => (c.id === updated.id ? updated : c))
-        );
+        console.log("PATCH response:", res.data);
+
+        const updated = res.data; // backend returns plain object (id, name, isDoc)
+
+        setCategories((prev) => {
+          const newList = prev.map((c) =>
+            c.id === editingCategory.id ? { ...c, ...updated } : c
+          );
+          console.log("Updated categories:", newList);
+          return newList;
+        });
+
         toast.success("Category updated successfully");
       } else {
         const res = await api.post("/category", formData);
-        setCategories([res.data, ...categories]);
+        const created = res.data;
+        setCategories((prev) => [created, ...prev]);
         toast.success("Category added successfully");
       }
+
+      // Reset form & modal
       setIsModalOpen(false);
       setEditingCategory(null);
       setFormData({ name: "", isDoc: false });
     } catch (err: any) {
-      console.error(err);
+      console.error("Save error:", err);
       toast.error(err.response?.data?.message || "Failed to save category");
     }
   };
