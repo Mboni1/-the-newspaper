@@ -21,6 +21,7 @@ import NavbarPage from "./Pages/NavbarPage";
 // Components (for Dashboard layout)
 import Dashboard from "./Components/Dashboard";
 import Analytics from "./Components/Analytics";
+import AddNotification from "./Components/AddNotifications";
 
 const App: React.FC = () => {
   return (
@@ -138,6 +139,15 @@ const App: React.FC = () => {
             <div className="min-h-screen bg-gray-100">
               <NavbarPage />
               <AddBusiness />
+            </div>
+          }
+        />
+        <Route
+          path="/add-notification"
+          element={
+            <div className="min-h-screen bg-gray-100">
+              <NavbarPage />
+              <AddNotification />
             </div>
           }
         />

@@ -25,7 +25,7 @@ interface Category {
   isDoc: boolean;
 }
 
-const limit = 2;
+const limit = 4;
 
 const ArticlesPage: React.FC = () => {
   const navigate = useNavigate();

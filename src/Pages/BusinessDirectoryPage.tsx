@@ -33,7 +33,7 @@ interface Business {
   icon?: React.ElementType;
 }
 
-const limit = 3;
+const limit = 6;
 
 const BusinessDirectoryPage: React.FC = () => {
   const [businesses, setBusinesses] = useState<Business[]>([]);
@@ -66,7 +66,6 @@ const BusinessDirectoryPage: React.FC = () => {
 
   const searchTimeout = useRef<NodeJS.Timeout | null>(null);
 
-  // Fetch businesses
   const fetchBusinesses = async () => {
     try {
       setLoading(true);

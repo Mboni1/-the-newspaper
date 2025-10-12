@@ -32,7 +32,7 @@ const CategoryMenu: React.FC<CategoryMenuProps> = ({
 
   const fetchCategories = async () => {
     try {
-      const res = await api.get("/category");
+      const res = await api.get("/category?limit=1000");
       const data = res.data.data || res.data;
       const filtered = data.filter((cat: any) => !cat.isDoc);
       setCategories(filtered);

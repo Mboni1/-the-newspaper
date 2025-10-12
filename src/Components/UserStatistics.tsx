@@ -18,15 +18,21 @@ interface AnalyticsData {
 }
 
 const UserStatistics: React.FC = () => {
-  const [timeRange, setTimeRange] = useState<"D" | "W" | "M" | "Y">("W");
+  const [timeRange, setTimeRange] = useState<"W" | "M" | "Y">("W");
   const [chartLabels, setChartLabels] = useState<string[]>([]);
   const [chartCounts, setChartCounts] = useState<number[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
+  // ✅ Map frontend timeRange → backend period param
+  const periodMap: Record<"W" | "M" | "Y", string> = {
+    W: "weekly",
+    M: "monthly",
+    Y: "yearly",
+  };
+
   // Default labels per range
-  const defaultLabels: Record<"D" | "W" | "M" | "Y", string[]> = {
-    D: ["0:00", "04:00", "08:00", "12:00", "16:00", "20:00"],
+  const defaultLabels: Record<"W" | "M" | "Y", string[]> = {
     W: ["Sun", "Mon", "Tues", "Wed", "Thur", "Fri", "Sat"],
     M: ["Week 1", "Week 2", "Week 3", "Week 4"],
     Y: [
@@ -51,14 +57,14 @@ const UserStatistics: React.FC = () => {
       setError(null);
 
       try {
+        // ✅ Send period param based on selected range
         const res = await api.get("/analytics/user", {
-          params: { range: timeRange },
+          params: { period: periodMap[timeRange] },
         });
 
         // backend igarura data: { data: AnalyticsData[] }
         const data: AnalyticsData[] = res.data?.data ?? [];
 
-        // mapping: labels & counts, fallback 0 if label not found
         const labels = defaultLabels[timeRange];
         const counts = labels.map((label) => {
           const item = data.find((d) => d.label === label);
@@ -102,12 +108,12 @@ const UserStatistics: React.FC = () => {
           <p className="text-gray-500 text-sm">User activities overview</p>
         </div>
 
-        {/* Timerange buttons */}
+        {/* Time range buttons */}
         <div className="space-x-1">
-          {["D", "W", "M", "Y"].map((range) => (
+          {["W", "M", "Y"].map((range) => (
             <button
               key={range}
-              onClick={() => setTimeRange(range as "D" | "W" | "M" | "Y")}
+              onClick={() => setTimeRange(range as "W" | "M" | "Y")}
               className={`px-2 py-0.5 rounded-full text-xs font-medium ${
                 timeRange === range
                   ? "bg-blue-500 text-white"
