@@ -11,9 +11,6 @@ import DocumentsPage from "./Pages/DocumentsPage";
 import ReviewsPage from "./Pages/ReviewsPage";
 import NotificationsPage from "./Pages/NotificationsPage";
 import LocationsOverviewPage from "./Pages/LocationsOverviewPage";
-import AddArticle from "./Components/AddArticle";
-import AddBusiness from "./Components/AddBusiness";
-import AddCategory from "./Components/AddCategory";
 import CategoryPage from "./Pages/CategoryPage";
 import SubCategoryPage from "./Pages/SubCategoryPage";
 import NavbarPage from "./Pages/NavbarPage";
@@ -21,7 +18,10 @@ import NavbarPage from "./Pages/NavbarPage";
 // Components (for Dashboard layout)
 import Dashboard from "./Components/Dashboard";
 import Analytics from "./Components/Analytics";
-import AddNotification from "./Components/AddNotifications";
+import AddArticle from "./Components/AddArticle";
+import AddBusiness from "./Components/AddBusiness";
+import AddCategory from "./Components/AddCategory";
+import AddNotifications from "./Components/AddNotifications";
 
 const App: React.FC = () => {
   return (
@@ -112,7 +112,18 @@ const App: React.FC = () => {
             </div>
           }
         />
-
+        <Route
+          path="/add-notifications"
+          element={
+            <div className="min-h-screen bg-gray-100">
+              <NavbarPage />
+              <AddNotifications
+                onClose={() => console.log("Closed")}
+                onSave={(data) => console.log("Saved:", data)}
+              />
+            </div>
+          }
+        />
         <Route
           path="/locations-overview"
           element={
@@ -139,15 +150,6 @@ const App: React.FC = () => {
             <div className="min-h-screen bg-gray-100">
               <NavbarPage />
               <AddBusiness />
-            </div>
-          }
-        />
-        <Route
-          path="/add-notification"
-          element={
-            <div className="min-h-screen bg-gray-100">
-              <NavbarPage />
-              <AddNotification />
             </div>
           }
         />
