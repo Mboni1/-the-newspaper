@@ -61,7 +61,7 @@ const App: React.FC = () => {
           }
         />
         <Route
-          path="/business-directory"
+          path="/business"
           element={
             <div className="min-h-screen bg-gray-100">
               <NavbarPage />
