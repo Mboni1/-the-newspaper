@@ -7,7 +7,6 @@ import Pagination from "../Components/Pagination";
 
 interface User {
   id: number;
-  names: string;
   firstName: string;
   lastName: string;
   email: string;
@@ -95,11 +94,8 @@ const UserManagement: React.FC = () => {
 
   const handleDelete = async (id: number, email: string) => {
     try {
-      // call backend API with email
       await api.delete(`/user/${encodeURIComponent(email)}`);
-      // update frontend state (remove by email or id)
       setUsers((prev) => prev.filter((u) => u.email !== email));
-
       setOpenMenu(null);
       toast.success("User deleted successfully");
     } catch (error) {
@@ -110,13 +106,15 @@ const UserManagement: React.FC = () => {
 
   const handleSave = async (
     id: number,
-    names: string,
+    firstName: string,
+    lastName: string,
     email: string,
     role: string
   ) => {
     try {
-      const res = await api.patch(`/user/names/${id}`, {
-        names,
+      const res = await api.patch(`/user/admin/${id}`, {
+        firstName,
+        lastName,
         email,
         role,
       });
@@ -194,9 +192,7 @@ const UserManagement: React.FC = () => {
                 </thead>
                 <tbody>
                   {users.map((u) => {
-                    const fullName = `${u.firstName ?? ""} ${
-                      u.lastName ?? ""
-                    }`.trim();
+                    const fullName = `${u.firstName} ${u.lastName}`.trim();
 
                     return (
                       <tr key={u.id} className="border-t border-gray-300">
@@ -273,7 +269,7 @@ const UserManagement: React.FC = () => {
                           </button>
 
                           {openMenu === u.id && (
-                            <div className="absolute right-8 top-full -mt-17 w-fit bg-white border  border-gray-300 rounded-md shadow-lg z-10">
+                            <div className="absolute right-8 top-full -mt-17 w-fit bg-white border border-gray-300 rounded-md shadow-lg z-10">
                               <button
                                 onClick={() => setEditingUser(u)}
                                 className="block w-full text-left px-3 py-1.5 text-sm hover:bg-gray-400"
@@ -322,17 +318,24 @@ const UserManagement: React.FC = () => {
 interface EditFormProps {
   user: User;
   onClose: () => void;
-  onSave: (id: number, names: string, email: string, role: string) => void;
+  onSave: (
+    id: number,
+    firstName: string,
+    lastName: string,
+    email: string,
+    role: string
+  ) => void;
 }
 
 const EditUserForm: React.FC<EditFormProps> = ({ user, onClose, onSave }) => {
-  const [names, setNames] = useState(user.names);
+  const [firstName, setFirstName] = useState(user.firstName ?? "");
+  const [lastName, setLastName] = useState(user.lastName ?? "");
   const [email, setEmail] = useState(user.email);
   const [role, setRole] = useState(user.role);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSave(user.id, names, email, role);
+    onSave(user.id, firstName, lastName, email, role);
   };
 
   return (
@@ -341,12 +344,22 @@ const EditUserForm: React.FC<EditFormProps> = ({ user, onClose, onSave }) => {
         <h2 className="text-lg font-semibold mb-4">Edit User</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium">Names</label>
+            <label className="block text-sm font-medium">First Name</label>
             <input
               type="text"
-              value={names}
-              onChange={(e) => setNames(e.target.value)}
-              className="w-full p-2 border   border-gray-300 rounded-lg"
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
+              className="w-full p-2 border border-gray-300 rounded-lg"
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium">Last Name</label>
+            <input
+              type="text"
+              value={lastName}
+              onChange={(e) => setLastName(e.target.value)}
+              className="w-full p-2 border border-gray-300 rounded-lg"
               required
             />
           </div>
@@ -356,16 +369,16 @@ const EditUserForm: React.FC<EditFormProps> = ({ user, onClose, onSave }) => {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full p-2 border  border-gray-300 rounded-lg"
+              className="w-full p-2 border border-gray-300 rounded-lg"
               required
             />
           </div>
           <div>
-            <label className="block text-sm   font-medium">Role</label>
+            <label className="block text-sm font-medium">Role</label>
             <select
               value={role}
               onChange={(e) => setRole(e.target.value as User["role"])}
-              className="w-full p-2 border  border-gray-300 rounded-lg"
+              className="w-full p-2 border border-gray-300 rounded-lg"
             >
               <option value="admin">Admin</option>
               <option value="user">User</option>

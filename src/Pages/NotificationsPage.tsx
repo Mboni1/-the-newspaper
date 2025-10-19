@@ -1,9 +1,11 @@
+// src/Pages/NotificationsPage.tsx
 import React, { useEffect, useState } from "react";
 import { Bell, Plus, Pencil, Trash, X, Search, Loader2 } from "lucide-react";
-import AddNotifications from "../Components/AddNotifications";
-import api from "../lib/axios";
-import toast, { Toaster } from "react-hot-toast";
 import { Link } from "react-router-dom";
+import toast, { Toaster } from "react-hot-toast";
+import api from "../lib/axios";
+import Pagination from "../Components/Pagination";
+import AddNotifications from "../Components/AddNotifications";
 
 export interface Notification {
   id: number;
@@ -16,59 +18,84 @@ export interface Notification {
 const NotificationsPage: React.FC = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(false);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalNotifications, setTotalNotifications] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("");
+  const [typeFilter, setTypeFilter] = useState("");
   const [showModal, setShowModal] = useState(false);
-  const [editNotification, setEditNotification] = useState<
-    Notification | undefined
-  >(undefined);
+  const [editNotification, setEditNotification] = useState<Notification>();
 
-  // Fetch notifications
-  const fetchNotifications = async (query = "") => {
-    try {
-      setLoading(true);
-      const res = await api.get("/notifications", {
-        params: query ? { search: query } : {},
-      });
-      setNotifications(res.data || []);
-    } catch (error) {
-      console.error(error);
-      toast.error("Failed to fetch notifications");
-    } finally {
-      setLoading(false);
-    }
-  };
+  const limit = 10;
 
+  // Debounce search input
   useEffect(() => {
-    fetchNotifications();
-  }, []);
-
-  useEffect(() => {
-    const delay = setTimeout(() => {
-      fetchNotifications(searchTerm);
+    const handler = setTimeout(() => {
+      setPage(1);
+      setSearchQuery(searchTerm.trim());
     }, 500);
-    return () => clearTimeout(delay);
+    return () => clearTimeout(handler);
   }, [searchTerm]);
 
-  // Add or update notification
+  // Fetch notifications whenever page, filters, or searchQuery change
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      try {
+        setLoading(true);
+        const params: any = { page, limit };
+        if (searchQuery) params.query = searchQuery;
+        if (categoryFilter) params.category = categoryFilter;
+        if (typeFilter) params.type = typeFilter;
+
+        const res =
+          searchQuery || categoryFilter || typeFilter
+            ? await api.get("/notification/search", { params })
+            : await api.get("/notification/admin/all", { params });
+
+        const { data, total } = res.data;
+        if (!Array.isArray(data)) throw new Error("Invalid API response");
+
+        setNotifications(data);
+        const totalCount = total ?? 0; // default 0 if undefined
+        setTotalNotifications(totalCount);
+        setTotalPages(Math.ceil(totalCount / limit)); // pagination ikora neza
+      } catch (error: any) {
+        console.error(error.response || error);
+        toast.error("Failed to fetch notifications");
+        setNotifications([]);
+        setTotalNotifications(0);
+        setTotalPages(1);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchNotifications();
+  }, [page, searchQuery, categoryFilter, typeFilter]);
+
+  // Save notification
   const handleSave = async (data: Notification) => {
     try {
       if (editNotification) {
-        const res = await api.put(
-          `/notifications/${editNotification.id}`,
-          data,
-          {
-            headers: { "Content-Type": "application/json" },
-          }
+        const res = await api.patch(
+          `/notification/${editNotification.id}`,
+          data
         );
         setNotifications((prev) =>
           prev.map((n) => (n.id === editNotification.id ? res.data : n))
         );
         toast.success("Notification updated successfully");
       } else {
-        const res = await api.post("/notification/add", data, {
-          headers: { "Content-Type": "application/json" },
+        const res = await api.post("/notification/add", data);
+        setNotifications((prev) => [res.data, ...prev]);
+        // Update totalNotifications and totalPages correctly
+        setTotalNotifications((prev) => {
+          const newTotal = prev + 1;
+          setTotalPages(Math.ceil(newTotal / limit));
+          return newTotal;
         });
-        setNotifications((prev) => [...prev, res.data]);
         toast.success("Notification added successfully");
       }
       setShowModal(false);
@@ -84,8 +111,13 @@ const NotificationsPage: React.FC = () => {
   // Delete notification
   const handleDelete = async (id: number) => {
     try {
-      await api.delete(`/notifications/${id}`);
+      await api.delete(`/notification/admin/${id}`);
       setNotifications((prev) => prev.filter((n) => n.id !== id));
+      setTotalNotifications((prev) => {
+        const newTotal = prev - 1;
+        setTotalPages(Math.ceil(newTotal / limit));
+        return newTotal;
+      });
       toast.success("Notification deleted");
     } catch (error) {
       console.error(error);
@@ -101,6 +133,7 @@ const NotificationsPage: React.FC = () => {
   return (
     <div className="p-6 pt-20 bg-gray-50 min-h-screen">
       <Toaster position="top-right" />
+
       <Link
         to="/dashboard"
         className="text-blue-500 hover:underline inline-block mb-4"
@@ -108,8 +141,7 @@ const NotificationsPage: React.FC = () => {
         ← Back to Dashboard
       </Link>
 
-      {/* Header */}
-      <div className="flex justify-between items-center mb-4">
+      <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold flex items-center gap-2">
           <Bell className="text-blue-600" /> Notifications
         </h2>
@@ -124,19 +156,59 @@ const NotificationsPage: React.FC = () => {
         </button>
       </div>
 
-      {/* Search */}
-      <div className="mb-4 relative">
-        <Search className="absolute left-3 top-3 text-gray-400" size={18} />
-        <input
-          type="text"
-          placeholder="Search notifications..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="pl-10 pr-4 py-2 border rounded-xl w-full focus:ring-2 focus:ring-blue-500 focus:outline-none"
-        />
+      {/* Filters */}
+      <div className="mb-6 flex flex-wrap gap-3 items-center">
+        {/* Search input */}
+        <div className="relative w-full md:flex-1">
+          <Search className="absolute left-3 top-3 text-gray-400" size={18} />
+          <input
+            type="text"
+            placeholder="Search notifications..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10 pr-4 py-2 border  border-gray-300 rounded-xl w-full focus:ring-2 focus:ring-blue-500 focus:outline-none"
+          />
+        </div>
+
+        {/* Category filter */}
+        <div className="w-full md:w-1/4">
+          <select
+            value={categoryFilter}
+            onChange={(e) => {
+              setCategoryFilter(e.target.value);
+              setPage(1);
+            }}
+            className="border  border-gray-300 rounded-xl px-3 py-2 w-full focus:ring-2 focus:ring-blue-500 focus:outline-none"
+          >
+            <option value="">All Categories</option>
+            <option value="Marketing">Marketing</option>
+            <option value="Sales">Sales</option>
+            <option value="Updates">Updates</option>
+            <option value="System">System</option>
+            <option value="test">test</option>
+          </select>
+        </div>
+
+        {/* Type filter */}
+        <div className="w-full md:w-1/4">
+          <select
+            value={typeFilter}
+            onChange={(e) => {
+              setTypeFilter(e.target.value);
+              setPage(1);
+            }}
+            className="border  border-gray-300 rounded-xl px-3 py-2 w-full focus:ring-2 focus:ring-blue-500 focus:outline-none"
+          >
+            <option value="">All Types</option>
+            <option value="SYSTEM">SYSTEM</option>
+            <option value="ALERT">ALERT</option>
+            <option value="REMINDER">REMINDER</option>
+            <option value="PROMOTION">PROMOTION</option>
+          </select>
+        </div>
       </div>
 
-      {/* Notification List */}
+      {/* Notifications List */}
       {loading ? (
         <div className="flex justify-center items-center py-10">
           <Loader2 className="animate-spin text-blue-600" size={32} />
@@ -146,42 +218,46 @@ const NotificationsPage: React.FC = () => {
           No notifications found.
         </p>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="space-y-4">
           {notifications.map((n) => (
             <div
               key={n.id}
-              className="border rounded-xl p-4 shadow hover:shadow-md transition relative"
+              className="w-full border  border-gray-300 rounded-xl p-4 shadow bg-white flex justify-between items-center hover:shadow-md transition"
             >
-              <div className="flex justify-between items-start">
-                <div>
-                  <h3 className="text-lg font-semibold">{n.title}</h3>
-                  <p className="text-gray-600 mb-1">{n.body}</p>
-
-                  <p className="text-sm text-gray-500">
-                    <span className="font-medium">Category:</span> {n.category}
-                  </p>
-                  <p className="text-sm text-gray-500">
-                    <span className="font-medium">Type:</span> {n.type}
-                  </p>
-                </div>
-
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => handleEdit(n)}
-                    className="p-1 text-blue-600 hover:bg-blue-100 rounded-lg"
-                  >
-                    <Pencil size={18} />
-                  </button>
-                  <button
-                    onClick={() => handleDelete(n.id)}
-                    className="p-1 text-red-600 hover:bg-red-100 rounded-lg"
-                  >
-                    <Trash size={18} />
-                  </button>
-                </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-gray-800 mb-1">
+                  {n.title}
+                </h3>
+                <p className="text-gray-700 text-sm">{n.body}</p>
+                <div className="text-xs text-gray-500 mt-1"></div>
+              </div>
+              <div className="flex gap-2 ml-4">
+                <button
+                  onClick={() => handleEdit(n)}
+                  className="p-2 text-blue-600 hover:bg-blue-100 rounded-lg"
+                >
+                  <Pencil size={18} />
+                </button>
+                <button
+                  onClick={() => handleDelete(n.id)}
+                  className="p-2 text-red-600 hover:bg-red-100 rounded-lg"
+                >
+                  <Trash size={18} />
+                </button>
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="mt-6 flex justify-center">
+          <Pagination
+            page={page}
+            totalPages={totalPages}
+            onPageChange={setPage}
+          />
         </div>
       )}
 

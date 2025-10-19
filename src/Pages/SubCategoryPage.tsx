@@ -7,6 +7,7 @@ import toast, { Toaster } from "react-hot-toast";
 import Description from "../Components/Description";
 import Pagination from "../Components/Pagination";
 import SearchInput from "../Components/SearchInput";
+import MultiImageUpload from "../Components/MultiImageUpload";
 
 interface Business {
   id: number;
@@ -20,6 +21,7 @@ interface Business {
   latitude: string;
   longitude: string;
   placeImage: string;
+  existingImages: string[];
 }
 
 const limit = 1;
@@ -28,13 +30,25 @@ const SubCategoryPage: React.FC = () => {
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingBusiness, setEditingBusiness] = useState<Business | null>(null);
   const [page, setPage] = useState(1);
   const { name } = useParams<{ name: string }>();
   const navigate = useNavigate();
 
-  const [formData, setFormData] = useState({
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingBusiness, setEditingBusiness] = useState<Business | null>(null);
+
+  const [formData, setFormData] = useState<{
+    title: string;
+    description: string;
+    workingHours: string;
+    location: string;
+    businessEmail: string;
+    phoneNumber: string;
+    subCategoryName: string;
+    latitude: string;
+    longitude: string;
+    placeImage: string | File;
+  }>({
     title: "",
     description: "",
     workingHours: "",
@@ -44,38 +58,32 @@ const SubCategoryPage: React.FC = () => {
     subCategoryName: name || "",
     latitude: "",
     longitude: "",
-    placeImage: "" as string | File,
+    placeImage: "",
   });
 
   const [imagePreview, setImagePreview] = useState<string>("");
 
-  // Fetch businesses (search integrated)
+  //  Fetch Businesses with Live Search
   useEffect(() => {
     if (!name) return;
 
     let active = true;
-    let debounceTimer: ReturnType<typeof setTimeout>;
-
-    const fetchBusinesses = async () => {
+    const debounceTimer = setTimeout(async () => {
       try {
-        if (!search.trim()) setLoading(true);
+        setLoading(true);
 
-        debounceTimer = setTimeout(async () => {
-          const endpoint = search.trim()
-            ? "/place-item/search/all"
-            : `/place-item/subcategory/${name}`;
+        const endpoint = search.trim()
+          ? `/place-item/search/subcategory/${encodeURIComponent(name)}`
+          : `/place-item/subcategory/${encodeURIComponent(name)}`;
 
-          const params = search.trim()
-            ? { query: search, subCategoryName: name }
-            : {};
+        const params = search.trim() ? { query: search } : {};
 
-          const res = await api.get(endpoint, { params });
+        const res = await api.get(endpoint, { params });
 
-          if (active) {
-            setBusinesses(Array.isArray(res.data.data) ? res.data.data : []);
-            setLoading(false);
-          }
-        }, 400);
+        if (active) {
+          setBusinesses(Array.isArray(res.data.data) ? res.data.data : []);
+          setLoading(false);
+        }
       } catch (err) {
         console.error("Error fetching businesses:", err);
         if (active) {
@@ -83,9 +91,7 @@ const SubCategoryPage: React.FC = () => {
           setLoading(false);
         }
       }
-    };
-
-    fetchBusinesses();
+    }, 400);
 
     return () => {
       active = false;
@@ -93,7 +99,7 @@ const SubCategoryPage: React.FC = () => {
     };
   }, [name, search]);
 
-  // Modal handlers
+  //  Modal Handlers
   const handleAdd = () => {
     setEditingBusiness(null);
     setFormData({
@@ -143,19 +149,8 @@ const SubCategoryPage: React.FC = () => {
     }
   };
 
-  // Handle image selection
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      setFormData({ ...formData, placeImage: file });
-      setImagePreview(URL.createObjectURL(file));
-    }
-  };
-
-  // Save business (add or edit)
   const handleSave = async () => {
     try {
-      // Validation
       if (!formData.title.trim()) return toast.error("Title is required");
       if (!formData.subCategoryName.trim())
         return toast.error("SubCategory is required");
@@ -163,20 +158,13 @@ const SubCategoryPage: React.FC = () => {
         return toast.error("Description is required");
 
       const submitData = new FormData();
-
-      submitData.append("title", formData.title);
-      submitData.append("subCategoryName", formData.subCategoryName);
-      submitData.append("description", formData.description);
-      submitData.append("workingHours", formData.workingHours || "");
-      submitData.append("location", formData.location || "");
-      submitData.append("businessEmail", formData.businessEmail || "");
-      submitData.append("phoneNumber", formData.phoneNumber || "");
-      submitData.append("latitude", formData.latitude || "");
-      submitData.append("longitude", formData.longitude || "");
-
-      if (formData.placeImage instanceof File) {
-        submitData.append("images", formData.placeImage);
-      }
+      Object.entries(formData).forEach(([key, value]) => {
+        if (key === "placeImage" && value instanceof File) {
+          submitData.append("images", value);
+        } else {
+          submitData.append(key, value as string);
+        }
+      });
 
       if (editingBusiness) {
         const res = await api.patch(
@@ -198,7 +186,6 @@ const SubCategoryPage: React.FC = () => {
         toast.success("Business added successfully");
       }
 
-      // Reset modal & form
       setIsModalOpen(false);
       setEditingBusiness(null);
       setFormData({
@@ -302,7 +289,7 @@ const SubCategoryPage: React.FC = () => {
 
       {/* Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-white bg-opacity-40 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-gray-50 bg-opacity-40 flex items-center justify-center z-50 p-4">
           <div className="bg-white w-full max-w-full max-h-[90vh] p-6 md:p-12 overflow-y-auto rounded-2xl relative flex flex-col">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-semibold">
@@ -412,20 +399,15 @@ const SubCategoryPage: React.FC = () => {
                 />
               </div>
 
+              {/* Multi Image Upload */}
               <div>
-                <label className="block mb-1 font-medium">Business Image</label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageChange}
+                <label className="block mb-1">Upload Images</label>
+                <MultiImageUpload
+                  existingImages={imagePreview ? [imagePreview] : []}
+                  onChange={(files) =>
+                    setFormData({ ...formData, placeImage: files[0] })
+                  }
                 />
-                {imagePreview && (
-                  <img
-                    src={imagePreview}
-                    alt="Preview"
-                    className="w-2xl h-100 object-cover mt-2 rounded-lg"
-                  />
-                )}
               </div>
             </div>
 
