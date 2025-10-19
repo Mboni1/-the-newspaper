@@ -14,6 +14,7 @@ import LocationsOverviewPage from "./Pages/LocationsOverviewPage";
 import CategoryPage from "./Pages/CategoryPage";
 import SubCategoryPage from "./Pages/SubCategoryPage";
 import NavbarPage from "./Pages/NavbarPage";
+import NotFoundPage from "./Pages/NotFoundPage"; // ✅ Added
 
 // Components (for Dashboard layout)
 import Dashboard from "./Components/Dashboard";
@@ -44,7 +45,6 @@ const App: React.FC = () => {
             </div>
           }
         />
-
         <Route
           path="/user-management"
           element={
@@ -54,7 +54,6 @@ const App: React.FC = () => {
             </div>
           }
         />
-
         <Route
           path="/service-categories"
           element={
@@ -64,7 +63,6 @@ const App: React.FC = () => {
             </div>
           }
         />
-
         <Route
           path="/business"
           element={
@@ -74,7 +72,6 @@ const App: React.FC = () => {
             </div>
           }
         />
-
         <Route
           path="/business-directory"
           element={
@@ -84,7 +81,6 @@ const App: React.FC = () => {
             </div>
           }
         />
-
         <Route
           path="/documents"
           element={
@@ -94,7 +90,6 @@ const App: React.FC = () => {
             </div>
           }
         />
-
         <Route
           path="/reviews"
           element={
@@ -104,7 +99,6 @@ const App: React.FC = () => {
             </div>
           }
         />
-
         <Route
           path="/notifications"
           element={
@@ -135,7 +129,6 @@ const App: React.FC = () => {
             </div>
           }
         />
-
         <Route
           path="/add-article"
           element={
@@ -145,7 +138,6 @@ const App: React.FC = () => {
             </div>
           }
         />
-
         <Route
           path="/add-business"
           element={
@@ -155,7 +147,6 @@ const App: React.FC = () => {
             </div>
           }
         />
-
         <Route
           path="/add-category"
           element={
@@ -165,7 +156,6 @@ const App: React.FC = () => {
             </div>
           }
         />
-
         <Route
           path="/login"
           element={
@@ -191,6 +181,17 @@ const App: React.FC = () => {
             <div className="min-h-screen bg-gray-100">
               <NavbarPage />
               <SubCategoryPage />
+            </div>
+          }
+        />
+
+        {/* Catch all route */}
+        <Route
+          path="*"
+          element={
+            <div className="min-h-screen bg-gray-100">
+              <NavbarPage />
+              <NotFoundPage />
             </div>
           }
         />
