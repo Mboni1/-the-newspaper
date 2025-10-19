@@ -23,7 +23,6 @@ import AddArticle from "./Components/AddArticle";
 import AddBusiness from "./Components/AddBusiness";
 import AddCategory from "./Components/AddCategory";
 import AddNotifications from "./Components/AddNotifications";
-import Counter from "./Components/Counter";
 
 const App: React.FC = () => {
   return (
@@ -41,7 +40,6 @@ const App: React.FC = () => {
               <NavbarPage />
               <Dashboard />
               <Analytics />
-              <Counter />
             </div>
           }
         />
