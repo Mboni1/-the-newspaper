@@ -1,5 +1,5 @@
 import React from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { HashRouter as Router, Routes, Route } from "react-router-dom";
 
 // Pages
 import LoginPage from "./Pages/LoginPage";
@@ -14,9 +14,9 @@ import LocationsOverviewPage from "./Pages/LocationsOverviewPage";
 import CategoryPage from "./Pages/CategoryPage";
 import SubCategoryPage from "./Pages/SubCategoryPage";
 import NavbarPage from "./Pages/NavbarPage";
-import NotFoundPage from "./Pages/NotFoundPage"; // ✅ Added
+import NotFoundPage from "./Pages/NotFoundPage";
 
-// Components (for Dashboard layout)
+// Components (Dashboard)
 import Dashboard from "./Components/Dashboard";
 import Analytics from "./Components/Analytics";
 import AddArticle from "./Components/AddArticle";
@@ -60,15 +60,6 @@ const App: React.FC = () => {
             <div className="min-h-screen bg-gray-100">
               <NavbarPage />
               <ServiceCategoriesPage />
-            </div>
-          }
-        />
-        <Route
-          path="/business"
-          element={
-            <div className="min-h-screen bg-gray-100">
-              <NavbarPage />
-              <BusinessDirectoryPage />
             </div>
           }
         />
