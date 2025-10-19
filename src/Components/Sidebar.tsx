@@ -12,6 +12,7 @@ const menuItems = [
   { name: "Documents", path: "/documents" },
   { name: "Reviews", path: "/reviews" },
   { name: "Notifications", path: "/notifications" },
+  { name: "Location", path: "/location" },
 ];
 
 const Sidebar: React.FC = () => {

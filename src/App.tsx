@@ -14,7 +14,6 @@ import LocationsOverviewPage from "./Pages/LocationsOverviewPage";
 import CategoryPage from "./Pages/CategoryPage";
 import SubCategoryPage from "./Pages/SubCategoryPage";
 import NavbarPage from "./Pages/NavbarPage";
-import NotFoundPage from "./Pages/NotFoundPage";
 
 // Components (Dashboard)
 import Dashboard from "./Components/Dashboard";
@@ -180,7 +179,6 @@ const App: React.FC = () => {
           element={
             <div className="min-h-screen bg-gray-100">
               <NavbarPage />
-              <NotFoundPage />
             </div>
           }
         />
