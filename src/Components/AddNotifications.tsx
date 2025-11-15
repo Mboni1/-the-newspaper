@@ -1,13 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Notification } from "../Pages/NotificationsPage";
 import { Loader2 } from "lucide-react";
-
-export const categories = [
-  "System Updates",
-  "Marketing",
-  "New Features",
-  "Security",
-] as const;
+import api from "../lib/axios";
 
 export interface AddNotificationProps {
   onClose: () => void;
@@ -28,7 +22,30 @@ const AddNotifications: React.FC<AddNotificationProps> = ({
   );
   const [loading, setLoading] = useState(false);
 
-  // Populate fields when editing
+  // categories
+  const [categories, setCategories] = useState<{ id: number; name: string }[]>(
+    []
+  );
+  const [loadingCategories, setLoadingCategories] = useState(true);
+
+  const fetchCategories = async () => {
+    try {
+      const res = await api.get("/category?limit=1000");
+      const data = res.data.data || res.data;
+      const filtered = data.filter((cat: any) => !cat.isDoc);
+
+      setCategories(filtered);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoadingCategories(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchCategories();
+  }, []);
+
   useEffect(() => {
     if (initialData) {
       setTitle(initialData.title);
@@ -74,7 +91,7 @@ const AddNotifications: React.FC<AddNotificationProps> = ({
 
       {/* Title */}
       <div>
-        <label className="block mb-2 font-medium  text-gray-700">Title</label>
+        <label className="block mb-2 font-medium text-gray-700">Title</label>
         <input
           type="text"
           value={title}
@@ -86,7 +103,7 @@ const AddNotifications: React.FC<AddNotificationProps> = ({
 
       {/* Body */}
       <div>
-        <label className="block mb-2 font-medium  text-gray-700">Body</label>
+        <label className="block mb-2 font-medium text-gray-700">Body</label>
         <textarea
           value={body}
           onChange={(e) => setBody(e.target.value)}
@@ -96,28 +113,31 @@ const AddNotifications: React.FC<AddNotificationProps> = ({
         />
       </div>
 
-      {/* Category Dropdown */}
+      {/* Category Dropdown (from API) */}
       <div>
-        <label className="block mb-2 font-medium  text-gray-700">
-          Category
-        </label>
-        <select
-          value={category}
-          onChange={(e) => setCategory(e.target.value)}
-          className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-        >
-          <option value="">Select Category</option>
-          {categories.map((c) => (
-            <option key={c} value={c}>
-              {c}
-            </option>
-          ))}
-        </select>
+        <label className="block mb-2 font-medium text-gray-700">Category</label>
+
+        {loadingCategories ? (
+          <p className="text-gray-500 text-sm">Loading categories...</p>
+        ) : (
+          <select
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            className="w-full border rounded-xl px-3 py-2 mt-1 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+          >
+            <option value="">Select Category</option>
+            {categories.map((c) => (
+              <option key={c.id} value={c.name}>
+                {c.name}
+              </option>
+            ))}
+          </select>
+        )}
       </div>
 
       {/* Type Dropdown */}
       <div>
-        <label className="block mb-2 font-medium  text-gray-700">Type</label>
+        <label className="block mb-2 font-medium text-gray-700">Type</label>
         <select
           value={type}
           onChange={(e) => setType(e.target.value as Notification["type"])}

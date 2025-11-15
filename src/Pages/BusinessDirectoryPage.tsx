@@ -33,7 +33,7 @@ interface Business {
   icon?: React.ElementType;
 }
 
-const limit = 6;
+const limit = 3;
 
 const BusinessDirectoryPage: React.FC = () => {
   const [businesses, setBusinesses] = useState<Business[]>([]);
