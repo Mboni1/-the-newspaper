@@ -106,7 +106,7 @@ const ServiceCategories: React.FC = () => {
         });
         console.log("PATCH response:", res.data);
 
-        const updated = res.data; // backend returns plain object (id, name, isDoc)
+        const updated = res.data; 
 
         setCategories((prev) => {
           const newList = prev.map((c) =>

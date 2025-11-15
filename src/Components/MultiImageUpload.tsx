@@ -2,10 +2,9 @@ import React, { useState, useEffect } from "react";
 import { X, ChevronLeft, ChevronRight } from "lucide-react";
 
 interface MultiImageUploadProps {
-  existingImages?: string[]; // amafoto asanzwe (editing)
+  existingImages?: string[]; 
   onChange: (files: File[], removedExisting?: string[]) => void;
-  // files = amafoto mashya
-  // removedExisting = amafoto asanzwe yakuwemo
+  
 }
 
 const MultiImageUpload: React.FC<MultiImageUploadProps> = ({

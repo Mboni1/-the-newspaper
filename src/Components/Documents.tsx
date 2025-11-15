@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import { FileText } from "lucide-react";
 import StatCard from "./StatCard";
 import { Link } from "react-router-dom";
-import axios from "axios";
 import api from "../lib/axios";
 
 const Documents: React.FC = () => {

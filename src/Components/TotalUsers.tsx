@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import { Users } from "lucide-react";
 import StatCard from "./StatCard";
 import { Link } from "react-router-dom";
-
 import api from "../lib/axios";
 
 const TotalUsers: React.FC = () => {

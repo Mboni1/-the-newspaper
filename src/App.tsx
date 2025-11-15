@@ -15,7 +15,7 @@ import CategoryPage from "./Pages/CategoryPage";
 import SubCategoryPage from "./Pages/SubCategoryPage";
 import NavbarPage from "./Pages/NavbarPage";
 
-// Components (Dashboard)
+// Components
 import Dashboard from "./Components/Dashboard";
 import Analytics from "./Components/Analytics";
 import AddArticle from "./Components/AddArticle";
@@ -23,163 +23,201 @@ import AddBusiness from "./Components/AddBusiness";
 import AddCategory from "./Components/AddCategory";
 import AddNotifications from "./Components/AddNotifications";
 
+// Protection
+import ProtectedRoute from "./Components/ProtectedRoute";
+
 const App: React.FC = () => {
   return (
     <Router>
       <Routes>
-        {/* Public Routes */}
+        {/* PUBLIC ROUTES */}
         <Route path="/" element={<LoginPage />} />
+        <Route path="/login" element={<LoginPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
 
-        {/* Dashboard Routes */}
+        {/* 🚨 PROTECTED ROUTES 🚨 */}
         <Route
           path="/dashboard"
           element={
-            <div className="min-h-screen bg-gray-100">
-              <NavbarPage />
-              <Dashboard />
-              <Analytics />
-            </div>
+            <ProtectedRoute>
+              <div className="min-h-screen bg-gray-100">
+                <NavbarPage />
+                <Dashboard />
+                <Analytics />
+              </div>
+            </ProtectedRoute>
           }
         />
+
         <Route
           path="/user-management"
           element={
-            <div className="min-h-screen bg-gray-100">
-              <NavbarPage />
-              <UserManagementPage />
-            </div>
+            <ProtectedRoute>
+              <div className="min-h-screen bg-gray-100">
+                <NavbarPage />
+                <UserManagementPage />
+              </div>
+            </ProtectedRoute>
           }
         />
+
         <Route
           path="/service-categories"
           element={
-            <div className="min-h-screen bg-gray-100">
-              <NavbarPage />
-              <ServiceCategoriesPage />
-            </div>
+            <ProtectedRoute>
+              <div className="min-h-screen bg-gray-100">
+                <NavbarPage />
+                <ServiceCategoriesPage />
+              </div>
+            </ProtectedRoute>
           }
         />
+
         <Route
           path="/business"
           element={
-            <div className="min-h-screen bg-gray-100">
-              <NavbarPage />
-              <BusinessDirectoryPage />
-            </div>
+            <ProtectedRoute>
+              <div className="min-h-screen bg-gray-100">
+                <NavbarPage />
+                <BusinessDirectoryPage />
+              </div>
+            </ProtectedRoute>
           }
         />
+
         <Route
           path="/documents"
           element={
-            <div className="min-h-screen bg-gray-100">
-              <NavbarPage />
-              <DocumentsPage />
-            </div>
+            <ProtectedRoute>
+              <div className="min-h-screen bg-gray-100">
+                <NavbarPage />
+                <DocumentsPage />
+              </div>
+            </ProtectedRoute>
           }
         />
+
         <Route
           path="/reviews"
           element={
-            <div className="min-h-screen bg-gray-100">
-              <NavbarPage />
-              <ReviewsPage />
-            </div>
+            <ProtectedRoute>
+              <div className="min-h-screen bg-gray-100">
+                <NavbarPage />
+                <ReviewsPage />
+              </div>
+            </ProtectedRoute>
           }
         />
+
         <Route
           path="/notifications"
           element={
-            <div className="min-h-screen bg-gray-100">
-              <NavbarPage />
-              <NotificationsPage />
-            </div>
+            <ProtectedRoute>
+              <div className="min-h-screen bg-gray-100">
+                <NavbarPage />
+                <NotificationsPage />
+              </div>
+            </ProtectedRoute>
           }
         />
+
         <Route
           path="/add-notifications"
           element={
-            <div className="min-h-screen bg-gray-100">
-              <NavbarPage />
-              <AddNotifications
-                onClose={() => console.log("Closed")}
-                onSave={(data) => console.log("Saved:", data)}
-              />
-            </div>
+            <ProtectedRoute>
+              <div className="min-h-screen bg-gray-100">
+                <NavbarPage />
+                <AddNotifications
+                  onClose={() => console.log("Closed")}
+                  onSave={(data) => console.log("Saved:", data)}
+                />
+              </div>
+            </ProtectedRoute>
           }
         />
+
         <Route
           path="/locations-overview"
           element={
-            <div className="min-h-screen bg-gray-100">
-              <NavbarPage />
-              <LocationsOverviewPage />
-            </div>
+            <ProtectedRoute>
+              <div className="min-h-screen bg-gray-100">
+                <NavbarPage />
+                <LocationsOverviewPage />
+              </div>
+            </ProtectedRoute>
           }
         />
+
         <Route
           path="/add-article"
           element={
-            <div className="min-h-screen bg-gray-100">
-              <NavbarPage />
-              <AddArticle />
-            </div>
+            <ProtectedRoute>
+              <div className="min-h-screen bg-gray-100">
+                <NavbarPage />
+                <AddArticle />
+              </div>
+            </ProtectedRoute>
           }
         />
+
         <Route
           path="/add-business"
           element={
-            <div className="min-h-screen bg-gray-100">
-              <NavbarPage />
-              <AddBusiness />
-            </div>
+            <ProtectedRoute>
+              <div className="min-h-screen bg-gray-100">
+                <NavbarPage />
+                <AddBusiness />
+              </div>
+            </ProtectedRoute>
           }
         />
+
         <Route
           path="/add-category"
           element={
-            <div className="min-h-screen bg-gray-100">
-              <NavbarPage />
-              <AddCategory />
-            </div>
-          }
-        />
-        <Route
-          path="/login"
-          element={
-            <div className="min-h-screen bg-gray-100">
-              <LoginPage />
-            </div>
+            <ProtectedRoute>
+              <div className="min-h-screen bg-gray-100">
+                <NavbarPage />
+                <AddCategory />
+              </div>
+            </ProtectedRoute>
           }
         />
 
-        {/* Category detail route */}
+        {/* CATEGORY ROUTES */}
         <Route
           path="/category/:name"
           element={
-            <div className="min-h-screen bg-gray-100">
-              <NavbarPage />
-              <CategoryPage />
-            </div>
-          }
-        />
-        <Route
-          path="/category/subCategory/:name"
-          element={
-            <div className="min-h-screen bg-gray-100">
-              <NavbarPage />
-              <SubCategoryPage />
-            </div>
+            <ProtectedRoute>
+              <div className="min-h-screen bg-gray-100">
+                <NavbarPage />
+                <CategoryPage />
+              </div>
+            </ProtectedRoute>
           }
         />
 
-        {/* Catch all route */}
+        <Route
+          path="/category/subCategory/:name"
+          element={
+            <ProtectedRoute>
+              <div className="min-h-screen bg-gray-100">
+                <NavbarPage />
+                <SubCategoryPage />
+              </div>
+            </ProtectedRoute>
+          }
+        />
+
+        {/* CATCH ALL */}
         <Route
           path="*"
           element={
-            <div className="min-h-screen bg-gray-100">
-              <NavbarPage />
-            </div>
+            <ProtectedRoute>
+              <div className="min-h-screen bg-gray-100">
+                <NavbarPage />
+              </div>
+            </ProtectedRoute>
           }
         />
       </Routes>

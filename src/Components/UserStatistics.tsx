@@ -24,7 +24,7 @@ const UserStatistics: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
-  // ✅ Map frontend timeRange → backend period param
+  // Map frontend timeRange → backend period param
   const periodMap: Record<"W" | "M" | "Y", string> = {
     W: "weekly",
     M: "monthly",
@@ -57,12 +57,12 @@ const UserStatistics: React.FC = () => {
       setError(null);
 
       try {
-        // ✅ Send period param based on selected range
+        // Send period param based on selected range
         const res = await api.get("/analytics/user", {
           params: { period: periodMap[timeRange] },
         });
 
-        // backend igarura data: { data: AnalyticsData[] }
+        // backend  data: { data: AnalyticsData[] }
         const data: AnalyticsData[] = res.data?.data ?? [];
 
         const labels = defaultLabels[timeRange];
