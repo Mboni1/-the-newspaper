@@ -1,0 +1,39 @@
+import React, { useEffect, useState } from "react";
+import { FileText } from "lucide-react";
+import StatCard from "./StatCard";
+import { Link } from "react-router-dom";
+import api from "../lib/axios";
+
+const Documents: React.FC = () => {
+  const [totalDocs, setTotalDocs] = useState<number>(0);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchTotalDocuments = async () => {
+      try {
+        const res = await api.get("/doc-item/admin/all");
+
+        // Assuming backend returns { total: number }
+        setTotalDocs(res.data.total || 0);
+        setLoading(false);
+      } catch (err) {
+        console.error(err);
+        setLoading(false);
+      }
+    };
+
+    fetchTotalDocuments();
+  }, []);
+
+  return (
+    <Link to="/documents">
+      <StatCard
+        icon={FileText}
+        value={loading ? "..." : totalDocs} // show "..." while loading
+        label="Documents"
+      />
+    </Link>
+  );
+};
+
+export default Documents;
