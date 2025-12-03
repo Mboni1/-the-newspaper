@@ -25,6 +25,12 @@ interface Category {
   isDoc: boolean;
 }
 
+interface ApiResponse<T> {
+  data: {
+    data: T;
+  };
+}
+
 const limit = 4;
 
 const ArticlesPage: React.FC = () => {
@@ -54,7 +60,7 @@ const ArticlesPage: React.FC = () => {
   const fetchArticles = async (query = "") => {
     setLoading(true);
     try {
-      const res = query
+      const res: ApiResponse<Article[]> = query
         ? await api.get("/doc-item/search/all", { params: { query } })
         : await api.get("/doc-item/admin/all");
 
@@ -79,12 +85,11 @@ const ArticlesPage: React.FC = () => {
     }
   };
 
-  // Fetch categories (only isDoc)
+  // Fetch categories
   const fetchCategories = async () => {
     try {
-      const res = await api.get("/category");
-      const docCategories = res.data.data.filter((c: Category) => c.isDoc);
-      setCategories(docCategories);
+      const res: ApiResponse<Category[]> = await api.get("/category?limit=100");
+      setCategories(res.data.data.filter((c) => c.isDoc));
     } catch (err) {
       console.error("Failed to fetch categories", err);
     }
@@ -114,6 +119,22 @@ const ArticlesPage: React.FC = () => {
 
   const handlePrev = () => setPage((prev) => Math.max(prev - 1, 1));
   const handleNext = () => setPage((prev) => Math.min(prev + 1, totalPages));
+
+  // Get categories only from current page
+  const getCurrentPageCategories = (): Category[] => {
+    const pageCategories: Category[] = paginatedArticles.map((a) => ({
+      id: 0,
+      name: a.categoryName,
+      isDoc: true,
+    }));
+
+    const map = new Map<string, Category>();
+    [...categories, ...pageCategories].forEach((c) => {
+      if (c.name) map.set(c.name, c);
+    });
+
+    return Array.from(map.values());
+  };
 
   // Modal handlers
   const handleAdd = () => {
@@ -165,6 +186,7 @@ const ArticlesPage: React.FC = () => {
       setImagePreview(URL.createObjectURL(file));
     }
   };
+
   const handleSave = async () => {
     if (!formData.title.trim()) {
       toast.error("Title is required");
@@ -180,9 +202,8 @@ const ArticlesPage: React.FC = () => {
       data.append("description", formData.description);
       if (imageFile) data.append("image", imageFile);
 
-      let res;
+      let res: ApiResponse<Article>;
       if (editingArticle) {
-        // Edit
         res = await api.patch(`/doc-item/${editingArticle.id}`, data, {
           headers: { "Content-Type": "multipart/form-data" },
         });
@@ -191,7 +212,6 @@ const ArticlesPage: React.FC = () => {
           prev.map((a) => (a.id === editingArticle.id ? res.data.data : a))
         );
       } else {
-        // Add
         res = await api.post("/doc-item", data, {
           headers: { "Content-Type": "multipart/form-data" },
         });
@@ -199,7 +219,6 @@ const ArticlesPage: React.FC = () => {
         setArticles((prev) => [res.data.data, ...prev]);
       }
 
-      // Reset form & modal
       setIsModalOpen(false);
       setEditingArticle(null);
       setFormData({
@@ -248,7 +267,6 @@ const ArticlesPage: React.FC = () => {
         </button>
       </div>
 
-      {/* Live Search */}
       <div className="mb-4 w-full">
         <SearchInput
           value={search}
@@ -258,7 +276,6 @@ const ArticlesPage: React.FC = () => {
         />
       </div>
 
-      {/* Articles List */}
       <div className="space-y-4">
         {loading ? (
           <p className="p-8 text-gray-500">Loading articles...</p>
@@ -300,14 +317,12 @@ const ArticlesPage: React.FC = () => {
         )}
       </div>
 
-      {/* Pagination */}
       <Pagination
         page={page}
         totalPages={totalPages}
         onPageChange={(p) => setPage(p)}
       />
 
-      {/* Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-gray-50 bg-opacity-40 flex items-center justify-center z-50 p-4">
           <div className="bg-white w-full max-w-full max-h-[90vh] p-6 md:p-12 overflow-y-auto rounded-2xl relative flex flex-col">
@@ -322,7 +337,6 @@ const ArticlesPage: React.FC = () => {
               {editingArticle ? "Edit Article" : "New Article"}
             </h2>
 
-            {/* Form fields */}
             <div className="flex flex-col gap-6 w-full">
               <div className="flex flex-col">
                 <label className="text-sm font-medium text-gray-600 mb-1">
@@ -339,7 +353,6 @@ const ArticlesPage: React.FC = () => {
                 />
               </div>
 
-              {/* Description */}
               <Description
                 value={formData.description}
                 onChange={(content) =>
@@ -348,7 +361,6 @@ const ArticlesPage: React.FC = () => {
                 placeholder="Description..."
               />
 
-              {/* Summary */}
               <div className="flex flex-col">
                 <label className="text-sm font-medium text-gray-600 mb-1">
                   Summary
@@ -363,7 +375,6 @@ const ArticlesPage: React.FC = () => {
                 />
               </div>
 
-              {/* Category + Location */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="flex flex-col">
                   <label className="text-sm font-medium text-gray-600 mb-1">
@@ -377,8 +388,8 @@ const ArticlesPage: React.FC = () => {
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500"
                   >
                     <option value="">Select category</option>
-                    {categories.map((cat) => (
-                      <option key={cat.id} value={cat.name}>
+                    {getCurrentPageCategories().map((cat) => (
+                      <option key={cat.name} value={cat.name}>
                         {cat.name}
                       </option>
                     ))}
@@ -401,7 +412,6 @@ const ArticlesPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* Image upload */}
               <div className="flex flex-col">
                 <label className="text-sm font-medium text-gray-600 mb-2">
                   Featured Image
